@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0E0712;
+  --semiaccent: #51206F;
+  --accent: #770FB8;
+  --grey: #F6EFFB;
+  --white: #FCFCFD;
+}
+
+body {
+  background: var(--background);
+}
+
+h2 {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--white);
+}
