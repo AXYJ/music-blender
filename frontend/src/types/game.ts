@@ -26,6 +26,7 @@ export interface GameContextType {
     // Actions
   createGame: () => void;
   joinGame: (code: string) => void;
+  beReady: () => void;
 
     // Volume
   volume: number;
@@ -40,6 +41,7 @@ export interface GameContextType {
 // Types pour les joueurs
 export interface Player {
   id: string;
+  socketId?: string;
   name: string;
   isHost: boolean;
   isReady: boolean;

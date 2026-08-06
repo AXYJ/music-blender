@@ -24,7 +24,7 @@ import {
   GameContextType,
   Player,
 } from "../types/game";
-// import { useSocketListeners } from "../hooks/useSocketListeners";
+import { useSocketListeners } from "../hooks/useSocketListeners";
 
 // Création du contexte
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -49,6 +49,18 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   
   // Pseudo du joueur
   const [name, setName] = useState("");
+
+  // Enregistrement des écouteurs de socket
+  useSocketListeners({
+    socket,
+    setView,
+    setError,
+    setRoomCode,
+    setPlayers,
+    setIsConnected,
+    setNoMorePlayers,
+    setName,
+  });
 
   // ----------------------------------------------------------------
   // Sauvegarde des volumes dans le localStorage quand ils changent
@@ -86,8 +98,9 @@ useEffect(() => {
     }
 
     // Initialisation de la connexion
-    const socketUrl =
-      process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:4000";
+    const envUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
+    const socketUrl = envUrl && envUrl !== "undefined" ? envUrl : "http://localhost:4000";
+    console.log("Socket connection target URL:", socketUrl);
     const newSocket = io(socketUrl, {
       transports: ["websocket", "polling"],
     });
@@ -111,7 +124,7 @@ useEffect(() => {
   const createGame = useCallback(() => {
     if (socket) {
       const id = localStorage.getItem("id");
-      socket.emit("create_game", socket.id, id);
+      socket.emit("create_game", socket.id, id, name);
       // Sauvegarde du pseudo uniquement au lancement de la partie
       localStorage.setItem(PLAYER_NAME_KEY, name);
     }
@@ -121,11 +134,21 @@ useEffect(() => {
   const joinGame = useCallback((code: string) => {
     if (socket) {
       const id = localStorage.getItem("id");
-      socket.emit("join_game", code, socket.id, id);
+      socket.emit("join_game", code, socket.id, id, name);
       // Sauvegarde du pseudo uniquement au lancement de la partie
       localStorage.setItem(PLAYER_NAME_KEY, name);
     }
   }, [socket, name]);
+
+  // Prêt
+  const beReady = useCallback(() => {
+    if (socket) {
+      const me = players.find((p) => p.socketId === socket.id);
+      if (me) {
+        socket.emit("ready", !me.isReady, me.id);
+      }
+    }
+  }, [socket, players]);
 
 
 const value = useMemo(
@@ -150,6 +173,7 @@ const value = useMemo(
       setName,
       createGame,
       joinGame,
+      beReady,
     }),
     [
       socket,
@@ -164,6 +188,7 @@ const value = useMemo(
       name,
       createGame,
       joinGame,
+      beReady,
     ]
   );
 

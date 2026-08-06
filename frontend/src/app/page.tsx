@@ -5,8 +5,8 @@ import { GameProvider, useGame } from "../context/GameContext";
 
 // Import des composants
 import Home from "../pages/Home";
-// import Lobby from "../components/pages/Lobby";
-// import Game from "../components/pages/Game";
+import Lobby from "../pages/Lobby";
+import Game from "../pages/Game";
 
 function GameContent() {
   const { view } = useGame();
@@ -17,14 +17,14 @@ function GameContent() {
   switch (baseView) {
     case "home":
       return <Home />;
-    // case "lobby":
-    //   return <Lobby />;
-    // case "game":
-    //   return (
-    //     <>
-    //       <Game />
-    //     </>
-    //   );
+    case "lobby":
+      return <Lobby />;
+    case "game":
+      return (
+        <>
+          <Game />
+        </>
+      );
     default:
       return <Home />;
   }
@@ -33,7 +33,7 @@ function GameContent() {
 export default function App() {
   
   return (
-    <main>
+    <main className="min-h-screen py-16 px-8">
       <GameProvider>
         <GameContent />
       </GameProvider>

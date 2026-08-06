@@ -4,7 +4,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import React from "react";
-import Image from "next/image";
 
 // Import du contexte
 import { useGame } from "../context/GameContext";
@@ -60,19 +59,19 @@ export default function Home() {
     }
     
     return (
-        <div className="flex flex-col items-center min-h-screen py-16 px-8 gap-8">
-            <h1 className="text-4xl font-bold text-[var(--accent)] text-center">Music Blender</h1>
+        <div className="flex flex-col items-center gap-8">
+            <h1 className="text-4xl font-bold text-(--accent) text-center">Music Blender</h1>
             <div className="flex flex-col items-center gap-4 w-full">
                 <Section>
                     <div className="flex flex-col gap-2 mb-4">
-                        <label htmlFor="name" className="text-[var(--white)] text-2xl font-bold">Votre pseudo</label>
-                        <input type="text" className="h-8 w-full px-4 rounded-lg text-base bg-[var(--white)]" value={name} onChange={(e) => setName(e.target.value)}/>
+                        <label htmlFor="name" className="text-(--white) text-2xl font-bold">Votre pseudo</label>
+                        <input type="text" className="h-8 w-full px-4 rounded-lg text-base bg-(--white) text-(--background)" value={name} onChange={(e) => setName(e.target.value)}/>
                     </div>
                     <div className="flex flex-col gap-4">
-                        <button className="bg-[var(--accent)] text-[var(--white)] px-4 py-2 rounded-lg cursor-pointer" onClick={handleCreateGame}>Créer</button>
+                        <button className="bg-(--accent) text-(--white) px-4 py-2 rounded-lg" onClick={handleCreateGame}>Créer</button>
                         <div className="flex flex-col gap-2">
-                            <input type="text" placeholder="Code de la room" className="h-8 w-full px-4 rounded-lg text-base bg-[var(--white)]" value={roomInput} onChange={(e) => setRoomInput(e.target.value)}/>
-                            <button className="bg-[var(--accent)] text-[var(--white)] px-4 py-2 rounded-lg cursor-pointer" onClick={handleJoinGame}>Rejoindre</button>
+                            <input type="text" placeholder="Code de la room" className="h-8 w-full px-4 rounded-lg text-base bg-(--white) text-(--background)" value={roomInput} onChange={(e) => setRoomInput(e.target.value)}/>
+                            <button className="bg-(--accent) text-(--white) px-4 py-2 rounded-lg" onClick={handleJoinGame}>Rejoindre</button>
                         </div>
                     </div>
                 </Section>
