@@ -1,5 +1,5 @@
 import { Socket } from "socket.io-client";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Player, View } from "../types/game";
 
 interface SocketListenersProps {
@@ -11,6 +11,9 @@ interface SocketListenersProps {
   setIsConnected: (connected: boolean) => void;
   setNoMorePlayers: React.Dispatch<React.SetStateAction<boolean>>;
   setName: (name: string) => void;
+  setMusicAmount: (amount: number) => void;
+  setTime: (time: number) => void;
+  playlistUrl: string;
 }
 
 export const useSocketListeners = (props: SocketListenersProps) => {
@@ -23,7 +26,13 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     setIsConnected,
     setNoMorePlayers,
     setName,
+    setMusicAmount,
+    setTime,
+    playlistUrl,
   } = props;
+
+  const playlistUrlRef = useRef(playlistUrl);
+  playlistUrlRef.current = playlistUrl;
 
   useEffect(() => {
     if (!socket) return;
@@ -102,6 +111,33 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     socket.on("room_created", handleRoomCreated);
     socket.on("room_updated", handleRoomUpdated);
 
+    const handleGameStarted = (players: Player[]) => {
+      socket.emit("send_playlist_url", playlistUrlRef.current);
+    };
+    socket.on("game_started", handleGameStarted);
+
+    const handleDataLoaded = (toPlay: any[], database: any[]) => {
+      setView("game");
+      console.log("toPlay", toPlay);
+      console.log("database", database);
+    }
+
+    socket.on("data_loaded", handleDataLoaded);
+
+    // ----------------
+    // Gestion des paramètres de partie
+    // ----------------
+    const handleGameSetting = (key: string, value: any) => {
+      console.log("Game setting:", key, value);
+      if(key === "music_amount") {
+        setMusicAmount(value);
+      } else if(key === "time") {
+        setTime(value);
+      }
+    };
+
+    socket.on("game-setting", handleGameSetting);
+
     return () => {
       clearInterval(keepAliveInterval);
       socket.off("connect", handleConnect);
@@ -110,6 +146,19 @@ export const useSocketListeners = (props: SocketListenersProps) => {
       socket.off("error", handleError);
       socket.off("room_created", handleRoomCreated);
       socket.off("room_updated", handleRoomUpdated);
+      socket.off("game-setting", handleGameSetting);
+      socket.off("game_started", handleGameStarted);
     };
-  }, [socket, setView, setError, setIsConnected, setRoomCode, setPlayers, setName]);
+  }, [
+    socket,
+    setView,
+    setError,
+    setIsConnected,
+    setRoomCode,
+    setPlayers,
+    setName,
+    setMusicAmount,
+    setTime,
+    setNoMorePlayers,
+  ]);
 };

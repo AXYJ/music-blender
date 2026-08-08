@@ -1,0 +1,5 @@
+{
+  "ignore": [
+    "room_*_db.json"
+  ]
+}

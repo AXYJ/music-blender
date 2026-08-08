@@ -27,6 +27,7 @@ export interface GameContextType {
   createGame: () => void;
   joinGame: (code: string) => void;
   beReady: () => void;
+  launchGame: () => void;
 
     // Volume
   volume: number;
@@ -36,6 +37,14 @@ export interface GameContextType {
   // Joueur
   name: string;
   setName: (name: string) => void;
+
+  // Paramètres de partie
+  musicAmount: number;
+  setMusicAmount: (amount: number) => void;
+  time: number;
+  setTime: (time: number) => void;
+  playlistUrl: string;
+  setPlaylistUrl: React.Dispatch<React.SetStateAction<string>>;
 }
 
 // Types pour les joueurs
@@ -47,4 +56,6 @@ export interface Player {
   isReady: boolean;
   score: number;
   leavedPlayer: boolean;
+  playlistUrl?: string;
+  tracks?: any[];
 }

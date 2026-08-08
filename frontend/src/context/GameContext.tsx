@@ -45,7 +45,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [noMorePlayers, setNoMorePlayers] = useState(false);
   const [volume, setVolume] = useState(0.5);
   const [sfxVolume, setSfxVolume] = useState(0.5);
+  const [musicAmount, setMusicAmount] = useState(3);
+  const [time, setTime] = useState(30);
   const sfxVolumeRef = useRef(sfxVolume);
+  const [playlistUrl, setPlaylistUrl] = useState("")
   
   // Pseudo du joueur
   const [name, setName] = useState("");
@@ -60,6 +63,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setIsConnected,
     setNoMorePlayers,
     setName,
+    setMusicAmount,
+    setTime,
+    playlistUrl,
   });
 
   // ----------------------------------------------------------------
@@ -124,7 +130,7 @@ useEffect(() => {
   const createGame = useCallback(() => {
     if (socket) {
       const id = localStorage.getItem("id");
-      socket.emit("create_game", socket.id, id, name);
+      socket.emit("create_game", id, name);
       // Sauvegarde du pseudo uniquement au lancement de la partie
       localStorage.setItem(PLAYER_NAME_KEY, name);
     }
@@ -134,7 +140,7 @@ useEffect(() => {
   const joinGame = useCallback((code: string) => {
     if (socket) {
       const id = localStorage.getItem("id");
-      socket.emit("join_game", code, socket.id, id, name);
+      socket.emit("join_game", code, id, name);
       // Sauvegarde du pseudo uniquement au lancement de la partie
       localStorage.setItem(PLAYER_NAME_KEY, name);
     }
@@ -145,10 +151,17 @@ useEffect(() => {
     if (socket) {
       const me = players.find((p) => p.socketId === socket.id);
       if (me) {
-        socket.emit("ready", !me.isReady, me.id);
+        socket.emit("ready", !me.isReady);
       }
     }
   }, [socket, players]);
+
+  //Lancer une partie
+  const launchGame = useCallback(() => {
+    if (socket) {
+      socket.emit("start_game");
+    }
+  }, [socket]);
 
 
 const value = useMemo(
@@ -174,6 +187,13 @@ const value = useMemo(
       createGame,
       joinGame,
       beReady,
+      launchGame,
+      musicAmount,
+      setMusicAmount,
+      time,
+      setTime,
+      playlistUrl,
+      setPlaylistUrl,
     }),
     [
       socket,
@@ -189,6 +209,13 @@ const value = useMemo(
       createGame,
       joinGame,
       beReady,
+      launchGame,
+      musicAmount,
+      setMusicAmount,
+      time,
+      setTime,
+      playlistUrl,
+      setPlaylistUrl,
     ]
   );
 
