@@ -1,5 +1,37 @@
 import process from "process";
 import { Buffer } from "buffer";
+import { transliterate } from "transliteration";
+
+function getInternationalName(text) {
+    if (!text || typeof text !== "string") return "";
+    
+    // Use [^()]+ to ensure we match the LAST individual parenthesized block
+    const parenthesizedMatch = text.match(/^(.*?)\s*\(([^()]+)\)\s*$/);
+    if (parenthesizedMatch) {
+        const part1 = parenthesizedMatch[1].trim();
+        const part2 = parenthesizedMatch[2].trim();
+        
+        // Check if the parentheses contain a featuring artist
+        const isFeaturing = /^(feat|featuring|with)\b/i.test(part2);
+        
+        if (isFeaturing) {
+            // Recursively process the title part, then append the featuring part back
+            return `${getInternationalName(part1)} (${part2})`;
+        } else {
+            const isPart1Ascii = !/[^\x00-\x7F]/.test(part1);
+            const isPart2Ascii = !/[^\x00-\x7F]/.test(part2);
+            
+            if (isPart1Ascii && !isPart2Ascii) return part1;
+            if (isPart2Ascii && !isPart1Ascii) return part2;
+        }
+    }
+    
+    if (/[^\x00-\x7F]/.test(text)) {
+        return transliterate(text);
+    }
+    return text;
+}
+
 
 async function getSpotifyAccessToken() {
     // 1. Check if a user-supplied access token is configured in .env (for local testing/OAuth bypass)
@@ -69,6 +101,8 @@ async function getSpotifyTracksAnonymously(type, id) {
         return entity.trackList.map(item => ({
             name: item.title,
             artist: item.subtitle,
+            internationalName: getInternationalName(item.title),
+            internationalArtist: getInternationalName(item.subtitle),
             previewUrl: item.audioPreview?.url || "",
             imageUrl: entity.coverArt?.sources?.[0]?.url || "", // fallback to cover art
             uri: item.uri
@@ -103,9 +137,12 @@ async function getSpotifyPlaylistTracks(playlistId, accessToken) {
             .filter(item => item.track)
             .map(item => {
                 const t = item.track;
+                const artistsStr = t.artists.map(a => a.name).join(", ");
                 return {
                     name: t.name,
-                    artist: t.artists.map(a => a.name).join(", "),
+                    artist: artistsStr,
+                    internationalName: getInternationalName(t.name),
+                    internationalArtist: getInternationalName(artistsStr),
                     previewUrl: t.preview_url,
                     imageUrl: t.album?.images?.[0]?.url || ""
                 };

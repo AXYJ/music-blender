@@ -45,6 +45,12 @@ export interface GameContextType {
   setTime: (time: number) => void;
   playlistUrl: string;
   setPlaylistUrl: React.Dispatch<React.SetStateAction<string>>;
+  toPlay: any[];
+  setToPlay: React.Dispatch<React.SetStateAction<any[]>>;
+  database_artists: any[];
+  setDatabaseArtists: React.Dispatch<React.SetStateAction<any[]>>;
+  database_tracks: any[];
+  setDatabaseTracks: React.Dispatch<React.SetStateAction<any[]>>;
 }
 
 // Types pour les joueurs

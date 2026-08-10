@@ -52,6 +52,7 @@ const rooms = {};
 
 // Import des hooks
 import fs from "fs";
+import { transliterate } from "transliteration";
 import selectTracks from "./streaming/connectSpotify.js";
 
 io.on("connection", (socket) => {
@@ -167,6 +168,7 @@ io.on("connection", (socket) => {
             io.to(roomCode).emit("game_started", room.players);
         }
     });
+    
     // Ajout des autres playlist
     socket.on("send_playlist_url", async (playlistUrl) => {
         const roomCode = Array.from(socket.rooms).find((r) => r !== socket.id);
@@ -207,18 +209,34 @@ io.on("connection", (socket) => {
                 }
 
                 try {
-                    // Créer une database unique (sans doublons) contenant uniquement { name, artist }
-                    const seen = new Set();
-                    room.database = [];
+                    // Créer des databases uniques pour les artistes (séparés par feat) et les musiques
+                    const seenArtists = new Set();
+                    const seenTracks = new Set();
+                    room.database_artists = [];
+                    room.database_tracks = [];
                     for (const t of allPlaylistTracks) {
                         if (t && typeof t.name === "string" && typeof t.artist === "string") {
-                            const key = `${t.name.toLowerCase()}|||${t.artist.toLowerCase()}`;
-                            if (!seen.has(key)) {
-                                seen.add(key);
-                                room.database.push({
+                            // 1. Gérer le nom de la musique
+                            const trackKey = t.name.toLowerCase();
+                            if (!seenTracks.has(trackKey)) {
+                                seenTracks.add(trackKey);
+                                room.database_tracks.push({
                                     name: t.name,
-                                    artist: t.artist
+                                    internationalName: t.internationalName || t.name,
                                 });
+                            }
+
+                            // 2. Gérer les artistes individuellement (séparation des feats)
+                            const individualArtists = splitArtists(t.artist);
+                            for (const artistName of individualArtists) {
+                                const artistKey = artistName.toLowerCase();
+                                if (!seenArtists.has(artistKey)) {
+                                    seenArtists.add(artistKey);
+                                    room.database_artists.push({
+                                        artist: artistName,
+                                        internationalArtist: getInternationalName(artistName)
+                                    });
+                                }
                             }
                         }
                     }
@@ -227,26 +245,16 @@ io.on("connection", (socket) => {
                     const shuffledTracks = shuffle(room.toPlay);
                     room.toPlay = shuffledTracks.map((track, index) => ({
                         order: index + 1,
-                        name: track.name || "Inconnu",
-                        artist: track.artist || "Inconnu",
+                        name: track.name || "",
+                        artist: track.artist || "",
+                        internationalName: track.internationalName || track.name || "",
+                        internationalArtist: track.internationalArtist || track.artist || "",
                         previewUrl: track.previewUrl || "",
                         imageUrl: track.imageUrl || "",
-                        submittedBy: track.submittedBy || "Inconnu"
+                        submittedBy: track.submittedBy || ""
                     }));
-
-                    // Sauvegarder la base de données dans un JSON
-                    try {
-                        await fs.promises.writeFile(
-                            `room_${roomCode}_db.json`,
-                            JSON.stringify(room.database, null, 2)
-                        );
-                        console.log(`[${new Date().toISOString()}] Database saved to room_${roomCode}_db.json`);
-                    } catch (fsErr) {
-                        console.error("Failed to save room database JSON:", fsErr);
-                    }
-
                     // Envoyer au front
-                    io.to(roomCode).emit("data_loaded", room.toPlay, room.database);
+                    io.to(roomCode).emit("data_loaded", room.toPlay, room.database_artists, room.database_tracks);
                 } catch (processingErr) {
                     console.error("Error during game data processing:", processingErr);
                     socket.emit("error", "Une erreur interne est survenue lors de la préparation de la partie.");
@@ -289,4 +297,47 @@ function shuffle(array) {
         [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
     }
     return newArray;
+}
+
+function getInternationalName(text) {
+    if (!text || typeof text !== "string") return "";
+    
+    // Use [^()]+ to ensure we match the LAST individual parenthesized block
+    const parenthesizedMatch = text.match(/^(.*?)\s*\(([^()]+)\)\s*$/);
+    if (parenthesizedMatch) {
+        const part1 = parenthesizedMatch[1].trim();
+        const part2 = parenthesizedMatch[2].trim();
+        
+        // Check if the parentheses contain a featuring artist
+        const isFeaturing = /^(feat|featuring|with)\b/i.test(part2);
+        
+        if (isFeaturing) {
+            // Recursively process the title part, then append the featuring part back
+            return `${getInternationalName(part1)} (${part2})`;
+        } else {
+            const isPart1Ascii = !/[^\x00-\x7F]/.test(part1);
+            const isPart2Ascii = !/[^\x00-\x7F]/.test(part2);
+            
+            if (isPart1Ascii && !isPart2Ascii) return part1;
+            if (isPart2Ascii && !isPart1Ascii) return part2;
+        }
+    }
+    
+    if (/[^\x00-\x7F]/.test(text)) {
+        return transliterate(text);
+    }
+    return text;
+}
+
+function splitArtists(artistStr) {
+    if (!artistStr || typeof artistStr !== "string") return [];
+    
+    // Split by symbols (with optional spaces for comma/ampersand, mandatory spaces for slash)
+    // or words (with mandatory spaces)
+    const separators = /,\s*|&\s*|\s+\/\s+|\s+(?:and|feat\.?|featuring|with)\s+/gi;
+    
+    return artistStr
+        .split(separators)
+        .map(a => a.trim())
+        .filter(a => a.length > 0 && !/^(feat\.?|featuring|with|&|and)$/i.test(a));
 }

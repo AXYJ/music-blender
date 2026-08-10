@@ -45,7 +45,7 @@ export default function Lobby() {
     }
 
     return (
-        <div className="flex flex-col items-center gap-8">
+        <div className="flex flex-col items-center gap-8 my-16">
             <h1 className="text-4xl font-bold text-(--accent) text-center">Music Blender</h1>
 
             <div className="flex flex-col gap-4"    >

@@ -14,6 +14,9 @@ interface SocketListenersProps {
   setMusicAmount: (amount: number) => void;
   setTime: (time: number) => void;
   playlistUrl: string;
+  setToPlay: (toPlay: any[]) => void;
+  setDatabaseArtists: (database_artists: any[]) => void;
+  setDatabaseTracks: (database_tracks: any[]) => void;
 }
 
 export const useSocketListeners = (props: SocketListenersProps) => {
@@ -29,6 +32,9 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     setMusicAmount,
     setTime,
     playlistUrl,
+    setToPlay,
+    setDatabaseArtists,
+    setDatabaseTracks,
   } = props;
 
   const playlistUrlRef = useRef(playlistUrl);
@@ -116,10 +122,14 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     };
     socket.on("game_started", handleGameStarted);
 
-    const handleDataLoaded = (toPlay: any[], database: any[]) => {
+    const handleDataLoaded = (toPlay: any[], database_artists: any[], database_tracks: any[]) => {
       setView("game");
-      console.log("toPlay", toPlay);
-      console.log("database", database);
+      setToPlay(toPlay);
+      setDatabaseArtists(database_artists);
+      setDatabaseTracks(database_tracks);
+      console.log(toPlay);
+      console.log(database_artists);
+      
     }
 
     socket.on("data_loaded", handleDataLoaded);

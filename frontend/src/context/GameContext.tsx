@@ -43,12 +43,27 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   });
   const [players, setPlayers] = useState<Player[]>([]);
   const [noMorePlayers, setNoMorePlayers] = useState(false);
-  const [volume, setVolume] = useState(0.5);
-  const [sfxVolume, setSfxVolume] = useState(0.5);
+  const [volume, setVolume] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(VOLUME_KEY);
+      return saved ? parseFloat(saved) : 0.1;
+    }
+    return 0.1;
+  });
+  const [sfxVolume, setSfxVolume] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(SFX_KEY);
+      return saved ? parseFloat(saved) : 0.5;
+    }
+    return 0.5;
+  });
   const [musicAmount, setMusicAmount] = useState(3);
-  const [time, setTime] = useState(30);
+  const [time, setTime] = useState(20);
   const sfxVolumeRef = useRef(sfxVolume);
-  const [playlistUrl, setPlaylistUrl] = useState("")
+  const [playlistUrl, setPlaylistUrl] = useState("");
+  const [toPlay, setToPlay] = useState<any[]>([]);
+  const [database_artists, setDatabaseArtists] = useState<any[]>([]);
+  const [database_tracks, setDatabaseTracks] = useState<any[]>([]);
   
   // Pseudo du joueur
   const [name, setName] = useState("");
@@ -66,6 +81,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setMusicAmount,
     setTime,
     playlistUrl,
+    setToPlay,
+    setDatabaseArtists,
+    setDatabaseTracks,
   });
 
   // ----------------------------------------------------------------
@@ -193,7 +211,13 @@ const value = useMemo(
       time,
       setTime,
       playlistUrl,
+      toPlay,
+      database_artists,
+      database_tracks,
       setPlaylistUrl,
+      setToPlay,
+      setDatabaseArtists,
+      setDatabaseTracks,
     }),
     [
       socket,
@@ -215,7 +239,13 @@ const value = useMemo(
       time,
       setTime,
       playlistUrl,
+      toPlay,
+      database_artists,
+      database_tracks,
       setPlaylistUrl,
+      setToPlay,
+      setDatabaseArtists,
+      setDatabaseTracks,
     ]
   );
 
