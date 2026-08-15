@@ -9,18 +9,46 @@ import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 
 // Import des composants
-import Section from "../components/Section";
 
 // Import du contexte
 import { useGame } from "../context/GameContext";
 
 export default function Game() {
-    const { toPlay, time, volume } = useGame();
+    const { toPlay, time, volume, database_artists = [], database_tracks = [], sendAnswer, setPlayers, socket, players } = useGame();
     const [turn, setTurn] = useState<number>(1);
+
+    // Find current player profile
+    const me = players?.find((p) => p.socketId === socket?.id);
     const [phase, setPhase] = useState<"guessing" | "answer" | "transition">("guessing");
     const [timeLeft, setTimeLeft] = useState<number>(time);
     const [artistGuess, setArtistGuess] = useState<string>("");
     const [trackGuess, setTrackGuess] = useState<string>("");
+    const [guessingArtist, setGuessingArtist] = useState<boolean>(false);
+    const [guessingSong, setGuessingSong] = useState<boolean>(false);
+    const [showArtistSuggestions, setShowArtistSuggestions] = useState<boolean>(false);
+    const [showTrackSuggestions, setShowTrackSuggestions] = useState<boolean>(false);
+
+    // Filter database artists (max 5 results)
+    const filteredArtists = (database_artists || [])
+        .filter((a) => {
+            if (!artistGuess || artistGuess.length < 3) return false;
+            const search = artistGuess.toLowerCase();
+            const matchesName = a.artist?.toLowerCase().includes(search);
+            const matchesInt = a.internationalArtist?.toLowerCase().includes(search);
+            return matchesName || matchesInt;
+        })
+        .slice(0, 5);
+
+    // Filter database tracks (max 5 results)
+    const filteredTracks = (database_tracks || [])
+        .filter((t) => {
+            if (!trackGuess || trackGuess.length < 3) return false;
+            const search = trackGuess.toLowerCase();
+            const matchesName = t.name?.toLowerCase().includes(search);
+            const matchesInt = t.internationalName?.toLowerCase().includes(search);
+            return matchesName || matchesInt;
+        })
+        .slice(0, 5);
 
     const audioRef = useRef<HTMLAudioElement>(null);
     const volumeRef = useRef(volume);
@@ -99,6 +127,11 @@ export default function Game() {
                 // Transition to show answer phase (5 seconds) - music keeps playing!
                 setPhase("answer");
                 setTimeLeft(5);
+                setGuessingArtist(false);
+                setGuessingSong(false);
+                setShowArtistSuggestions(false);
+                setShowTrackSuggestions(false);
+                sendAnswer(artistGuess, trackGuess, turn);
             } else if (phase === "answer") {
                 // Transition to inter-turn pause phase (2 seconds) - music fades out!
                 setPhase("transition");
@@ -110,6 +143,7 @@ export default function Game() {
                 setTimeLeft(time);
                 setArtistGuess("");
                 setTrackGuess("");
+                setPlayers((prev) => prev.map((p) => ({ ...p, artist_answer: false, track_answer: false })));
             }
         }
     }, [timeLeft, phase, time]);
@@ -162,8 +196,8 @@ export default function Game() {
     if (turn > toPlay.length) {
         return (
             <div className="flex flex-col items-center gap-8 min-h-screen justify-center">
-                <h1 className="text-4xl font-bold text-(--accent)">Partie terminée !</h1>
-                <p className="text-xl">Merci d'avoir joué.</p>
+                <h1 className="text-4xl font-bold text-(--accent)">{players.map((p) => <div key={p.socketId}>{p.name} : {p.score}</div>)}</h1>
+                <p className="text-xl">{"Merci d'avoir joué."}</p>
             </div>
         );
     }
@@ -183,19 +217,30 @@ export default function Game() {
                 </div>
             ) : (
                 <>
+                    {(guessingArtist || guessingSong) && (
+                        <div
+                            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-all duration-300"
+                            onClick={() => {
+                                setGuessingArtist(false);
+                                setGuessingSong(false);
+                                setShowArtistSuggestions(false);
+                                setShowTrackSuggestions(false);
+                            }}
+                        />
+                    )}
                     <h1>Music Blender</h1>
-                    <section className="w-full relative">
+                    <section className="w-full relative overflow-hidden">
                         {trackImage ? (
                             <Image
                                 src={trackImage}
                                 alt={currentTrack.name || "Cover"}
                                 width={100}
                                 height={100}
-                                className={`w-full aspect-square transition-all rounded-lg overflow-hidden ${phase === "guessing" ? "blur-md" : "blur-none duration-300"}`}
+                                className={`w-full aspect-square transition-all rounded-lg ${phase === "guessing" ? "blur-md" : "blur-none duration-300"}`}
                             />
                         ) : (
                             <div className="w-full aspect-square bg-gray-700 rounded-2xl flex items-center justify-center text-sm text-gray-400">
-                                Pas d'image
+                                {"Pas d'image"}
                             </div>
                         )}
 
@@ -208,19 +253,181 @@ export default function Game() {
                         </div>
                     </section>
 
-
-
                     <section className="flex flex-col gap-4 w-full">
-                        <div className="flex flex-col">
-                            <label htmlFor="artist-guess" className="text-xl">Artiste</label>
-                            <input type="text" className="w-full px-4 py-2 rounded-lg text-(--background) bg-(--white)" value={artistGuess} onChange={(e) => setArtistGuess(e.target.value)} />
+                        {/* Wrapper Artiste */}
+                        <div className="h-[76px] w-full relative">
+                            <motion.div
+                                layout
+                                transition={{ type: "spring", stiffness: 350, damping: 35 }}
+                                className={`flex flex-col ${
+                                    guessingArtist
+                                        ? "fixed top-[20%] left-1/2 -translate-x-1/2 z-50 w-80 max-w-[90vw]"
+                                        : "absolute inset-0"
+                                }`}
+                                onClick={() => {
+                                    if (phase !== "guessing") return;
+                                    setGuessingSong(false);
+                                    setGuessingArtist(true);
+                                    if (artistGuess.length > 2) {
+                                        setShowArtistSuggestions(true);
+                                    }
+                                }}
+                            >
+                                <label htmlFor="artist-guess" className="text-xl mb-1">
+                                    Artiste
+                                </label>
+                                <input
+                                     id="artist-guess"
+                                     type="text"
+                                     className={`w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-(--accent) ${
+                                         phase === "answer"
+                                             ? me?.artist_answer
+                                                 ? "bg-emerald-600 text-white"
+                                                 : "bg-rose-600 text-white"
+                                             : "text-(--background) bg-(--white)"
+                                     }`}
+                                     value={artistGuess}
+                                    onFocus={() => {
+                                        if (phase !== "guessing") return;
+                                        setGuessingArtist(true);
+                                        if (artistGuess.length > 2) {
+                                            setShowArtistSuggestions(true);
+                                        }
+                                    }}
+                                    onChange={(e) => {
+                                        setArtistGuess(e.target.value);
+                                        if (e.target.value.length > 2) {
+                                            setShowArtistSuggestions(true);
+                                        } else {
+                                            setShowArtistSuggestions(false);
+                                        }
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter" || e.key === "Escape") {
+                                            setGuessingArtist(false);
+                                            setShowArtistSuggestions(false);
+                                            e.currentTarget.blur();
+                                        }
+                                    }}
+                                    autoComplete="off"
+                                />
+                                {showArtistSuggestions && artistGuess.length > 2 && (
+                                    <div className="absolute top-full left-0 right-0 z-50 mt-2 max-h-60 overflow-y-auto rounded-xl bg-neutral-900/95 border border-neutral-800/80 shadow-2xl backdrop-blur-md overflow-hidden flex flex-col">
+                                        {filteredArtists.length > 0 ? (
+                                            filteredArtists.map((artist, idx) => (
+                                                <div
+                                                    key={artist.artist + "-" + idx}
+                                                    onMouseDown={(e) => {
+                                                        e.preventDefault();
+                                                        setArtistGuess(artist.artist);
+                                                        setShowArtistSuggestions(false);
+                                                        setGuessingArtist(false);
+                                                    }}
+                                                    className="px-4 py-3 text-sm text-gray-200 hover:bg-(--semiaccent) hover:text-(--white) cursor-pointer transition-colors duration-150 flex items-center justify-between border-b border-neutral-800/50 last:border-0"
+                                                >
+                                                    <span className="font-medium">{artist.artist}</span>
+                                                    {artist.internationalArtist && artist.internationalArtist !== artist.artist && (
+                                                        <span className="text-xs text-gray-400 italic">({artist.internationalArtist})</span>
+                                                    )}
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="px-4 py-3 text-sm text-gray-400 italic">
+                                                Aucun artiste trouvé
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </motion.div>
                         </div>
-                        <div className="flex flex-col">
-                            <label htmlFor="track-guess" className="text-xl">Chanson</label>
-                            <input type="text" className="w-full px-4 py-2 rounded-lg text-(--background) bg-(--white)" value={trackGuess} onChange={(e) => setTrackGuess(e.target.value)} />
+
+                        {/* Wrapper Chanson */}
+                        <div className="h-[76px] w-full relative">
+                            <motion.div
+                                layout
+                                transition={{ type: "spring", stiffness: 350, damping: 35 }}
+                                className={`flex flex-col ${
+                                    guessingSong
+                                        ? "fixed top-[20%] left-1/2 -translate-x-1/2 z-50 w-80 max-w-[90vw]"
+                                        : "absolute inset-0"
+                                }`}
+                                onClick={() => {
+                                    if (phase !== "guessing") return;
+                                    setGuessingArtist(false);
+                                    setGuessingSong(true);
+                                    if (trackGuess.length > 2) {
+                                        setShowTrackSuggestions(true);
+                                    }
+                                }}
+                            >
+                                <label htmlFor="track-guess" className="text-xl mb-1">
+                                    Chanson
+                                </label>
+                                <input
+                                     id="track-guess"
+                                     type="text"
+                                     className={`w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-(--accent) ${
+                                         phase === "answer"
+                                             ? me?.track_answer
+                                                 ? "bg-emerald-600 text-white"
+                                                 : "bg-rose-600 text-white"
+                                             : "text-(--background) bg-(--white)"
+                                     }`}
+                                     value={trackGuess}
+                                    onFocus={() => {
+                                        if (phase !== "guessing") return;
+                                        setGuessingSong(true);
+                                        if (trackGuess.length > 2) {
+                                            setShowTrackSuggestions(true);
+                                        }
+                                    }}
+                                    onChange={(e) => {
+                                        setTrackGuess(e.target.value);
+                                        if (e.target.value.length > 2) {
+                                            setShowTrackSuggestions(true);
+                                        } else {
+                                            setShowTrackSuggestions(false);
+                                        }
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter" || e.key === "Escape") {
+                                            setGuessingSong(false);
+                                            setShowTrackSuggestions(false);
+                                            e.currentTarget.blur();
+                                        }
+                                    }}
+                                    autoComplete="off"
+                                />
+                                {showTrackSuggestions && trackGuess.length > 2 && (
+                                    <div className="absolute top-full left-0 right-0 z-50 mt-2 max-h-60 overflow-y-auto rounded-xl bg-neutral-900/95 border border-neutral-800/80 shadow-2xl backdrop-blur-md overflow-hidden flex flex-col">
+                                        {filteredTracks.length > 0 ? (
+                                            filteredTracks.map((track, idx) => (
+                                                <div
+                                                    key={track.name + "-" + idx}
+                                                    onMouseDown={(e) => {
+                                                        e.preventDefault();
+                                                        setTrackGuess(track.name);
+                                                        setShowTrackSuggestions(false);
+                                                        setGuessingSong(false);
+                                                    }}
+                                                    className="px-4 py-3 text-sm text-gray-200 hover:bg-(--semiaccent) hover:text-(--white) cursor-pointer transition-colors duration-150 flex items-center justify-between border-b border-neutral-800/50 last:border-0"
+                                                >
+                                                    <span className="font-medium">{track.name}</span>
+                                                    {track.internationalName && track.internationalName !== track.name && (
+                                                        <span className="text-xs text-gray-400 italic">({track.internationalName})</span>
+                                                    )}
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="px-4 py-3 text-sm text-gray-400 italic">
+                                                Aucune chanson trouvée
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </motion.div>
                         </div>
                     </section>
-
 
                     <div className="flex flex-col items-center w-[calc(100vw-4rem)] max-w-lg gap-2 fixed bottom-6 left-1/2 -translate-x-1/2">
                         <span className="text-sm font-semibold tracking-wider text-gray-300">

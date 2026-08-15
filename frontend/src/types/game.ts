@@ -51,6 +51,7 @@ export interface GameContextType {
   setDatabaseArtists: React.Dispatch<React.SetStateAction<any[]>>;
   database_tracks: any[];
   setDatabaseTracks: React.Dispatch<React.SetStateAction<any[]>>;
+  sendAnswer: (artist: string, track: string, turn: number) => void;
 }
 
 // Types pour les joueurs
@@ -64,4 +65,6 @@ export interface Player {
   leavedPlayer: boolean;
   playlistUrl?: string;
   tracks?: any[];
+  artist_answer: boolean;
+  track_answer: boolean;
 }

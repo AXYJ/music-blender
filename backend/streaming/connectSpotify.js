@@ -1,10 +1,24 @@
 import process from "process";
 import { Buffer } from "buffer";
 import { transliterate } from "transliteration";
+import Kuroshiro from "kuroshiro";
+import KuromojiAnalyzer from "kuroshiro-analyzer-kuromoji";
 
-function getInternationalName(text) {
+const kuroshiro = new Kuroshiro.default();
+let kuroshiroReady = false;
+
+kuroshiro.init(new KuromojiAnalyzer())
+    .then(() => {
+        kuroshiroReady = true;
+    })
+    .catch((err) => {
+        console.error("[Kuroshiro connectSpotify] Failed to initialize:", err);
+    });
+
+async function getInternationalName(text) {
     if (!text || typeof text !== "string") return "";
     
+    let result = text;
     // Use [^()]+ to ensure we match the LAST individual parenthesized block
     const parenthesizedMatch = text.match(/^(.*?)\s*\(([^()]+)\)\s*$/);
     if (parenthesizedMatch) {
@@ -16,20 +30,48 @@ function getInternationalName(text) {
         
         if (isFeaturing) {
             // Recursively process the title part, then append the featuring part back
-            return `${getInternationalName(part1)} (${part2})`;
+            const p1 = await getInternationalName(part1);
+            result = `${p1} (${part2})`;
         } else {
             const isPart1Ascii = !/[^\x00-\x7F]/.test(part1);
             const isPart2Ascii = !/[^\x00-\x7F]/.test(part2);
             
-            if (isPart1Ascii && !isPart2Ascii) return part1;
-            if (isPart2Ascii && !isPart1Ascii) return part2;
+            if (isPart1Ascii && !isPart2Ascii) result = part1;
+            if (isPart2Ascii && !isPart1Ascii) result = part2;
+        }
+    } else {
+        const hasKana = /[\u3040-\u309F\u30A0-\u30FF]/.test(text);
+        const isCJK = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(text);
+        
+        if (isCJK && kuroshiroReady) {
+            try {
+                const converted = await kuroshiro.convert(text, {
+                    to: "romaji",
+                    romajiSystem: "hepburn"
+                });
+                
+                const hasRemainingCJK = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(converted);
+                if (hasRemainingCJK) {
+                    if (hasKana) {
+                        result = transliterate(converted);
+                    } else {
+                        result = transliterate(text);
+                    }
+                } else {
+                    result = converted;
+                }
+            } catch (err) {
+                console.error("Kuroshiro conversion error:", err);
+                if (/[^\x00-\x7F]/.test(text)) {
+                    result = transliterate(text);
+                }
+            }
+        } else if (/[^\x00-\x7F]/.test(text)) {
+            result = transliterate(text);
         }
     }
     
-    if (/[^\x00-\x7F]/.test(text)) {
-        return transliterate(text);
-    }
-    return text;
+    return result.replace(/\s+/g, "");
 }
 
 
@@ -98,15 +140,16 @@ async function getSpotifyTracksAnonymously(type, id) {
         }
 
         console.log(`[Spotify Scraper] Successfully extracted ${entity.trackList.length} tracks via public embed page!`);
-        return entity.trackList.map(item => ({
+        const tracks = await Promise.all(entity.trackList.map(async item => ({
             name: item.title,
             artist: item.subtitle,
-            internationalName: getInternationalName(item.title),
-            internationalArtist: getInternationalName(item.subtitle),
+            internationalName: await getInternationalName(item.title),
+            internationalArtist: await getInternationalName(item.subtitle),
             previewUrl: item.audioPreview?.url || "",
             imageUrl: entity.coverArt?.sources?.[0]?.url || "", // fallback to cover art
             uri: item.uri
-        }));
+        })));
+        return tracks;
     } catch (e) {
         console.error(`[Spotify Scraper] Error scraping ${type} tracks:`, e);
         return null;
@@ -133,20 +176,23 @@ async function getSpotifyPlaylistTracks(playlistId, accessToken) {
         }
         const data = await response.json();
         if (!data.items) return null;
-        return data.items
-            .filter(item => item.track)
-            .map(item => {
-                const t = item.track;
-                const artistsStr = t.artists.map(a => a.name).join(", ");
-                return {
-                    name: t.name,
-                    artist: artistsStr,
-                    internationalName: getInternationalName(t.name),
-                    internationalArtist: getInternationalName(artistsStr),
-                    previewUrl: t.preview_url,
-                    imageUrl: t.album?.images?.[0]?.url || ""
-                };
-            });
+        const tracks = await Promise.all(
+            data.items
+                .filter(item => item.track)
+                .map(async item => {
+                    const t = item.track;
+                    const artistsStr = t.artists.map(a => a.name).join(", ");
+                    return {
+                        name: t.name,
+                        artist: artistsStr,
+                        internationalName: await getInternationalName(t.name),
+                        internationalArtist: await getInternationalName(artistsStr),
+                        previewUrl: t.preview_url,
+                        imageUrl: t.album?.images?.[0]?.url || ""
+                    };
+                })
+        );
+        return tracks;
     } catch (e) {
         console.error("Error fetching Spotify playlist tracks:", e);
         return null;

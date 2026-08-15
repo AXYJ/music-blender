@@ -54,6 +54,19 @@ const rooms = {};
 import fs from "fs";
 import { transliterate } from "transliteration";
 import selectTracks from "./streaming/connectSpotify.js";
+import Kuroshiro from "kuroshiro";
+import KuromojiAnalyzer from "kuroshiro-analyzer-kuromoji";
+
+const kuroshiro = new Kuroshiro.default();
+let kuroshiroReady = false;
+
+kuroshiro.init(new KuromojiAnalyzer())
+    .then(() => {
+        kuroshiroReady = true;
+    })
+    .catch((err) => {
+        console.error("[Kuroshiro servor] Failed to initialize:", err);
+    });
 
 io.on("connection", (socket) => {
     console.log(`[${new Date().toISOString()}] User connected: ${socket.id}`);
@@ -234,7 +247,7 @@ io.on("connection", (socket) => {
                                     seenArtists.add(artistKey);
                                     room.database_artists.push({
                                         artist: artistName,
-                                        internationalArtist: getInternationalName(artistName)
+                                        internationalArtist: await getInternationalName(artistName)
                                     });
                                 }
                             }
@@ -288,6 +301,45 @@ io.on("connection", (socket) => {
             io.to(roomCode).emit("game-setting", "time", time);
         }
     });
+
+    // Envoi de la réponse
+    socket.on("submit_answer", (artist, track, turn) => {
+        const roomCode = Array.from(socket.rooms).find((r) => r !== socket.id);
+        const room = rooms[roomCode];
+        if (room) {
+            const player = room.players.find((p) => p.socketId === socket.id);
+            if (player) {
+                const currentTrack = room.toPlay[turn - 1];
+                if (currentTrack) {
+                    const artistGuess = (artist || "").trim().toLowerCase();
+                    const trackGuess = (track || "").trim().toLowerCase();
+
+                    const correctTrack = (currentTrack.name || "").trim().toLowerCase();
+                    const correctIntTrack = (currentTrack.internationalName || "").trim().toLowerCase();
+
+                    const acceptableArtists = [
+                        (currentTrack.artist || ""),
+                        (currentTrack.internationalArtist || ""),
+                        ...splitArtists(currentTrack.artist),
+                        ...splitArtists(currentTrack.internationalArtist)
+                    ].map(a => a.trim().toLowerCase()).filter(Boolean);
+
+                    const artist_answer = acceptableArtists.includes(artistGuess);
+                    const track_answer = (trackGuess === correctTrack || trackGuess === correctIntTrack);
+
+                    room.answers = room.answers || {};
+                    room.answers[player.id] = {
+                        artist: artist,
+                        track: track,
+                        artist_correct: artist_answer,
+                        track_correct: track_answer
+                    };
+
+                    io.to(roomCode).emit("answer", player.name, artist_answer, track_answer);
+                }
+            }
+        }
+    });
 });
 
 function shuffle(array) {
@@ -299,9 +351,10 @@ function shuffle(array) {
     return newArray;
 }
 
-function getInternationalName(text) {
+async function getInternationalName(text) {
     if (!text || typeof text !== "string") return "";
     
+    let result = text;
     // Use [^()]+ to ensure we match the LAST individual parenthesized block
     const parenthesizedMatch = text.match(/^(.*?)\s*\(([^()]+)\)\s*$/);
     if (parenthesizedMatch) {
@@ -313,20 +366,48 @@ function getInternationalName(text) {
         
         if (isFeaturing) {
             // Recursively process the title part, then append the featuring part back
-            return `${getInternationalName(part1)} (${part2})`;
+            const p1 = await getInternationalName(part1);
+            result = `${p1} (${part2})`;
         } else {
             const isPart1Ascii = !/[^\x00-\x7F]/.test(part1);
             const isPart2Ascii = !/[^\x00-\x7F]/.test(part2);
             
-            if (isPart1Ascii && !isPart2Ascii) return part1;
-            if (isPart2Ascii && !isPart1Ascii) return part2;
+            if (isPart1Ascii && !isPart2Ascii) result = part1;
+            if (isPart2Ascii && !isPart1Ascii) result = part2;
+        }
+    } else {
+        const hasKana = /[\u3040-\u309F\u30A0-\u30FF]/.test(text);
+        const isCJK = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(text);
+        
+        if (isCJK && kuroshiroReady) {
+            try {
+                const converted = await kuroshiro.convert(text, {
+                    to: "romaji",
+                    romajiSystem: "hepburn"
+                });
+                
+                const hasRemainingCJK = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(converted);
+                if (hasRemainingCJK) {
+                    if (hasKana) {
+                        result = transliterate(converted);
+                    } else {
+                        result = transliterate(text);
+                    }
+                } else {
+                    result = converted;
+                }
+            } catch (err) {
+                console.error("Kuroshiro conversion error:", err);
+                if (/[^\x00-\x7F]/.test(text)) {
+                    result = transliterate(text);
+                }
+            }
+        } else if (/[^\x00-\x7F]/.test(text)) {
+            result = transliterate(text);
         }
     }
     
-    if (/[^\x00-\x7F]/.test(text)) {
-        return transliterate(text);
-    }
-    return text;
+    return result.replace(/\s+/g, "");
 }
 
 function splitArtists(artistStr) {

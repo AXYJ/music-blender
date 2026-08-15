@@ -181,6 +181,13 @@ useEffect(() => {
     }
   }, [socket]);
 
+  // Envoi des réponses aux serveur
+  const sendAnswer = useCallback((artist: string, track: string, turn: number) => {
+    if (socket) {
+      socket.emit("submit_answer", artist, track, turn);
+    }
+  }, [socket]);
+
 
 const value = useMemo(
     () => ({
@@ -206,6 +213,7 @@ const value = useMemo(
       joinGame,
       beReady,
       launchGame,
+      sendAnswer,
       musicAmount,
       setMusicAmount,
       time,
@@ -234,6 +242,7 @@ const value = useMemo(
       joinGame,
       beReady,
       launchGame,
+      sendAnswer,
       musicAmount,
       setMusicAmount,
       time,

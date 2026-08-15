@@ -129,7 +129,7 @@ export const useSocketListeners = (props: SocketListenersProps) => {
       setDatabaseTracks(database_tracks);
       console.log(toPlay);
       console.log(database_artists);
-      
+      console.log(database_tracks);
     }
 
     socket.on("data_loaded", handleDataLoaded);
@@ -148,6 +148,31 @@ export const useSocketListeners = (props: SocketListenersProps) => {
 
     socket.on("game-setting", handleGameSetting);
 
+    // ----------------
+    // Gestion des réponses des joueurs
+    // ----------------
+    const handleAnswer = (name: string, artist_answer: boolean, track_answer: boolean) => {
+      console.log("Answer received:", name, artist_answer, track_answer);
+      setPlayers((prev) =>
+        prev.map((p) => {
+          if (p.name === name) {
+            let additionalScore = 0;
+            if (artist_answer) additionalScore += 1;
+            if (track_answer) additionalScore += 1;
+            return {
+              ...p,
+              artist_answer,
+              track_answer,
+              score: p.score + additionalScore,
+            };
+          }
+          return p;
+        })
+      );
+    };
+
+    socket.on("answer", handleAnswer);
+
     return () => {
       clearInterval(keepAliveInterval);
       socket.off("connect", handleConnect);
@@ -158,6 +183,7 @@ export const useSocketListeners = (props: SocketListenersProps) => {
       socket.off("room_updated", handleRoomUpdated);
       socket.off("game-setting", handleGameSetting);
       socket.off("game_started", handleGameStarted);
+      socket.off("answer", handleAnswer);
     };
   }, [
     socket,
