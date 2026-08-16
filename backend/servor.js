@@ -219,6 +219,11 @@ io.on("connection", (socket) => {
                         console.log(`[Spotify] No playlist URL provided for player "${p.name}" (using empty list)`);
                         p.tracks = [];
                     }
+                } 
+
+                if (allPlaylistTracks.length < 1) {
+                    io.to(roomCode).emit("no_playlist", "No tracks found in any playlist");
+                    return;
                 }
 
                 try {
