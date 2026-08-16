@@ -6,7 +6,11 @@ export const metadata: Metadata = {
   description: "Music Blender",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="fr" className="h-full antialiased">
       <body suppressHydrationWarning className="min-h-full flex flex-col">

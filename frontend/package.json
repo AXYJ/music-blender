@@ -11,7 +11,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,md,css}\""
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,md,css}\""
   },
   "dependencies": {
     "framer-motion": "^12.34.0",

@@ -45,14 +45,15 @@ export const useSocketListeners = (props: SocketListenersProps) => {
 
     // Keep-alive pour éviter que le serveur (ex: Render) ne mette le socket en veille
     const envUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
-    const socketUrl = envUrl && envUrl !== "undefined" ? envUrl : "http://localhost:4000";
+    const socketUrl =
+      envUrl && envUrl !== "undefined" ? envUrl : "http://localhost:4000";
     const keepAliveInterval = setInterval(
       () => {
         fetch(socketUrl).catch((err) =>
-          console.error("Erreur keep-alive", err)
+          console.error("Erreur keep-alive", err),
         );
       },
-      5 * 60 * 1000
+      5 * 60 * 1000,
     );
 
     // ----------------
@@ -111,7 +112,7 @@ export const useSocketListeners = (props: SocketListenersProps) => {
       console.log("Players", players);
       setView("lobby");
       setPlayers(players);
-      setRoomCode(roomCode)
+      setRoomCode(roomCode);
     };
 
     socket.on("room_created", handleRoomCreated);
@@ -122,7 +123,11 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     };
     socket.on("game_started", handleGameStarted);
 
-    const handleDataLoaded = (toPlay: any[], database_artists: any[], database_tracks: any[]) => {
+    const handleDataLoaded = (
+      toPlay: any[],
+      database_artists: any[],
+      database_tracks: any[],
+    ) => {
       setView("game");
       setToPlay(toPlay);
       setDatabaseArtists(database_artists);
@@ -130,7 +135,7 @@ export const useSocketListeners = (props: SocketListenersProps) => {
       console.log(toPlay);
       console.log(database_artists);
       console.log(database_tracks);
-    }
+    };
 
     socket.on("data_loaded", handleDataLoaded);
 
@@ -139,9 +144,9 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     // ----------------
     const handleGameSetting = (key: string, value: any) => {
       console.log("Game setting:", key, value);
-      if(key === "music_amount") {
+      if (key === "music_amount") {
         setMusicAmount(value);
-      } else if(key === "time") {
+      } else if (key === "time") {
         setTime(value);
       }
     };
@@ -151,7 +156,11 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     // ----------------
     // Gestion des réponses des joueurs
     // ----------------
-    const handleAnswer = (name: string, artist_answer: boolean, track_answer: boolean) => {
+    const handleAnswer = (
+      name: string,
+      artist_answer: boolean,
+      track_answer: boolean,
+    ) => {
       console.log("Answer received:", name, artist_answer, track_answer);
       setPlayers((prev) =>
         prev.map((p) => {
@@ -167,11 +176,21 @@ export const useSocketListeners = (props: SocketListenersProps) => {
             };
           }
           return p;
-        })
+        }),
       );
     };
 
     socket.on("answer", handleAnswer);
+
+    const handleNoPlaylist = () => {
+      setError("Aucune musique trouvée dans les playlists");
+      setView("lobby");
+      setTimeout(() => {
+        setError(null);
+      }, 2000);
+    };
+
+    socket.on("no_playlist", handleNoPlaylist);
 
     return () => {
       clearInterval(keepAliveInterval);

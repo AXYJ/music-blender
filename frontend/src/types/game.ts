@@ -8,7 +8,7 @@ export type Phase = "hide-answer" | "show-answer";
 // Toutes les variables globales du jeu
 // Utilisation de variables globales pour éviter de passer des props à chaque composant
 export interface GameContextType {
-    // Connexion
+  // Connexion
   socket: Socket | null;
   isConnected: boolean;
   error: string | null;
@@ -23,13 +23,13 @@ export interface GameContextType {
   setPlayers: React.Dispatch<React.SetStateAction<Player[]>>;
   noMorePlayers: boolean;
   setNoMorePlayers: React.Dispatch<React.SetStateAction<boolean>>;
-    // Actions
+  // Actions
   createGame: () => void;
   joinGame: (code: string) => void;
   beReady: () => void;
   launchGame: () => void;
 
-    // Volume
+  // Volume
   volume: number;
   setVolume: (volume: number) => void;
   sfxVolume: number;
@@ -52,6 +52,8 @@ export interface GameContextType {
   database_tracks: any[];
   setDatabaseTracks: React.Dispatch<React.SetStateAction<any[]>>;
   sendAnswer: (artist: string, track: string, turn: number) => void;
+  message: string;
+  setMessage: (message: string) => void;
 }
 
 // Types pour les joueurs

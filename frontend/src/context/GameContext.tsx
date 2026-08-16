@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 // Import des modules
 import {
@@ -19,11 +19,7 @@ const SFX_KEY = "game_sfx_volume";
 const VOLUME_KEY = "game_volume";
 
 // Import des types
-import {
-  View,
-  GameContextType,
-  Player,
-} from "../types/game";
+import { View, GameContextType, Player } from "../types/game";
 import { useSocketListeners } from "../hooks/useSocketListeners";
 
 // Création du contexte
@@ -64,7 +60,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [toPlay, setToPlay] = useState<any[]>([]);
   const [database_artists, setDatabaseArtists] = useState<any[]>([]);
   const [database_tracks, setDatabaseTracks] = useState<any[]>([]);
-  
+  const [message, setMessage] = useState("");
+
   // Pseudo du joueur
   const [name, setName] = useState("");
 
@@ -109,11 +106,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-
-// ----------------------------------------------------------------
-// Connexion au serveur
-// ----------------------------------------------------------------
-useEffect(() => {
+  // ----------------------------------------------------------------
+  // Connexion au serveur
+  // ----------------------------------------------------------------
+  useEffect(() => {
     // Création d'un ID de session pour pouvoir se reconnecter
     let id = localStorage.getItem("id");
     if (!id) {
@@ -123,7 +119,8 @@ useEffect(() => {
 
     // Initialisation de la connexion
     const envUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
-    const socketUrl = envUrl && envUrl !== "undefined" ? envUrl : "http://localhost:4000";
+    const socketUrl =
+      envUrl && envUrl !== "undefined" ? envUrl : "http://localhost:4000";
     console.log("Socket connection target URL:", socketUrl);
     const newSocket = io(socketUrl, {
       transports: ["websocket", "polling"],
@@ -139,10 +136,9 @@ useEffect(() => {
     };
   }, []);
 
-
-// ----------------------------------------------------------------
-// Actions de jeu (envoi au serveur)
-// ----------------------------------------------------------------
+  // ----------------------------------------------------------------
+  // Actions de jeu (envoi au serveur)
+  // ----------------------------------------------------------------
 
   // Création d'une partie
   const createGame = useCallback(() => {
@@ -155,14 +151,17 @@ useEffect(() => {
   }, [socket, name]);
 
   // Rejoindre une partie
-  const joinGame = useCallback((code: string) => {
-    if (socket) {
-      const id = localStorage.getItem("id");
-      socket.emit("join_game", code, id, name);
-      // Sauvegarde du pseudo uniquement au lancement de la partie
-      localStorage.setItem(PLAYER_NAME_KEY, name);
-    }
-  }, [socket, name]);
+  const joinGame = useCallback(
+    (code: string) => {
+      if (socket) {
+        const id = localStorage.getItem("id");
+        socket.emit("join_game", code, id, name);
+        // Sauvegarde du pseudo uniquement au lancement de la partie
+        localStorage.setItem(PLAYER_NAME_KEY, name);
+      }
+    },
+    [socket, name],
+  );
 
   // Prêt
   const beReady = useCallback(() => {
@@ -182,14 +181,16 @@ useEffect(() => {
   }, [socket]);
 
   // Envoi des réponses aux serveur
-  const sendAnswer = useCallback((artist: string, track: string, turn: number) => {
-    if (socket) {
-      socket.emit("submit_answer", artist, track, turn);
-    }
-  }, [socket]);
+  const sendAnswer = useCallback(
+    (artist: string, track: string, turn: number) => {
+      if (socket) {
+        socket.emit("submit_answer", artist, track, turn);
+      }
+    },
+    [socket],
+  );
 
-
-const value = useMemo(
+  const value = useMemo(
     () => ({
       socket,
       view,
@@ -226,6 +227,8 @@ const value = useMemo(
       setToPlay,
       setDatabaseArtists,
       setDatabaseTracks,
+      message,
+      setMessage,
     }),
     [
       socket,
@@ -255,10 +258,12 @@ const value = useMemo(
       setToPlay,
       setDatabaseArtists,
       setDatabaseTracks,
-    ]
+      message,
+      setMessage,
+    ],
   );
 
-   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
+  return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
 };
 
 // Hook personnalisé

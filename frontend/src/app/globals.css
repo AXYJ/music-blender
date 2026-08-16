@@ -49,11 +49,11 @@
 }
 
 :root {
-  --background: #0E0712;
-  --semiaccent: #51206F;
-  --accent: #770FB8;
-  --grey: #F6EFFB;
-  --white: #FCFCFD;
+  --background: #0e0712;
+  --semiaccent: #51206f;
+  --accent: #770fb8;
+  --grey: #f6effb;
+  --white: #fcfcfd;
 }
 
 body {
