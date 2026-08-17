@@ -54,6 +54,15 @@ export interface GameContextType {
   sendAnswer: (artist: string, track: string, turn: number) => void;
   message: string;
   setMessage: (message: string) => void;
+  restart: () => void;
+  turn: number;
+  setTurn: React.Dispatch<React.SetStateAction<number>>;
+  phase: "guessing" | "answer" | "transition";
+  setPhase: React.Dispatch<
+    React.SetStateAction<"guessing" | "answer" | "transition">
+  >;
+  timeLeft: number;
+  setTimeLeft: React.Dispatch<React.SetStateAction<number>>;
 }
 
 // Types pour les joueurs
@@ -68,5 +77,6 @@ export interface Player {
   playlistUrl?: string;
   tracks?: any[];
   artist_answer: boolean;
+  artist_score?: number;
   track_answer: boolean;
 }

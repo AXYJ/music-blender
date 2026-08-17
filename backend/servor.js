@@ -117,10 +117,10 @@ io.on("connection", (socket) => {
         const existingPlayer = room.players.find((p) => p.id === id);
         if (existingPlayer) {
             existingPlayer.socketId = socket.id;
-            existingPlayer.inLobby = true;
+            existingPlayer.leavedPlayer = false;
             socket.join(roomCode);
             console.log(`[${new Date().toISOString()}] User ${socket.id} reconnected to room ${roomCode}`);
-            io.to(roomCode).emit("room_updated", roomCode, rooms[roomCode].players);
+            io.to(roomCode).emit("room_updated", roomCode, room.players);
             
             // Sync settings to the reconnecting player
             if (room.musicAmount !== undefined) {
@@ -128,6 +128,52 @@ io.on("connection", (socket) => {
             }
             if (room.time !== undefined) {
                 socket.emit("game-setting", "time", room.time);
+            }
+
+            // Si la partie est déjà en cours
+            if (room.gameStartTime && room.toPlay && room.toPlay.length > 0 && !room.isGameOver) {
+                existingPlayer.inLobby = false;
+                
+                const turnDuration = room.time + 5 + 2;
+                const elapsedSeconds = (Date.now() - room.gameStartTime) / 1000;
+                const currentTurn = Math.floor(elapsedSeconds / turnDuration) + 1;
+                
+                if (currentTurn <= room.toPlay.length) {
+                    const elapsedInTurn = elapsedSeconds % turnDuration;
+                    let phase = "guessing";
+                    let timeLeft = Math.ceil(room.time - elapsedInTurn);
+                    
+                    if (elapsedInTurn >= room.time && elapsedInTurn < room.time + 5) {
+                        phase = "answer";
+                        timeLeft = Math.ceil((room.time + 5) - elapsedInTurn);
+                    } else if (elapsedInTurn >= room.time + 5) {
+                        phase = "transition";
+                        timeLeft = Math.ceil(turnDuration - elapsedInTurn);
+                    }
+                    
+                    socket.emit("game_reconnected", {
+                        toPlay: room.toPlay,
+                        database_artists: room.database_artists || [],
+                        database_tracks: room.database_tracks || [],
+                        turn: currentTurn,
+                        phase: phase,
+                        timeLeft: timeLeft,
+                        time: room.time
+                    });
+                } else {
+                    // La partie est finie
+                    socket.emit("game_reconnected", {
+                        toPlay: room.toPlay,
+                        database_artists: room.database_artists || [],
+                        database_tracks: room.database_tracks || [],
+                        turn: room.toPlay.length + 1,
+                        phase: "transition",
+                        timeLeft: 0,
+                        time: room.time
+                    });
+                }
+            } else {
+                existingPlayer.inLobby = true;
             }
             return;
         } else {
@@ -177,7 +223,9 @@ io.on("connection", (socket) => {
             // Réinitialiser la propriété playlistUrl de tous les joueurs à undefined pour pouvoir suivre les retours
             room.players.forEach(p => {
                 p.playlistUrl = undefined;
+                p.inLobby = false;
             });
+            room.isGameOver = false;
             io.to(roomCode).emit("game_started", room.players);
         }
     });
@@ -271,6 +319,7 @@ io.on("connection", (socket) => {
                         imageUrl: track.imageUrl || "",
                         submittedBy: track.submittedBy || ""
                     }));
+                    room.gameStartTime = Date.now();
                     // Envoyer au front
                     io.to(roomCode).emit("data_loaded", room.toPlay, room.database_artists, room.database_tracks);
                 } catch (processingErr) {
@@ -316,32 +365,123 @@ io.on("connection", (socket) => {
             if (player) {
                 const currentTrack = room.toPlay[turn - 1];
                 if (currentTrack) {
-                    const artistGuess = (artist || "").trim().toLowerCase();
                     const trackGuess = (track || "").trim().toLowerCase();
 
                     const correctTrack = (currentTrack.name || "").trim().toLowerCase();
                     const correctIntTrack = (currentTrack.internationalName || "").trim().toLowerCase();
 
-                    const acceptableArtists = [
-                        (currentTrack.artist || ""),
-                        (currentTrack.internationalArtist || ""),
-                        ...splitArtists(currentTrack.artist),
-                        ...splitArtists(currentTrack.internationalArtist)
-                    ].map(a => a.trim().toLowerCase()).filter(Boolean);
+                    // Split the player's artist guesses by comma
+                    const playerGuesses = (artist || "")
+                        .split(",")
+                        .map(a => a.trim().toLowerCase())
+                        .filter(Boolean);
 
-                    const artist_answer = acceptableArtists.includes(artistGuess);
+                    // Extract the required individual artists for this track (both original and international names)
+                    const originalArtistsList = splitArtists(currentTrack.artist).map(a => a.trim().toLowerCase()).filter(Boolean);
+                    const internationalArtistsList = splitArtists(currentTrack.internationalArtist).map(a => a.trim().toLowerCase()).filter(Boolean);
+
+                    // Build lists of acceptable names for each individual artist
+                    const requiredArtists = originalArtistsList.map((orig, idx) => {
+                        const names = [orig];
+                        if (internationalArtistsList[idx]) {
+                            names.push(internationalArtistsList[idx]);
+                        }
+                        return names;
+                    });
+
+                    // Count how many required artists are matched by the player's guesses
+                    let matchedCount = 0;
+                    for (const acceptableNames of requiredArtists) {
+                        const isGuessed = playerGuesses.some(guess => acceptableNames.includes(guess));
+                        if (isGuessed) {
+                            matchedCount++;
+                        }
+                    }
+
+                    // Score calculation:
+                    // 1 point if all required artists are guessed.
+                    // 0.5 points if at least one but not all required artists are guessed.
+                    // 0 points otherwise.
+                    let artist_score = 0;
+                    if (requiredArtists.length > 0) {
+                        if (matchedCount === requiredArtists.length) {
+                            artist_score = 1;
+                        } else if (matchedCount > 0) {
+                            artist_score = 0.5;
+                        }
+                    } else {
+                        // Fallback in case requiredArtists is empty
+                        const rawArtist = (currentTrack.artist || "").trim().toLowerCase();
+                        const rawIntArtist = (currentTrack.internationalArtist || "").trim().toLowerCase();
+                        if (playerGuesses.some(guess => guess === rawArtist || guess === rawIntArtist)) {
+                            artist_score = 1;
+                        }
+                    }
+
                     const track_answer = (trackGuess === correctTrack || trackGuess === correctIntTrack);
 
                     room.answers = room.answers || {};
                     room.answers[player.id] = {
                         artist: artist,
                         track: track,
-                        artist_correct: artist_answer,
+                        artist_correct: artist_score > 0,
+                        artist_score: artist_score,
                         track_correct: track_answer
                     };
 
-                    io.to(roomCode).emit("answer", player.name, artist_answer, track_answer);
+                    io.to(roomCode).emit("answer", player.name, artist_score, track_answer);
                 }
+            }
+        }
+    });
+
+    // Retour au lobby
+    socket.on("restart_game", () => {
+        for (const code in rooms) {
+            const room = rooms[code];
+            const player = room.players.find((p) => p.socketId === socket.id);
+            if (player) {
+                player.inLobby = true;
+                room.isGameOver = true;
+                checkAndResetGame(code, rooms, io);
+                break;
+            }
+        }
+    });
+
+    socket.on("disconnect", () => {
+        console.log(`[${new Date().toISOString()}] User disconnected: ${socket.id}`);
+        for (const code in rooms) {
+            const room = rooms[code];
+            const player = room.players.find((p) => p.socketId === socket.id);
+            if (player) {
+                // Si la partie n'a pas commencé, ou est finie, on peut le supprimer
+                if (!room.gameStartTime || room.isGameOver) {
+                    room.players = room.players.filter((p) => p.socketId !== socket.id);
+                    // Si plus aucun joueur dans la room, on supprime la room
+                    if (room.players.length === 0) {
+                        delete rooms[code];
+                        console.log(`[${new Date().toISOString()}] Room ${code} deleted because it is empty`);
+                    } else {
+                        // S'il reste des gens, on met à jour la liste des joueurs
+                        io.to(code).emit("room_updated", code, room.players);
+                        
+                        // Si l'hôte est parti, on attribue l'hôte à un autre joueur
+                        if (player.isHost) {
+                            const newHost = room.players.find(p => !p.leavedPlayer);
+                            if (newHost) {
+                                newHost.isHost = true;
+                                newHost.isReady = true;
+                                io.to(code).emit("room_updated", code, room.players);
+                            }
+                        }
+                    }
+                } else {
+                    // Sinon (partie en cours), on le marque simplement comme déconnecté temporaire
+                    player.leavedPlayer = true;
+                    io.to(code).emit("room_updated", code, room.players);
+                }
+                break;
             }
         }
     });
@@ -427,3 +567,30 @@ function splitArtists(artistStr) {
         .map(a => a.trim())
         .filter(a => a.length > 0 && !/^(feat\.?|featuring|with|&|and)$/i.test(a));
 }
+
+export const checkAndResetGame = (roomCode, rooms, io) => {
+    const room = rooms[roomCode];
+    if (!room) return;
+
+    const activePlayers = room.players.filter((p) => !p.leavedPlayer);
+    const allInLobby = activePlayers.every((p) => p.inLobby);
+
+    if (room.isGameOver && allInLobby) {
+        activePlayers.forEach((p) => {
+            p.isReady = p.isHost;
+            p.inLobby = true;
+            p.score = 0;
+        });
+
+        room.players = activePlayers;
+        room.isGameOver = false;
+        room.answers = {};
+
+        const rulesObj = {
+            musicAmount: room.musicAmount,
+            time: room.time
+        };
+
+        io.to(roomCode).emit("game_reset", rulesObj, activePlayers);
+    }
+};

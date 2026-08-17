@@ -23,6 +23,13 @@ export default function Home() {
     joinGame,
   } = useGame();
   const [roomInput, setRoomInput] = useState("");
+  const [savedCode, setSavedCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setSavedCode(localStorage.getItem("roomCode"));
+    }
+  }, []);
 
   // Effet pour cacher automatiquement les messages d'erreur après 3 secondes
   useEffect(() => {
@@ -99,7 +106,13 @@ export default function Home() {
                 className="h-8 w-full px-4 rounded-lg text-base bg-(--white) text-(--background)"
                 value={roomInput}
                 onChange={(e) => setRoomInput(e.target.value)}
+                list={savedCode ? "saved-room-code" : undefined}
               />
+              {savedCode && (
+                <datalist id="saved-room-code">
+                  <option value={savedCode}></option>
+                </datalist>
+              )}
               <button
                 className="bg-(--accent) text-(--white) px-4 py-2 rounded-lg"
                 onClick={handleJoinGame}

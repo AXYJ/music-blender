@@ -58,9 +58,41 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const sfxVolumeRef = useRef(sfxVolume);
   const [playlistUrl, setPlaylistUrl] = useState("");
   const [toPlay, setToPlay] = useState<any[]>([]);
-  const [database_artists, setDatabaseArtists] = useState<any[]>([]);
-  const [database_tracks, setDatabaseTracks] = useState<any[]>([]);
+  const [database_artists, setDatabaseArtists] = useState<any[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = sessionStorage.getItem("database_artists");
+        return saved ? JSON.parse(saved) : [];
+      } catch (e) {
+        console.error(
+          "Error reading database_artists from sessionStorage during init:",
+          e,
+        );
+      }
+    }
+    return [];
+  });
+  const [database_tracks, setDatabaseTracks] = useState<any[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = sessionStorage.getItem("database_tracks");
+        return saved ? JSON.parse(saved) : [];
+      } catch (e) {
+        console.error(
+          "Error reading database_tracks from sessionStorage during init:",
+          e,
+        );
+      }
+    }
+    return [];
+  });
   const [message, setMessage] = useState("");
+
+  const [turn, setTurn] = useState<number>(1);
+  const [phase, setPhase] = useState<"guessing" | "answer" | "transition">(
+    "guessing",
+  );
+  const [timeLeft, setTimeLeft] = useState<number>(20);
 
   // Pseudo du joueur
   const [name, setName] = useState("");
@@ -81,6 +113,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setToPlay,
     setDatabaseArtists,
     setDatabaseTracks,
+    setTurn,
+    setPhase,
+    setTimeLeft,
+    time,
   });
 
   // ----------------------------------------------------------------
@@ -137,6 +173,32 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   // ----------------------------------------------------------------
+  // Sauvegarde du code de partie dans le sessionStorage
+  // ----------------------------------------------------------------
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (roomCode) {
+        sessionStorage.setItem("game_code", roomCode);
+      } else {
+        sessionStorage.removeItem("game_code");
+      }
+    }
+  }, [roomCode]);
+
+  // ----------------------------------------------------------------
+  // Reconnexion automatique au serveur
+  // ----------------------------------------------------------------
+  useEffect(() => {
+    if (socket && isConnected && roomCode && name) {
+      const id = localStorage.getItem("id");
+      console.log(
+        `Tentative de reconnexion automatique à la room ${roomCode} avec l'ID ${id}`,
+      );
+      socket.emit("join_game", roomCode, id, name);
+    }
+  }, [socket, isConnected, roomCode, name]);
+
+  // ----------------------------------------------------------------
   // Actions de jeu (envoi au serveur)
   // ----------------------------------------------------------------
 
@@ -190,6 +252,14 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     [socket],
   );
 
+  // Relancer une partie
+  const restart = useCallback(() => {
+    console.log("restart");
+    if (socket) {
+      socket.emit("restart_game");
+    }
+  }, [socket]);
+
   const value = useMemo(
     () => ({
       socket,
@@ -229,6 +299,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       setDatabaseTracks,
       message,
       setMessage,
+      restart,
+      turn,
+      setTurn,
+      phase,
+      setPhase,
+      timeLeft,
+      setTimeLeft,
     }),
     [
       socket,
@@ -260,6 +337,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       setDatabaseTracks,
       message,
       setMessage,
+      restart,
+      turn,
+      phase,
+      timeLeft,
     ],
   );
 

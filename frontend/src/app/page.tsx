@@ -32,7 +32,7 @@ function GameContent() {
 
 export default function App() {
   return (
-    <main className="min-h-screen px-8">
+    <main className="min-h-screen px-8 max-w-3xl w-full mx-auto">
       <GameProvider>
         <GameContent />
       </GameProvider>

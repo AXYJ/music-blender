@@ -100,7 +100,7 @@ export default function Lobby() {
   }, [error]);
 
   return (
-    <div className="flex flex-col items-center gap-8 my-16">
+    <div className="flex flex-col items-center gap-8 my-16 w-full">
       <h1 className="text-4xl font-bold text-(--accent) text-center">
         Music Blender
       </h1>
@@ -117,101 +117,108 @@ export default function Lobby() {
             Code de la partie : {roomCode}
           </p>
         </div>
-        <Section>
-          <h2>Liste des joueurs</h2>
-          <div className="flex flex-col gap-2 h-[25vh] overflow-y-auto">
-            {players.map((player) => (
-              <p
-                key={player.id}
-                className={`px-3 py-2 rounded-full transition-all duration-300 ${player.isReady ? "text-(--white) bg-(--accent)" : "text-(--background) bg-(--grey)"}`}
-              >
-                {player.name}
-              </p>
-            ))}
-          </div>
-        </Section>
-        <Section>
-          <h2>Paramètres de la partie</h2>
-          <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-4">
-              <p>Nombre de musique par playlist</p>
-              <div className="flex items-center justify-center gap-4">
-                {isHost && (
-                  <button
-                    className={`rounded-full bg-(--white) aspect-square text-(--background) h-8 w-8 ${musicAmount === 1 ? "opacity-50 cursor-not-allowed" : ""}`}
-                    onClick={() => {
-                      handleMusicAmount("down");
-                    }}
-                  >
-                    -
-                  </button>
-                )}
-                <p>{musicAmount}</p>
-                {isHost && (
-                  <button
-                    className={`rounded-full bg-(--white) aspect-square text-(--background) h-8 w-8 ${musicAmount === 20 ? "opacity-50 cursor-not-allowed" : ""}`}
-                    onClick={() => {
-                      handleMusicAmount("up");
-                    }}
-                  >
-                    +
-                  </button>
-                )}
+        <div className="flex flex-col items-center gap-4 w-full lg:grid lg:grid-cols-3 lg:items-stretch">
+          <Section
+            sectionClassName="lg:h-full"
+            className="flex flex-col gap-4 h-full"
+          >
+            <h2>Liste des joueurs</h2>
+            <div className="flex flex-col gap-2 flex-1 min-h-[200px] overflow-y-auto">
+              {players.map((player) => (
+                <p
+                  key={player.id}
+                  className={`px-3 py-2 rounded-full transition-all duration-300 ${player.isReady ? "text-(--white) bg-(--accent)" : "text-(--background) bg-(--grey)"}`}
+                >
+                  {player.name}
+                </p>
+              ))}
+            </div>
+          </Section>
+          <div className="flex flex-col items-center gap-4 w-full lg:col-span-2">
+            <Section>
+              <h2>Paramètres de la partie</h2>
+              <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-4">
+                  <p>Nombre de musique par playlist</p>
+                  <div className="flex items-center justify-center gap-4">
+                    {isHost && (
+                      <button
+                        className={`rounded-full bg-(--white) aspect-square text-(--background) h-8 w-8 ${musicAmount === 1 ? "opacity-50 cursor-not-allowed" : ""}`}
+                        onClick={() => {
+                          handleMusicAmount("down");
+                        }}
+                      >
+                        -
+                      </button>
+                    )}
+                    <p>{musicAmount}</p>
+                    {isHost && (
+                      <button
+                        className={`rounded-full bg-(--white) aspect-square text-(--background) h-8 w-8 ${musicAmount === 20 ? "opacity-50 cursor-not-allowed" : ""}`}
+                        onClick={() => {
+                          handleMusicAmount("up");
+                        }}
+                      >
+                        +
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-col gap-4">
+                  <p>Temps par musique (secondes)</p>
+                  <div className="flex items-center justify-center gap-4">
+                    {isHost && (
+                      <button
+                        className={`rounded-full bg-(--white) aspect-square text-(--background) h-8 w-8 ${time === 5 ? "opacity-50 cursor-not-allowed" : ""}`}
+                        onClick={() => {
+                          handleTime("down");
+                        }}
+                      >
+                        -
+                      </button>
+                    )}
+                    <p>{time}</p>
+                    {isHost && (
+                      <button
+                        className={`rounded-full bg-(--white) aspect-square text-(--background) h-8 w-8 ${time === 30 ? "opacity-50 cursor-not-allowed" : ""}`}
+                        onClick={() => {
+                          handleTime("up");
+                        }}
+                      >
+                        +
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="flex flex-col gap-4">
-              <p>Temps par musique (secondes)</p>
-              <div className="flex items-center justify-center gap-4">
-                {isHost && (
-                  <button
-                    className={`rounded-full bg-(--white) aspect-square text-(--background) h-8 w-8 ${time === 5 ? "opacity-50 cursor-not-allowed" : ""}`}
-                    onClick={() => {
-                      handleTime("down");
-                    }}
+            </Section>
+            <Section>
+              <h2>Ajoute ta musique</h2>
+              <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-2">
+                  <p>Plateforme de streaming</p>
+                  <select
+                    name="stream-service"
+                    id="stream"
+                    className="rounded-md p-2 bg-(--white) text-(--background)"
                   >
-                    -
-                  </button>
-                )}
-                <p>{time}</p>
-                {isHost && (
-                  <button
-                    className={`rounded-full bg-(--white) aspect-square text-(--background) h-8 w-8 ${time === 30 ? "opacity-50 cursor-not-allowed" : ""}`}
-                    onClick={() => {
-                      handleTime("up");
-                    }}
-                  >
-                    +
-                  </button>
-                )}
+                    <option value="spotify">Spotify</option>
+                    {/* <option value="deezer">Deezer</option> */}
+                  </select>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <p>URL de la playlist</p>
+                  <input
+                    type="text"
+                    className="h-8 w-full px-4 rounded-lg text-base bg-(--white) text-(--background)"
+                    value={playlistUrl}
+                    onChange={(e) => setPlaylistUrl(e.target.value)}
+                  />
+                </div>
               </div>
-            </div>
+            </Section>
           </div>
-        </Section>
-        <Section>
-          <h2>Ajoute ta musique</h2>
-          <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-2">
-              <p>Plateforme de streaming</p>
-              <select
-                name="stream-service"
-                id="stream"
-                className="rounded-md p-2 bg-(--white) text-(--background)"
-              >
-                <option value="spotify">Spotify</option>
-                {/* <option value="deezer">Deezer</option> */}
-              </select>
-            </div>
-            <div className="flex flex-col gap-2">
-              <p>URL de la playlist</p>
-              <input
-                type="text"
-                className="h-8 w-full px-4 rounded-lg text-base bg-(--white) text-(--background)"
-                value={playlistUrl}
-                onChange={(e) => setPlaylistUrl(e.target.value)}
-              />
-            </div>
-          </div>
-        </Section>
+        </div>
       </div>
 
       <div className="w-full flex justify-between gap-4">
