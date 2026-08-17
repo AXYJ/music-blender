@@ -298,7 +298,7 @@ export default function Game() {
             )}
 
             <div
-              className={`absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center gap-1 transition-all duration-300 px-4 ${showAnswer ? "bg-black/75 opacity-100 pointer-events-auto" : "bg-black/0 opacity-0 pointer-events-none"}`}
+              className={`absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center gap-1 transition-all duration-300 px-4 ${showAnswer ? "bg-black/75 opacity-100 pointer-events-auto lg:w-1/2 lg:left-1/2 lg:-translate-x-1/2 " : "bg-black/0 opacity-0 pointer-events-none lg:w-1/2 lg:left-1/2 lg:-translate-x-1/2"}`}
             >
               <p className="text-lg">La réponse est :</p>
               <p className="text-2xl font-bold text-(--white)">
@@ -584,7 +584,7 @@ export default function Game() {
             </div>
           </section>
 
-          <div className="flex flex-col items-center w-[calc(100vw-4rem)] lg:w-[704px] max-w-3xl gap-2 fixed bottom-6 left-1/2 -translate-x-1/2">
+          <div className="flex flex-col items-center w-[calc(100vw-4rem)] lg:w-1/3 max-w-3xl gap-2 fixed bottom-6 left-1/2 -translate-x-1/2">
             <span className="text-sm font-semibold tracking-wider text-gray-300">
               {phase === "guessing"
                 ? `Temps restant : ${timeLeft}s`
