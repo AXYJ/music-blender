@@ -158,7 +158,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     const socketUrl = getSocketUrl();
     console.log("Socket connection target URL:", socketUrl);
     const newSocket = io(socketUrl, {
-      transports: ["websocket", "polling"],
+      transports: ["polling", "websocket"],
     });
 
     setTimeout(() => {
