@@ -315,7 +315,7 @@ export default function Game() {
 
           <section className="flex flex-col gap-4 w-full">
             {/* Wrapper Artiste */}
-            <div className="h-[76px] w-full relative">
+            <div className="h-18 w-full relative">
               <motion.div
                 layout
                 transition={{ type: "spring", stiffness: 350, damping: 35 }}
@@ -461,7 +461,7 @@ export default function Game() {
             </div>
 
             {/* Wrapper Chanson */}
-            <div className="h-[76px] w-full relative">
+            <div className="h-18 w-full relative">
               <motion.div
                 layout
                 transition={{ type: "spring", stiffness: 350, damping: 35 }}

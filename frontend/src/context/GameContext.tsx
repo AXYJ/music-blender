@@ -21,6 +21,7 @@ const VOLUME_KEY = "game_volume";
 // Import des types
 import { View, GameContextType, Player } from "../types/game";
 import { useSocketListeners } from "../hooks/useSocketListeners";
+import { getSocketUrl } from "../utils/config";
 
 // Création du contexte
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -154,9 +155,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
 
     // Initialisation de la connexion
-    const envUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
-    const socketUrl =
-      envUrl && envUrl !== "undefined" ? envUrl : "http://localhost:4000";
+    const socketUrl = getSocketUrl();
     console.log("Socket connection target URL:", socketUrl);
     const newSocket = io(socketUrl, {
       transports: ["websocket", "polling"],

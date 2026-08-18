@@ -1,6 +1,7 @@
 import { Socket } from "socket.io-client";
 import { useEffect, useRef } from "react";
 import { Player, View } from "../types/game";
+import { getSocketUrl } from "../utils/config";
 
 interface SocketListenersProps {
   socket: Socket | null;
@@ -54,9 +55,7 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     if (!socket) return;
 
     // Keep-alive pour éviter que le serveur (ex: Render) ne mette le socket en veille
-    const envUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
-    const socketUrl =
-      envUrl && envUrl !== "undefined" ? envUrl : "http://localhost:4000";
+    const socketUrl = getSocketUrl();
     const keepAliveInterval = setInterval(
       () => {
         fetch(socketUrl).catch((err) =>

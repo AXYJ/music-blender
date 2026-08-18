@@ -123,7 +123,7 @@ export default function Lobby() {
             className="flex flex-col gap-4 h-full"
           >
             <h2>Liste des joueurs</h2>
-            <div className="flex flex-col gap-2 flex-1 min-h-[200px] overflow-y-auto">
+            <div className="flex flex-col gap-2 flex-1 min-h-48 overflow-y-auto">
               {players.map((player) => (
                 <p
                   key={player.id}
