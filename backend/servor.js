@@ -178,13 +178,15 @@ io.on("connection", (socket) => {
             return;
         } else {
             // Si non, on l'ajoute à la partie
+            const isGameInProgress = !!(room.gameStartTime && room.toPlay && room.toPlay.length > 0 && !room.isGameOver);
+
             rooms[roomCode].players.push({
                 name: name,
                 id: id,
                 socketId: socket.id,
                 isHost: false,
                 leavedPlayer: false,
-                inLobby: true,
+                inLobby: !isGameInProgress,
                 score: 0,
             });
             socket.join(roomCode);
@@ -197,6 +199,48 @@ io.on("connection", (socket) => {
             }
             if (room.time !== undefined) {
                 socket.emit("game-setting", "time", room.time);
+            }
+
+            // Si la partie est déjà en cours, on lui envoie les infos de reconnexion pour qu'il rejoigne l'écran de jeu
+            if (isGameInProgress) {
+                const turnDuration = room.time + 5 + 2;
+                const elapsedSeconds = (Date.now() - room.gameStartTime) / 1000;
+                const currentTurn = Math.floor(elapsedSeconds / turnDuration) + 1;
+                
+                if (currentTurn <= room.toPlay.length) {
+                    const elapsedInTurn = elapsedSeconds % turnDuration;
+                    let phase = "guessing";
+                    let timeLeft = Math.ceil(room.time - elapsedInTurn);
+                    
+                    if (elapsedInTurn >= room.time && elapsedInTurn < room.time + 5) {
+                        phase = "answer";
+                        timeLeft = Math.ceil((room.time + 5) - elapsedInTurn);
+                    } else if (elapsedInTurn >= room.time + 5) {
+                        phase = "transition";
+                        timeLeft = Math.ceil(turnDuration - elapsedInTurn);
+                    }
+                    
+                    socket.emit("game_reconnected", {
+                        toPlay: room.toPlay,
+                        database_artists: room.database_artists || [],
+                        database_tracks: room.database_tracks || [],
+                        turn: currentTurn,
+                        phase: phase,
+                        timeLeft: timeLeft,
+                        time: room.time
+                    });
+                } else {
+                    // La partie est finie
+                    socket.emit("game_reconnected", {
+                        toPlay: room.toPlay,
+                        database_artists: room.database_artists || [],
+                        database_tracks: room.database_tracks || [],
+                        turn: room.toPlay.length + 1,
+                        phase: "transition",
+                        timeLeft: 0,
+                        time: room.time
+                    });
+                }
             }
         }
     })
@@ -355,6 +399,10 @@ io.on("connection", (socket) => {
             io.to(roomCode).emit("game-setting", "time", time);
         }
     });
+
+    // --------------------------------------------------------
+    // Actions en partie
+    // --------------------------------------------------------
 
     // Envoi de la réponse
     socket.on("submit_answer", (artist, track, turn) => {
@@ -601,6 +649,7 @@ export const checkAndResetGame = (roomCode, rooms, io) => {
         room.players = activePlayers;
         room.isGameOver = false;
         room.answers = {};
+        room.gameStartTime = null;
 
         const rulesObj = {
             musicAmount: room.musicAmount,

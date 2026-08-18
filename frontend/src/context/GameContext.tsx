@@ -55,7 +55,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     return 0.5;
   });
   const [musicAmount, setMusicAmount] = useState(3);
-  const [time, setTime] = useState(20);
+  const [time, setTime] = useState(30);
   const sfxVolumeRef = useRef(sfxVolume);
   const [playlistUrl, setPlaylistUrl] = useState("");
   const [toPlay, setToPlay] = useState<any[]>([]);
@@ -93,7 +93,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [phase, setPhase] = useState<"guessing" | "answer" | "transition">(
     "guessing",
   );
-  const [timeLeft, setTimeLeft] = useState<number>(20);
+  const [timeLeft, setTimeLeft] = useState<number>(30);
 
   // Pseudo du joueur
   const [name, setName] = useState("");
