@@ -5,6 +5,7 @@ import { getSocketUrl } from "../utils/config";
 
 interface SocketListenersProps {
   socket: Socket | null;
+  view: View;
   setView: (view: View) => void;
   setError: (error: string | null) => void;
   setRoomCode: (code: string) => void;
@@ -29,6 +30,7 @@ interface SocketListenersProps {
 export const useSocketListeners = (props: SocketListenersProps) => {
   const {
     socket,
+    view,
     setView,
     setError,
     setRoomCode,
@@ -50,6 +52,9 @@ export const useSocketListeners = (props: SocketListenersProps) => {
 
   const playlistUrlRef = useRef(playlistUrl);
   playlistUrlRef.current = playlistUrl;
+
+  const viewRef = useRef(view);
+  viewRef.current = view;
 
   useEffect(() => {
     if (!socket) return;
@@ -119,8 +124,23 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     const handleRoomUpdated = (roomCode: string, players: any[]) => {
       console.log("Room updated:", roomCode);
       console.log("Players", players);
-      setView("lobby");
-      setPlayers(players);
+      if (viewRef.current !== "game" && viewRef.current !== "final") {
+        setView("lobby");
+      }
+      setPlayers((prev) => {
+        return players.map((p) => {
+          const existing = prev.find((x) => x.id === p.id);
+          if (existing) {
+            return {
+              ...p,
+              artist_answer: existing.artist_answer,
+              artist_score: existing.artist_score,
+              track_answer: existing.track_answer,
+            };
+          }
+          return p;
+        });
+      });
       setRoomCode(roomCode);
     };
 
@@ -250,28 +270,22 @@ export const useSocketListeners = (props: SocketListenersProps) => {
       setPlayers((prev) =>
         prev.map((p) => {
           if (p.name === name) {
-            let additionalScore = 0;
             let isCorrect = false;
             let scoreVal = 0;
 
             if (typeof artist_answer === "number") {
-              additionalScore += artist_answer;
               isCorrect = artist_answer > 0;
               scoreVal = artist_answer;
             } else {
-              additionalScore += artist_answer ? 1 : 0;
               isCorrect = artist_answer;
               scoreVal = artist_answer ? 1 : 0;
             }
-
-            if (track_answer) additionalScore += 1;
 
             return {
               ...p,
               artist_answer: isCorrect,
               artist_score: scoreVal,
               track_answer,
-              score: p.score + additionalScore,
             };
           }
           return p;
@@ -279,7 +293,13 @@ export const useSocketListeners = (props: SocketListenersProps) => {
       );
     };
 
+    const handleFinalScores = (players: Player[]) => {
+      console.log("Final scores received from server:", players);
+      setPlayers(players);
+    };
+
     socket.on("answer", handleAnswer);
+    socket.on("final_scores", handleFinalScores);
 
     const handleNoPlaylist = () => {
       setError("Aucune musique trouvée dans les playlists");
@@ -329,6 +349,7 @@ export const useSocketListeners = (props: SocketListenersProps) => {
       socket.off("game_started", handleGameStarted);
       socket.off("data_loaded", handleDataLoaded);
       socket.off("answer", handleAnswer);
+      socket.off("final_scores", handleFinalScores);
       socket.off("no_playlist", handleNoPlaylist);
       socket.off("game_reset", handleGameReset);
       socket.off("game_reconnected", handleGameReconnected);

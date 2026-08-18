@@ -91,6 +91,7 @@ io.on("connection", (socket) => {
             ],
             musicAmount: 3,
             time: 30,
+            leavedPlayers: [],
         };
         socket.join(roomCode);
         console.log(`[${new Date().toISOString()}] Room created: ${roomCode} with host ${name}`);
@@ -244,6 +245,24 @@ io.on("connection", (socket) => {
             }
         }
     })
+
+    // Quitter une partie
+    socket.on("leave_game", () => {
+        const roomCode = Array.from(socket.rooms).find((r) => r !== socket.id);
+        const room = rooms[roomCode];
+        if (room) {
+            const player = room.players.find((p) => p.socketId === socket.id);
+            if (player) {
+                player.leavedPlayer = true;
+                room.leavedPlayers = room.leavedPlayers || [];
+                room.leavedPlayers.push(player);
+                room.players = room.players.filter((p) => p.socketId !== socket.id);
+                console.log(`[${new Date().toISOString()}] User ${player.name} left room ${roomCode}`);
+                socket.leave(roomCode);
+                io.to(roomCode).emit("room_updated", roomCode, rooms[roomCode].players);
+            }
+        }
+    });
 
     // Prêt
     socket.on("ready", (isReady) => {
@@ -477,9 +496,25 @@ io.on("connection", (socket) => {
                         track_correct: track_answer
                     };
 
+                    // Calcul et mise à jour du score sur le serveur
+                    let additionalScore = artist_score;
+                    if (track_answer) {
+                        additionalScore += 1;
+                    }
+                    player.score = (player.score || 0) + additionalScore;
+
                     io.to(roomCode).emit("answer", player.name, artist_score, track_answer);
                 }
             }
+        }
+    });
+
+    // Demande des scores finaux
+    socket.on("get_final_scores", () => {
+        const roomCode = Array.from(socket.rooms).find((r) => r !== socket.id);
+        const room = rooms[roomCode];
+        if (room) {
+            socket.emit("final_scores", room.players);
         }
     });
 

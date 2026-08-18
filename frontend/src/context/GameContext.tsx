@@ -101,6 +101,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   // Enregistrement des écouteurs de socket
   useSocketListeners({
     socket,
+    view,
     setView,
     setError,
     setRoomCode,
@@ -198,6 +199,16 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   }, [socket, isConnected, roomCode, name]);
 
   // ----------------------------------------------------------------
+  // Demander les scores finaux au serveur à la fin de la partie
+  // ----------------------------------------------------------------
+  useEffect(() => {
+    if (turn > toPlay.length && toPlay.length > 0 && socket) {
+      console.log("Game finished on client, requesting final scores from server...");
+      socket.emit("get_final_scores");
+    }
+  }, [turn, toPlay, socket]);
+
+  // ----------------------------------------------------------------
   // Actions de jeu (envoi au serveur)
   // ----------------------------------------------------------------
 
@@ -238,6 +249,15 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const launchGame = useCallback(() => {
     if (socket) {
       socket.emit("start_game");
+    }
+  }, [socket]);
+
+  // Quitter une partie
+  const quitGame = useCallback(() => {
+    if (socket) {
+      socket.emit("leave_game");
+      setRoomCode("");
+      setView("home");
     }
   }, [socket]);
 
@@ -305,6 +325,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       setPhase,
       timeLeft,
       setTimeLeft,
+      quitGame,
     }),
     [
       socket,
@@ -340,6 +361,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       turn,
       phase,
       timeLeft,
+      quitGame,
     ],
   );
 

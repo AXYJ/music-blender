@@ -52,6 +52,7 @@ export interface GameContextType {
   database_tracks: any[];
   setDatabaseTracks: React.Dispatch<React.SetStateAction<any[]>>;
   sendAnswer: (artist: string, track: string, turn: number) => void;
+  quitGame: () => void;
   message: string;
   setMessage: (message: string) => void;
   restart: () => void;

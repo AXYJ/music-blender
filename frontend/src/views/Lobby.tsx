@@ -30,6 +30,7 @@ export default function Lobby() {
     setMessage,
     error,
     setError,
+    quitGame,
   } = useGame();
 
   const me = players.find((p) => p.socketId === socket?.id);
@@ -222,7 +223,10 @@ export default function Lobby() {
       </div>
 
       <div className="w-full flex justify-between gap-4">
-        <button className="rounded-full px-8 py-2 bg-(--white) text-(--background) flex-1">
+        <button
+          className="rounded-full px-8 py-2 bg-(--white) text-(--background) flex-1"
+          onClick={quitGame}
+        >
           Quitter
         </button>
         {isHost && (

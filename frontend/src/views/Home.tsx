@@ -10,6 +10,7 @@ import { useGame } from "../context/GameContext";
 
 // Import des composants
 import Section from "../components/Section";
+import Error from "../components/alert/Error";
 
 export default function Home() {
   const {
@@ -130,38 +131,7 @@ export default function Home() {
         </Section>
       </div>
 
-      <AnimatePresence>
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.2 }}
-            className="fixed top-8 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 bg-red-600/90 text-white rounded-lg shadow-lg backdrop-blur-md flex items-center gap-3 w-[calc(100%-4rem)]"
-          >
-            <span className="font-medium">{error}</span>
-            <button
-              onClick={() => setError(null)}
-              className="ml-2 text-red-100 hover:text-white transition-colors"
-              aria-label="Fermer"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <Error error={error} setError={setError} />
     </div>
   );
 }
