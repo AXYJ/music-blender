@@ -14,5 +14,5 @@ export const getSocketUrl = (): string => {
   // Sinon (en production), on utilise la variable d'environnement ou le serveur public par défaut
   return envUrl && envUrl !== "undefined"
     ? envUrl
-    : "https://music-blender_serv.xiao-web.com";
+    : "https://music-blender-serv.xiao-web.com";
 };
