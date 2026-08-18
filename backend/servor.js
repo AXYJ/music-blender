@@ -479,7 +479,23 @@ io.on("connection", (socket) => {
                 } else {
                     // Sinon (partie en cours), on le marque simplement comme déconnecté temporaire
                     player.leavedPlayer = true;
-                    io.to(code).emit("room_updated", code, room.players);
+                    
+                    // Si plus aucun joueur n'est actif dans la room, on supprime la room
+                    const activePlayers = room.players.filter((p) => !p.leavedPlayer);
+                    if (activePlayers.length === 0) {
+                        delete rooms[code];
+                        console.log(`[${new Date().toISOString()}] Room ${code} deleted because all players left`);
+                    } else {
+                        // Si l'hôte est parti, on attribue l'hôte à un autre joueur actif
+                        if (player.isHost) {
+                            player.isHost = false;
+                            const newHost = activePlayers[0];
+                            if (newHost) {
+                                newHost.isHost = true;
+                            }
+                        }
+                        io.to(code).emit("room_updated", code, room.players);
+                    }
                 }
                 break;
             }
