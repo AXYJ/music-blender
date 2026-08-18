@@ -124,7 +124,7 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     const handleRoomUpdated = (roomCode: string, players: any[]) => {
       console.log("Room updated:", roomCode);
       console.log("Players", players);
-      if (viewRef.current !== "game" && viewRef.current !== "results") {
+      if (viewRef.current !== "game" && viewRef.current !== "result") {
         setView("lobby");
       }
       setPlayers((prev) => {
