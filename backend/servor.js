@@ -260,6 +260,7 @@ io.on("connection", (socket) => {
                 console.log(`[${new Date().toISOString()}] User ${player.name} left room ${roomCode}`);
                 socket.leave(roomCode);
                 io.to(roomCode).emit("room_updated", roomCode, rooms[roomCode].players);
+                checkAndResetGame(roomCode, rooms, io);
             }
         }
     });
@@ -380,7 +381,8 @@ io.on("connection", (socket) => {
                         internationalArtist: track.internationalArtist || track.artist || "",
                         previewUrl: track.previewUrl || "",
                         imageUrl: track.imageUrl || "",
-                        submittedBy: track.submittedBy || ""
+                        submittedBy: track.submittedBy || "",
+                        url: track.url || ""
                     }));
                     room.gameStartTime = Date.now();
                     // Envoyer au front
@@ -433,6 +435,7 @@ io.on("connection", (socket) => {
                 const currentTrack = room.toPlay[turn - 1];
                 if (currentTrack) {
                     const trackGuess = (track || "").trim().toLowerCase();
+
 
                     const correctTrack = (currentTrack.name || "").trim().toLowerCase();
                     const correctIntTrack = (currentTrack.internationalName || "").trim().toLowerCase();
@@ -487,6 +490,17 @@ io.on("connection", (socket) => {
 
                     const track_answer = (trackGuess === correctTrack || trackGuess === correctIntTrack);
 
+                    player.artists_final_board = player.artists_final_board || {};
+                    player.tracks_final_board = player.tracks_final_board || {};
+                    const cleanArtist = (artist || "").trim().replace(/,$/, "").trim();
+                    player.artists_final_board[turn - 1] = cleanArtist;
+                    player.tracks_final_board[turn - 1] = track || "";
+
+                    player.artists_scores_board = player.artists_scores_board || {};
+                    player.tracks_scores_board = player.tracks_scores_board || {};
+                    player.artists_scores_board[turn - 1] = artist_score;
+                    player.tracks_scores_board[turn - 1] = track_answer;
+
                     room.answers = room.answers || {};
                     room.answers[player.id] = {
                         artist: artist,
@@ -509,11 +523,16 @@ io.on("connection", (socket) => {
         }
     });
 
+    // --------------------------------------------------------
+    // Post game
+    // --------------------------------------------------------
+
     // Demande des scores finaux
     socket.on("get_final_scores", () => {
         const roomCode = Array.from(socket.rooms).find((r) => r !== socket.id);
         const room = rooms[roomCode];
         if (room) {
+            console.log("Sending final scores:", JSON.stringify(room.players, null, 2));
             socket.emit("final_scores", room.players);
         }
     });
@@ -526,6 +545,7 @@ io.on("connection", (socket) => {
             if (player) {
                 player.inLobby = true;
                 room.isGameOver = true;
+                io.to(code).emit("room_updated", code, room.players);
                 checkAndResetGame(code, rooms, io);
                 break;
             }
@@ -558,6 +578,7 @@ io.on("connection", (socket) => {
                                 io.to(code).emit("room_updated", code, room.players);
                             }
                         }
+                        checkAndResetGame(code, rooms, io);
                     }
                 } else {
                     // Sinon (partie en cours), on le marque simplement comme déconnecté temporaire
@@ -679,6 +700,10 @@ export const checkAndResetGame = (roomCode, rooms, io) => {
             p.isReady = p.isHost;
             p.inLobby = true;
             p.score = 0;
+            p.artists_final_board = {};
+            p.tracks_final_board = {};
+            p.artists_scores_board = {};
+            p.tracks_scores_board = {};
         });
 
         room.players = activePlayers;

@@ -7,6 +7,7 @@ import { GameProvider, useGame } from "../context/GameContext";
 import Home from "../views/Home";
 import Lobby from "../views/Lobby";
 import Game from "../views/Game";
+import Result from "../views/Results";
 
 function GameContent() {
   const { view } = useGame();
@@ -20,11 +21,9 @@ function GameContent() {
     case "lobby":
       return <Lobby />;
     case "game":
-      return (
-        <>
-          <Game />
-        </>
-      );
+      return <Game />;
+    case "result":
+      return <Result />;
     default:
       return <Home />;
   }
@@ -32,7 +31,7 @@ function GameContent() {
 
 export default function App() {
   return (
-    <main className="min-h-screen px-8 max-w-3xl w-full mx-auto">
+    <main className="min-h-screen px-8 md:max-w-lg lg:max-w-3xl w-full mx-auto">
       <GameProvider>
         <GameContent />
       </GameProvider>

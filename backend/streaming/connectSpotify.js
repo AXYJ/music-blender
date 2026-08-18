@@ -71,7 +71,10 @@ async function getInternationalName(text) {
         }
     }
     
-    return result.replace(/\s+/g, "");
+    result = result.toLowerCase();
+    result = result.replace(/\s+/g, "");
+    
+    return result;
 }
 
 
@@ -147,7 +150,7 @@ async function getSpotifyTracksAnonymously(type, id) {
             internationalArtist: await getInternationalName(item.subtitle),
             previewUrl: item.audioPreview?.url || "",
             imageUrl: entity.coverArt?.sources?.[0]?.url || "", // fallback to cover art
-            uri: item.uri
+            url: item.url || (item.uri ? `https://open.spotify.com/track/${item.uri.split(":")[2]}` : "")
         })));
         return tracks;
     } catch (e) {
@@ -188,7 +191,8 @@ async function getSpotifyPlaylistTracks(playlistId, accessToken) {
                         internationalName: await getInternationalName(t.name),
                         internationalArtist: await getInternationalName(artistsStr),
                         previewUrl: t.preview_url,
-                        imageUrl: t.album?.images?.[0]?.url || ""
+                        imageUrl: t.album?.images?.[0]?.url || "",
+                        url: t.external_urls?.spotify || (t.uri ? `https://open.spotify.com/track/${t.uri.split(":")[2]}` : "")
                     };
                 })
         );
@@ -247,8 +251,8 @@ export default async function selectTracks(playlistUrl, amount, player) {
     // Récupérer les vraies images de couverture pour les pistes sélectionnées via OEmbed si nécessaire
     console.log(`[Spotify] Fetching real cover images for ${selectedTracks.length} selected tracks via OEmbed...`);
     const selectedTracksWithImages = await Promise.all(selectedTracks.map(async (track) => {
-        if (track.uri && track.uri.startsWith("spotify:track:")) {
-            const realImg = await fetchTrackImageViaOEmbed(track.uri, track.imageUrl);
+        if (track.url) {
+            const realImg = await fetchTrackImageViaOEmbed(track.url, track.imageUrl);
             return {
                 ...track,
                 imageUrl: realImg
@@ -263,17 +267,16 @@ export default async function selectTracks(playlistUrl, amount, player) {
     };
 }
 
-async function fetchTrackImageViaOEmbed(trackUri, fallbackUrl) {
-    if (!trackUri || !trackUri.startsWith("spotify:track:")) return fallbackUrl;
-    const trackId = trackUri.split(":")[2];
+async function fetchTrackImageViaOEmbed(trackUrl, fallbackUrl) {
+    if (!trackUrl) return fallbackUrl;
     try {
-        const response = await fetch(`https://open.spotify.com/oembed?url=https://open.spotify.com/track/${trackId}`);
+        const response = await fetch(`https://open.spotify.com/oembed?url=${encodeURIComponent(trackUrl)}`);
         if (response.ok) {
             const data = await response.json();
             return data.thumbnail_url || fallbackUrl;
         }
     } catch (e) {
-        console.error(`[Spotify OEmbed] Error fetching cover for ${trackId}:`, e);
+        console.error(`[Spotify OEmbed] Error fetching cover for ${trackUrl}:`, e);
     }
     return fallbackUrl;
 }

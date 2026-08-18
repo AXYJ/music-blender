@@ -199,16 +199,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   }, [socket, isConnected, roomCode, name]);
 
   // ----------------------------------------------------------------
-  // Demander les scores finaux au serveur à la fin de la partie
-  // ----------------------------------------------------------------
-  useEffect(() => {
-    if (turn > toPlay.length && toPlay.length > 0 && socket) {
-      console.log("Game finished on client, requesting final scores from server...");
-      socket.emit("get_final_scores");
-    }
-  }, [turn, toPlay, socket]);
-
-  // ----------------------------------------------------------------
   // Actions de jeu (envoi au serveur)
   // ----------------------------------------------------------------
 
@@ -271,11 +261,27 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     [socket],
   );
 
+  // ----------------------------------------------------------------
+  // Post Game
+  // ----------------------------------------------------------------
+
+  // Demande des résultats au serveur
+  useEffect(() => {
+    if (turn > toPlay.length && toPlay.length > 0 && socket) {
+      console.log(
+        "Game finished on client, requesting final scores from server...",
+      );
+      socket.emit("get_final_scores");
+      setView("result");
+    }
+  }, [turn, toPlay, socket]);
+
   // Relancer une partie
   const restart = useCallback(() => {
     console.log("restart");
     if (socket) {
       socket.emit("restart_game");
+      setView("lobby");
     }
   }, [socket]);
 

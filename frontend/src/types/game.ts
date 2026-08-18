@@ -2,7 +2,7 @@ import React from "react";
 import { Socket } from "socket.io-client";
 
 // Définition des vues et phases
-export type View = "home" | "lobby" | "game" | "final";
+export type View = "home" | "lobby" | "game" | "result";
 export type Phase = "hide-answer" | "show-answer";
 
 // Toutes les variables globales du jeu
@@ -80,4 +80,8 @@ export interface Player {
   artist_answer: boolean;
   artist_score?: number;
   track_answer: boolean;
+  artists_final_board?: Record<number, string>;
+  tracks_final_board?: Record<number, string>;
+  artists_scores_board?: Record<number, number>;
+  tracks_scores_board?: Record<number, boolean>;
 }

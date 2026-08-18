@@ -282,14 +282,14 @@ export default function Game() {
             />
           )}
           <h1>Music Blender</h1>
-          <section className="w-full relative overflow-hidden">
+          <section className="w-full md:w-1/2 relative overflow-hidden rounded-lg">
             {trackImage ? (
               <Image
                 src={trackImage}
                 alt={currentTrack.name || "Cover"}
                 width={100}
                 height={100}
-                className={`w-full aspect-square transition-all rounded-lg object-cover lg:w-1/2 lg:mx-auto ${phase === "guessing" ? "blur-md" : "blur-none duration-300"}`}
+                className={`w-full aspect-square transition-all object-cover  md:mx-auto ${phase === "guessing" ? "blur-md" : "blur-none duration-300"}`}
               />
             ) : (
               <div className="w-full aspect-square bg-gray-700 rounded-2xl flex items-center justify-center text-sm text-gray-400">
@@ -298,15 +298,25 @@ export default function Game() {
             )}
 
             <div
-              className={`absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center gap-1 transition-all duration-300 px-4 ${showAnswer ? "bg-black/75 opacity-100 pointer-events-auto lg:w-1/2 lg:left-1/2 lg:-translate-x-1/2 " : "bg-black/0 opacity-0 pointer-events-none lg:w-1/2 lg:left-1/2 lg:-translate-x-1/2"}`}
+              className={`absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center gap-1 transition-all duration-300 px-4 ${showAnswer ? "bg-black/75 opacity-100 pointer-events-auto  md:left-1/2 md:-translate-x-1/2 " : "bg-black/0 opacity-0 pointer-events-none md:left-1/2 md:-translate-x-1/2"}`}
             >
-              <p className="text-lg">La réponse est :</p>
-              <p className="text-2xl font-bold text-(--white)">
+              <p className="text-base">La réponse est :</p>
+              <p className="text-xl font-bold text-(--white)">
                 {currentTrack.artist}
               </p>
-              <p className="text-xl text-(--white)">{currentTrack.name}</p>
+              <div className="flex flex-col items-center">
+                <p className="text-lg text-(--white) text-center">
+                  {currentTrack.name}
+                </p>
+                {currentTrack.internationalName !==
+                  currentTrack.name.toLowerCase().replace(/\s+/g, "") && (
+                  <p className="text-md text-(--grey)/50 text-center italic">
+                    {currentTrack.internationalName}
+                  </p>
+                )}
+              </div>
             </div>
-            <div className="absolute top-2 right-2 lg:w-1/2">
+            <div className="absolute top-2 right-2">
               <p className="text-sm">
                 {turn}/{toPlay.length}
               </p>
@@ -352,6 +362,7 @@ export default function Game() {
                   value={artistGuess}
                   onFocus={() => {
                     if (phase !== "guessing") return;
+                    setGuessingSong(false);
                     setGuessingArtist(true);
                     const query = getArtistQuery(artistGuess);
                     if (query.length > 2) {
@@ -368,6 +379,10 @@ export default function Game() {
                     }
                   }}
                   onKeyDown={(e) => {
+                    if (e.key === "Tab") {
+                      setShowArtistSuggestions(false);
+                      return;
+                    }
                     if (showArtistSuggestions && filteredArtists.length > 0) {
                       if (e.key === "ArrowDown") {
                         e.preventDefault();
@@ -495,6 +510,7 @@ export default function Game() {
                   value={trackGuess}
                   onFocus={() => {
                     if (phase !== "guessing") return;
+                    setGuessingArtist(false);
                     setGuessingSong(true);
                     if (trackGuess.length > 2) {
                       setShowTrackSuggestions(true);
@@ -509,6 +525,10 @@ export default function Game() {
                     }
                   }}
                   onKeyDown={(e) => {
+                    if (e.key === "Tab") {
+                      setShowTrackSuggestions(false);
+                      return;
+                    }
                     if (showTrackSuggestions && filteredTracks.length > 0) {
                       if (e.key === "ArrowDown") {
                         e.preventDefault();
@@ -584,7 +604,7 @@ export default function Game() {
             </div>
           </section>
 
-          <div className="flex flex-col items-center w-[calc(100vw-4rem)] lg:w-1/3 max-w-3xl gap-2 fixed bottom-6 left-1/2 -translate-x-1/2">
+          <div className="flex flex-col items-center w-[calc(100vw-4rem)] md:w-1/2 max-w-lg gap-2 fixed bottom-6 left-1/2 -translate-x-1/2 pointer-events-none">
             <span className="text-sm font-semibold tracking-wider text-gray-300">
               {phase === "guessing"
                 ? `Temps restant : ${timeLeft}s`
@@ -592,7 +612,7 @@ export default function Game() {
             </span>
             <div className="w-full bg-(--white)/20 h-2 rounded-full overflow-hidden">
               <div
-                className={`h-full rounded-full transition-all duration-1000 ease-linear ${phase === "guessing" ? "bg-(--accent)" : "bg-green-500"}`}
+                className={`h-full rounded-full transition-all duration-1000 ease-linear ${phase === "guessing" ? "bg-(--accent)" : "bg-(--green)"}`}
                 style={{
                   width: `${((totalPhaseTime - timeLeft) / totalPhaseTime) * 100}%`,
                 }}
