@@ -9,6 +9,8 @@ import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 
 // Import des composants
+import Error from "../components/alert/Error";
+import Message from "../components/alert/Message";
 
 // Import du contexte
 import { useGame } from "../context/GameContext";
@@ -18,6 +20,7 @@ export default function Game() {
     toPlay,
     time,
     volume,
+    setVolume,
     database_artists = [],
     database_tracks = [],
     sendAnswer,
@@ -31,6 +34,10 @@ export default function Game() {
     setPhase,
     timeLeft,
     setTimeLeft,
+    error,
+    setError,
+    message,
+    setMessage,
   } = useGame();
 
   // Find current player profile
@@ -60,6 +67,19 @@ export default function Game() {
     const parts = input.split(",");
     return parts[parts.length - 1].trim();
   };
+
+  // Reset de l'erreur après 2 secondes
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+    if (error) {
+      timer = setTimeout(() => {
+        setError(null);
+      }, 2000);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [error]);
 
   const artistQuery = getArtistQuery(artistGuess);
 
@@ -225,15 +245,6 @@ export default function Game() {
     }
   }, [timeLeft, phase, volume]);
 
-  if (!toPlay || toPlay.length === 0) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-8">
-        <h1>Music Blender</h1>
-        <p>Chargement de la partie...</p>
-      </div>
-    );
-  }
-
   if (turn > toPlay.length) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-8 lg:my-16">
@@ -259,6 +270,22 @@ export default function Game() {
   const trackImage = currentTrack.imageUrl || null;
   const totalPhaseTime = phase === "guessing" ? time : 5;
   const showAnswer = phase === "answer";
+
+  const handleVolume = (operation: "up" | "down") => {
+    if (operation === "up") {
+      if (volume < 1) {
+        const newVolume = Math.min(1, Math.round((volume + 0.1) * 10) / 10);
+        setVolume(newVolume);
+        socket?.emit("volume", newVolume);
+      }
+    } else if (operation === "down") {
+      if (volume > 0) {
+        const newVolume = Math.max(0, Math.round((volume - 0.1) * 10) / 10);
+        setVolume(newVolume);
+        socket?.emit("volume", newVolume);
+      }
+    }
+  };
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4">
@@ -297,25 +324,52 @@ export default function Game() {
               </div>
             )}
 
-            <div
-              className={`absolute top-0 left-0 flex h-full w-full flex-col items-center justify-center gap-1 px-4 transition-all duration-300 ${showAnswer ? "pointer-events-auto bg-black/75 opacity-100 md:left-1/2 md:-translate-x-1/2" : "pointer-events-none bg-black/0 opacity-0 md:left-1/2 md:-translate-x-1/2"}`}
-            >
-              <p className="text-base">La réponse est :</p>
-              <p className="text-xl font-bold text-(--white)">
-                {currentTrack.artist}
-              </p>
-              <div className="flex flex-col items-center">
-                <p className="text-center text-lg text-(--white)">
-                  {currentTrack.name}
+            {/* Overlay de réponse attendu */}
+            {showAnswer && (
+              <div
+                className={`absolute top-0 left-0 flex h-full w-full flex-col items-center justify-center gap-1 bg-black/75 px-4 opacity-100 transition-all duration-300 md:left-1/2 md:-translate-x-1/2`}
+              >
+                <p className="text-base">La réponse est :</p>
+                <p className="text-xl font-bold text-(--white)">
+                  {currentTrack.artist}
                 </p>
-                {currentTrack.internationalName !==
-                  currentTrack.name.toLowerCase().replace(/\s+/g, "") && (
-                  <p className="text-md text-center text-(--grey)/50 italic">
-                    {currentTrack.internationalName}
+                <div className="flex flex-col items-center">
+                  <p className="text-center text-lg text-(--white)">
+                    {currentTrack.name}
                   </p>
-                )}
+                  {currentTrack.internationalName !==
+                    currentTrack.name.toLowerCase().replace(/\s+/g, "") && (
+                    <p className="text-md text-center text-(--grey)/50 italic">
+                      {currentTrack.internationalName}
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
+
+            {!showAnswer && (
+              <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-4">
+                <button
+                  className={`aspect-square h-8 w-8 rounded-full bg-(--white) text-(--background) transition-all duration-100 ease-out hover:scale-105 active:scale-95 ${volume === 0 ? "cursor-not-allowed opacity-50" : ""}`}
+                  onClick={() => {
+                    handleVolume("down");
+                  }}
+                >
+                  -
+                </button>
+                <p>{Math.round(volume * 10) / 10}</p>
+                <button
+                  className={`aspect-square h-8 w-8 rounded-full bg-(--white) text-(--background) transition-all duration-100 ease-out hover:scale-105 active:scale-95 ${volume === 1 ? "cursor-not-allowed opacity-50" : ""}`}
+                  onClick={() => {
+                    handleVolume("up");
+                  }}
+                >
+                  +
+                </button>
+              </div>
+            )}
+
+            {/* Compteur de tours */}
             <div className="absolute top-2 right-2">
               <p className="text-sm">
                 {turn}/{toPlay.length}
@@ -625,6 +679,10 @@ export default function Game() {
           </div>
         </>
       )}
+
+      {/* Affichage des erreurs */}
+      <Error error={error} setError={setError} />
+      <Message message={message} setMessage={setMessage} />
     </div>
   );
 }

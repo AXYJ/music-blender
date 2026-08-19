@@ -240,7 +240,7 @@ export default function Lobby() {
         </button>
         {isHost && (
           <button
-            className={`flex-1 rounded-full bg-(--accent) px-8 py-2 text-(--white) transition-all duration-300 ease-out hover:bg-(--accent)/60 hover:text-(--white) active:scale-95 ${players.filter((p) => p.isReady).length !== players.length ? "cursor-not-allowed opacity-50" : ""}`}
+            className={`flex-1 rounded-full bg-(--accent) px-8 py-2 text-(--white) transition-all duration-300 ease-out hover:bg-(--accent)/60 hover:text-(--white) active:scale-95 ${players.filter((p) => p.isReady).length !== players.length ? "cursor-not-allowed opacity-50" : ""} ${isLoading ? "cursor-not-allowed opacity-50" : ""}`}
             onClick={() => {
               setIsLoading(true);
               launchGame();

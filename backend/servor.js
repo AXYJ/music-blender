@@ -337,25 +337,36 @@ io.on("connection", (socket) => {
                 const allPlaylistTracks = [];
 
                 try {
+                    let hasError = false;
                     for (const p of room.players) {
                         if (p.playlistUrl && p.playlistUrl.trim() !== "") {
                             try {
                                 const result = await selectTracks(p.playlistUrl, room.musicAmount, p);
-                                p.tracks = result.selectedTracks;
-                                allPlaylistTracks.push(...result.tracks);
-                                room.toPlay.push(...result.selectedTracks);
+                                if (!result || !result.selectedTracks || result.selectedTracks.length === 0) {
+                                    p.tracks = [];
+                                    io.to(roomCode).emit("error", `La playlist de ${p.name} n'a pas pu être chargée.`);
+                                    hasError = true;
+                                } else {
+                                    p.tracks = result.selectedTracks;
+                                    allPlaylistTracks.push(...result.tracks);
+                                    room.toPlay.push(...result.selectedTracks);
+                                }
                             } catch (err) {
                                 console.error(`Error processing tracks for player ${p.name}:`, err);
+                                p.tracks = [];
+                                io.to(roomCode).emit("error", `La playlist de ${p.name} n'a pas pu être chargée.`);
+                                hasError = true;
                             }
                         } else {
                             p.tracks = [];
-                            io.to(roomCode).emit("error", `La playlist de ${p.name} n'a pas pu être chargée.`);
                         }
                     } 
 
-                    if (allPlaylistTracks.length < 1) {
+                    if (hasError || allPlaylistTracks.length < 1) {
                         room.isLoadingTracks = false;
-                        io.to(roomCode).emit("no_playlist", "Aucune musique trouvée dans les playlists.");
+                        if (allPlaylistTracks.length < 1 && !hasError) {
+                            io.to(roomCode).emit("no_playlist", "Aucune musique trouvée dans les playlists.");
+                        }
                         return;
                     }
 
