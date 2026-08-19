@@ -312,8 +312,17 @@ io.on("connection", (socket) => {
             room.players.forEach(p => {
                 p.playlistUrl = undefined;
                 p.inLobby = false;
+                p.isReady = p.isHost;
+                p.score = 0;
+                p.artists_final_board = {};
+                p.tracks_final_board = {};
+                p.artists_scores_board = {};
+                p.tracks_scores_board = {};
+                p.leavedPlayer = false;
             });
             room.isGameOver = false;
+            room.answers = {};
+            room.gameStartTime = null;
             room.isLoadingTracks = false;
             io.to(roomCode).emit("game_started", room.players);
         }
@@ -573,6 +582,7 @@ io.on("connection", (socket) => {
             const player = room.players.find((p) => p.socketId === socket.id);
             if (player) {
                 player.inLobby = true;
+                player.isReady = player.isHost;
                 room.isGameOver = true;
                 io.to(code).emit("room_updated", code, room.players);
                 checkAndResetGame(code, rooms, io);

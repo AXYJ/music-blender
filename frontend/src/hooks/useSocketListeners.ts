@@ -144,6 +144,7 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     socket.on("room_updated", handleRoomUpdated);
 
     const handleGameStarted = (players: Player[]) => {
+      setPlayers(players);
       socket.emit("send_playlist_url", playlistUrlRef.current);
     };
     socket.on("game_started", handleGameStarted);

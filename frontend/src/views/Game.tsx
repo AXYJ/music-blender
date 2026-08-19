@@ -348,25 +348,28 @@ export default function Game() {
             )}
 
             {!showAnswer && (
-              <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-4">
-                <button
-                  className={`aspect-square h-8 w-8 rounded-full bg-(--white) text-(--background) transition-all duration-100 ease-out hover:scale-105 active:scale-95 ${volume === 0 ? "cursor-not-allowed opacity-50" : ""}`}
-                  onClick={() => {
-                    handleVolume("down");
-                  }}
-                >
-                  -
-                </button>
-                <p>{Math.round(volume * 10) / 10}</p>
-                <button
-                  className={`aspect-square h-8 w-8 rounded-full bg-(--white) text-(--background) transition-all duration-100 ease-out hover:scale-105 active:scale-95 ${volume === 1 ? "cursor-not-allowed opacity-50" : ""}`}
-                  onClick={() => {
-                    handleVolume("up");
-                  }}
-                >
-                  +
-                </button>
-              </div>
+              <>
+                <div className="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 items-center gap-4">
+                  <button
+                    className={`aspect-square h-8 w-8 rounded-full bg-(--white) text-(--background) transition-all duration-100 ease-out hover:scale-105 active:scale-95 ${volume === 0 ? "cursor-not-allowed opacity-50" : ""}`}
+                    onClick={() => {
+                      handleVolume("down");
+                    }}
+                  >
+                    -
+                  </button>
+                  <p>{Math.round(volume * 10) / 10}</p>
+                  <button
+                    className={`aspect-square h-8 w-8 rounded-full bg-(--white) text-(--background) transition-all duration-100 ease-out hover:scale-105 active:scale-95 ${volume === 1 ? "cursor-not-allowed opacity-50" : ""}`}
+                    onClick={() => {
+                      handleVolume("up");
+                    }}
+                  >
+                    +
+                  </button>
+                </div>
+                <div className="overlay-cover absolute top-0 left-0 h-full w-full"></div>
+              </>
             )}
 
             {/* Compteur de tours */}
