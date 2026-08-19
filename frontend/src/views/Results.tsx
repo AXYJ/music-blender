@@ -32,7 +32,7 @@ export default function Results() {
   };
 
   return (
-    <div className="flex flex-col items-center gap-6 w-full max-w-4xl mx-auto px-4 my-16 relative">
+    <div className="relative mx-auto my-16 flex w-full max-w-4xl flex-col items-center gap-6 px-4">
       <h1 className="text-3xl font-bold">Résultat de la partie</h1>
 
       <section className="relative w-full overflow-hidden">
@@ -46,22 +46,22 @@ export default function Results() {
           {toPlay?.map((track, index) => (
             <article
               key={index}
-              className="w-full flex-shrink-0 flex flex-col gap-6 items-center relative"
+              className="relative flex w-full flex-shrink-0 flex-col items-center gap-6 p-4"
             >
               <div
-                className="carousel-item-top flex gap-4 items-end w-3/5 max-w-xs relative aspect-square cursor-pointer overflow-hidden rounded-lg"
+                className="carousel-item-top relative flex aspect-square w-3/5 max-w-xs cursor-pointer items-end gap-4 overflow-hidden rounded-lg transition-all duration-300 ease-out hover:scale-105 active:scale-95"
                 onClick={() => {
                   window.open(track.url, "_blank");
                 }}
               >
                 <Image
-                  className="w-full h-full object-cover"
+                  className="h-full w-full object-cover"
                   src={track.imageUrl}
                   alt={track.name}
                   width={250}
                   height={250}
                 />
-                <div className="flex flex-col absolute bottom-4 right-4 text-right z-10 pointer-events-none">
+                <div className="pointer-events-none absolute right-4 bottom-4 z-10 flex flex-col text-right">
                   <p className="artist-name text-sm font-semibold">
                     {track.artist}
                   </p>
@@ -69,17 +69,17 @@ export default function Results() {
                 </div>
               </div>
 
-              <div className="w-full max-w-xl overflow-x-auto max-h-[25vh] overflow-y-auto">
+              <div className="max-h-[25vh] w-full max-w-xl overflow-x-auto overflow-y-auto">
                 <table className="carousel-item-bottom w-full">
-                  <thead>
+                  <thead className="border-b-2 border-(--accent)">
                     <tr>
-                      <th className="px-4 py-2 text-center text-xs font-semibold uppercase tracking-wider">
+                      <th className="px-4 py-2 text-center text-xs font-semibold tracking-wider uppercase">
                         Joueur
                       </th>
-                      <th className="px-4 py-2 text-center text-xs font-semibold uppercase tracking-wider">
+                      <th className="px-4 py-2 text-center text-xs font-semibold tracking-wider uppercase">
                         Artiste(s)
                       </th>
-                      <th className="px-4 py-2 text-center text-xs font-semibold uppercase tracking-wider">
+                      <th className="px-4 py-2 text-center text-xs font-semibold tracking-wider uppercase">
                         Musique
                       </th>
                     </tr>
@@ -90,16 +90,20 @@ export default function Results() {
                         key={order}
                         className="carousel-item-bottom-player border-t border-white/5"
                       >
-                        <td className="px-4 py-3 font-semibold text-xs text-center">
+                        <td
+                          className={`px-4 py-3 text-center text-xs font-semibold ${
+                            order === 0 ? "pt-4" : ""
+                          }`}
+                        >
                           {player.name + " (" + player.score + ")"}
                         </td>
                         <td
-                          className={`px-4 py-3 text-xs text-center ${
+                          className={`px-4 py-3 text-center text-xs ${order === 0 ? "pt-4" : ""} ${
                             player.artists_final_board?.[index]
                               ? player.artists_scores_board?.[index] === 1
-                                ? "text-(--green) font-medium"
+                                ? "font-medium text-(--green)"
                                 : player.artists_scores_board?.[index] === 0.5
-                                  ? "text-amber-500 font-medium"
+                                  ? "font-medium text-amber-500"
                                   : "text-(--red)"
                               : ""
                           }`}
@@ -107,10 +111,10 @@ export default function Results() {
                           {player.artists_final_board?.[index] || ""}
                         </td>
                         <td
-                          className={`px-4 py-3 text-xs text-center ${
+                          className={`px-4 py-3 text-center text-xs ${order === 0 ? "pt-4" : ""} ${
                             player.tracks_final_board?.[index]
                               ? player.tracks_scores_board?.[index]
-                                ? "text-(--green) font-medium"
+                                ? "font-medium text-(--green)"
                                 : "text-(--red)"
                               : ""
                           }`}
@@ -128,9 +132,9 @@ export default function Results() {
       </section>
 
       {/* Action Buttons */}
-      <div className="flex gap-4 mt-4">
+      <div className="mt-4 flex gap-4">
         <button
-          className="rounded-full px-8 py-2 bg-(--accent) hover:bg-(--semiaccent) text-(--white) font-semibold transition-all cursor-pointer shadow-md hover:shadow-lg active:scale-95"
+          className="cursor-pointer rounded-full bg-(--accent) px-8 py-2 font-semibold text-(--white) shadow-md transition-all hover:scale-105 hover:bg-(--semiaccent) hover:shadow-lg active:scale-95"
           onClick={() => restart()}
         >
           Rejouer
@@ -141,13 +145,13 @@ export default function Results() {
       {toPlay.length > 1 && (
         <>
           <button
-            className="h-10 w-10 md:h-12 md:w-12 bg-(--accent) hover:bg-(--semiaccent) text-(--white) rounded-full absolute top-1/3 md:top-48 lg:top-56 left-4 -translate-y-1/2 flex items-center justify-center transition-all z-20 cursor-pointer shadow-lg active:scale-95"
+            className="absolute top-2/5 left-8 z-20 flex h-10 w-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-(--accent) text-(--white) shadow-lg transition-all hover:bg-(--semiaccent) active:scale-95 md:top-48 md:h-12 md:w-12 lg:top-56"
             onClick={prevTrack}
           >
             &#10094;
           </button>
           <button
-            className="h-10 w-10 md:h-12 md:w-12 bg-(--accent) hover:bg-(--semiaccent) text-(--white) rounded-full absolute top-1/3 md:top-48 lg:top-56 right-4 -translate-y-1/2 flex items-center justify-center transition-all z-20 cursor-pointer shadow-lg active:scale-95"
+            className="absolute top-2/5 right-8 z-20 flex h-10 w-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-(--accent) text-(--white) shadow-lg transition-all hover:bg-(--semiaccent) active:scale-95 md:top-48 md:h-12 md:w-12 lg:top-56"
             onClick={nextTrack}
           >
             &#10095;

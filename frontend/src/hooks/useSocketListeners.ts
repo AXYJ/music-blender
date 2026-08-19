@@ -74,12 +74,10 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     // Connexion & Cycle de vie
     // ----------------
     const handleConnect = () => {
-      console.log("Connecté au serveur ! ID:", socket.id);
       setIsConnected(true);
     };
 
     const handleConnectError = (err: Error) => {
-      console.error("Erreur de connexion socket:", err);
       setError("Erreur de connexion serveur");
       setIsConnected(false);
     };
@@ -122,8 +120,6 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     };
 
     const handleRoomUpdated = (roomCode: string, players: any[]) => {
-      console.log("Room updated:", roomCode);
-      console.log("Players", players);
       if (viewRef.current !== "game" && viewRef.current !== "result") {
         setView("lobby");
       }
@@ -237,9 +233,6 @@ export const useSocketListeners = (props: SocketListenersProps) => {
 
       setDatabaseArtists(mergedArtists);
       setDatabaseTracks(mergedTracks);
-      console.log(toPlay);
-      console.log(mergedArtists);
-      console.log(mergedTracks);
     };
 
     socket.on("data_loaded", handleDataLoaded);
@@ -266,7 +259,6 @@ export const useSocketListeners = (props: SocketListenersProps) => {
       artist_answer: boolean | number,
       track_answer: boolean,
     ) => {
-      console.log("Answer received:", name, artist_answer, track_answer);
       setPlayers((prev) =>
         prev.map((p) => {
           if (p.name === name) {
@@ -294,7 +286,6 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     };
 
     const handleFinalScores = (players: Player[]) => {
-      console.log("Final scores received from server:", players);
       setPlayers(players);
     };
 
@@ -312,7 +303,6 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     socket.on("no_playlist", handleNoPlaylist);
 
     const handleGameReset = (rules: any, players: Player[]) => {
-      console.log("Game reset:", rules, players);
       if (rules) {
         if (rules.musicAmount !== undefined) setMusicAmount(rules.musicAmount);
         if (rules.time !== undefined) setTime(rules.time);
@@ -324,7 +314,6 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     socket.on("game_reset", handleGameReset);
 
     const handleGameReconnected = (data: any) => {
-      console.log("Game reconnected synced data:", data);
       setToPlay(data.toPlay);
       setDatabaseArtists(data.database_artists);
       setDatabaseTracks(data.database_tracks);

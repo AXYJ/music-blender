@@ -13,7 +13,7 @@ export default function Section({
 }: SectionProps) {
   return (
     <section
-      className={`bg-(--semiaccent) p-4 rounded-2xl w-full gap-4 flex flex-col ${sectionClassName || ""}`}
+      className={`flex w-full flex-col gap-4 rounded-2xl bg-(--semiaccent) p-4 ${sectionClassName || ""}`}
     >
       <div className={className || "flex flex-col gap-4"}>{children}</div>
     </section>

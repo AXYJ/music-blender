@@ -94,7 +94,6 @@ io.on("connection", (socket) => {
             leavedPlayers: [],
         };
         socket.join(roomCode);
-        console.log(`[${new Date().toISOString()}] Room created: ${roomCode} with host ${name}`);
         socket.emit("room_created", roomCode, rooms[roomCode].players);
     })
 
@@ -248,19 +247,45 @@ io.on("connection", (socket) => {
 
     // Quitter une partie
     socket.on("leave_game", () => {
-        const roomCode = Array.from(socket.rooms).find((r) => r !== socket.id);
-        const room = rooms[roomCode];
-        if (room) {
+        let foundRoomCode = null;
+        let foundRoom = null;
+        let foundPlayer = null;
+
+        for (const code in rooms) {
+            const room = rooms[code];
             const player = room.players.find((p) => p.socketId === socket.id);
             if (player) {
-                player.leavedPlayer = true;
-                room.leavedPlayers = room.leavedPlayers || [];
-                room.leavedPlayers.push(player);
-                room.players = room.players.filter((p) => p.socketId !== socket.id);
-                console.log(`[${new Date().toISOString()}] User ${player.name} left room ${roomCode}`);
-                socket.leave(roomCode);
-                io.to(roomCode).emit("room_updated", roomCode, rooms[roomCode].players);
-                checkAndResetGame(roomCode, rooms, io);
+                foundRoomCode = code;
+                foundRoom = room;
+                foundPlayer = player;
+                break;
+            }
+        }
+
+        if (foundRoom && foundPlayer) {
+            foundPlayer.leavedPlayer = true;
+            foundRoom.leavedPlayers = foundRoom.leavedPlayers || [];
+            foundRoom.leavedPlayers.push(foundPlayer);
+            foundRoom.players = foundRoom.players.filter((p) => p.socketId !== socket.id);
+            console.log(`[${new Date().toISOString()}] User ${foundPlayer.name} left room ${foundRoomCode}`);
+            socket.leave(foundRoomCode);
+
+            // Si l'hôte est parti dans le lobby ou si la partie est finie, on attribue l'hôte à un autre joueur
+            if (foundPlayer.isHost && (!foundRoom.gameStartTime || foundRoom.isGameOver)) {
+                const newHost = foundRoom.players.find(p => !p.leavedPlayer);
+                if (newHost) {
+                    newHost.isHost = true;
+                    newHost.isReady = true;
+                }
+            }
+
+            // Si plus aucun joueur dans la room, on supprime la room
+            if (foundRoom.players.length === 0) {
+                delete rooms[foundRoomCode];
+                console.log(`[${new Date().toISOString()}] Room ${foundRoomCode} deleted because it is empty`);
+            } else {
+                io.to(foundRoomCode).emit("room_updated", foundRoomCode, foundRoom.players);
+                checkAndResetGame(foundRoomCode, rooms, io);
             }
         }
     });
@@ -273,7 +298,6 @@ io.on("connection", (socket) => {
             const player = room.players.find((p) => p.socketId === socket.id);
             if (player) {
                 player.isReady = isReady;
-                console.log(`[${new Date().toISOString()}] User ${player.name} is ${isReady ? "ready" : "not ready"}`);
                 io.to(roomCode).emit("room_updated", roomCode, rooms[roomCode].players);
             }
         }
@@ -290,6 +314,7 @@ io.on("connection", (socket) => {
                 p.inLobby = false;
             });
             room.isGameOver = false;
+            room.isLoadingTracks = false;
             io.to(roomCode).emit("game_started", room.players);
         }
     });
@@ -302,43 +327,38 @@ io.on("connection", (socket) => {
             const player = room.players.find((p) => p.socketId === socket.id);
             if (player) {
                 player.playlistUrl = playlistUrl || "";
-                console.log(`[${new Date().toISOString()}] Playlist URL set for player ${player.name} in room ${roomCode}: ${playlistUrl}`);
             }
 
-            // Vérifier si tous les joueurs ont répondu (url ou chaîne vide)
+            // Vérifier si tous les joueurs ont répondu (url ou chaîne vide) et qu'on ne charge pas déjà
             const allSubmitted = room.players.every((p) => p.playlistUrl !== undefined);
-            if (allSubmitted) {
-                console.log(`[${new Date().toISOString()}] All playlist submissions received. Players state:`);
-                room.players.forEach(p => {
-                    console.log(`  -> Player "${p.name}" (Socket: ${p.socketId}): URL="${p.playlistUrl}"`);
-                });
-                console.log(`[${new Date().toISOString()}] Loading tracks...`);
+            if (allSubmitted && !room.isLoadingTracks) {
+                room.isLoadingTracks = true;
                 room.toPlay = [];
                 const allPlaylistTracks = [];
 
-                for (const p of room.players) {
-                    if (p.playlistUrl && p.playlistUrl.trim() !== "") {
-                        try {
-                            const result = await selectTracks(p.playlistUrl, room.musicAmount, p);
-                            p.tracks = result.selectedTracks;
-                            allPlaylistTracks.push(...result.tracks);
-                            room.toPlay.push(...result.selectedTracks);
-                            console.log(`[Spotify] Loaded ${result.tracks.length} tracks (${result.selectedTracks.length} selected) for player "${p.name}"`);
-                        } catch (err) {
-                            console.error(`Error processing tracks for player ${p.name}:`, err);
-                        }
-                    } else {
-                        console.log(`[Spotify] No playlist URL provided for player "${p.name}" (using empty list)`);
-                        p.tracks = [];
-                    }
-                } 
-
-                if (allPlaylistTracks.length < 1) {
-                    io.to(roomCode).emit("no_playlist", "No tracks found in any playlist");
-                    return;
-                }
-
                 try {
+                    for (const p of room.players) {
+                        if (p.playlistUrl && p.playlistUrl.trim() !== "") {
+                            try {
+                                const result = await selectTracks(p.playlistUrl, room.musicAmount, p);
+                                p.tracks = result.selectedTracks;
+                                allPlaylistTracks.push(...result.tracks);
+                                room.toPlay.push(...result.selectedTracks);
+                            } catch (err) {
+                                console.error(`Error processing tracks for player ${p.name}:`, err);
+                            }
+                        } else {
+                            p.tracks = [];
+                            io.to(roomCode).emit("error", `La playlist de ${p.name} n'a pas pu être chargée.`);
+                        }
+                    } 
+
+                    if (allPlaylistTracks.length < 1) {
+                        room.isLoadingTracks = false;
+                        io.to(roomCode).emit("no_playlist", "Aucune musique trouvée dans les playlists.");
+                        return;
+                    }
+
                     // Créer des databases uniques pour les artistes (séparés par feat) et les musiques
                     const seenArtists = new Set();
                     const seenTracks = new Set();
@@ -385,10 +405,11 @@ io.on("connection", (socket) => {
                         url: track.url || ""
                     }));
                     room.gameStartTime = Date.now();
+                    room.isLoadingTracks = false;
                     // Envoyer au front
                     io.to(roomCode).emit("data_loaded", room.toPlay, room.database_artists, room.database_tracks);
                 } catch (processingErr) {
-                    console.error("Error during game data processing:", processingErr);
+                    room.isLoadingTracks = false;
                     socket.emit("error", "Une erreur interne est survenue lors de la préparation de la partie.");
                 }
             }
@@ -405,7 +426,6 @@ io.on("connection", (socket) => {
         const room = rooms[roomCode];
         if (room) {
             room.musicAmount = amount;
-            console.log(`[${new Date().toISOString()}] Music amount set to ${amount}`);
             io.to(roomCode).emit("game-setting", "music_amount", amount);
         }
     });
@@ -416,7 +436,6 @@ io.on("connection", (socket) => {
         const room = rooms[roomCode];
         if (room) {
             room.time = time;
-            console.log(`[${new Date().toISOString()}] Time set to ${time}`);
             io.to(roomCode).emit("game-setting", "time", time);
         }
     });
@@ -532,7 +551,6 @@ io.on("connection", (socket) => {
         const roomCode = Array.from(socket.rooms).find((r) => r !== socket.id);
         const room = rooms[roomCode];
         if (room) {
-            console.log("Sending final scores:", JSON.stringify(room.players, null, 2));
             socket.emit("final_scores", room.players);
         }
     });
@@ -710,6 +728,7 @@ export const checkAndResetGame = (roomCode, rooms, io) => {
         room.isGameOver = false;
         room.answers = {};
         room.gameStartTime = null;
+        room.isLoadingTracks = false;
 
         const rulesObj = {
             musicAmount: room.musicAmount,

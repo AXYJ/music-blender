@@ -227,7 +227,7 @@ export default function Game() {
 
   if (!toPlay || toPlay.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-8 min-h-screen justify-center">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-8">
         <h1>Music Blender</h1>
         <p>Chargement de la partie...</p>
       </div>
@@ -236,7 +236,7 @@ export default function Game() {
 
   if (turn > toPlay.length) {
     return (
-      <div className="flex flex-col items-center gap-8 min-h-screen justify-center lg:my-16">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-8 lg:my-16">
         <h1 className="text-4xl font-bold text-(--accent)">
           {players.map((p) => (
             <div key={p.socketId}>
@@ -246,7 +246,7 @@ export default function Game() {
         </h1>
         <p className="text-xl">{"Merci d'avoir joué."}</p>
         <button
-          className="rounded-full px-8 py-2 bg-(--accent) text-(--white) cursor-pointer"
+          className="cursor-pointer rounded-full bg-(--accent) px-8 py-2 text-(--white)"
           onClick={() => restart()}
         >
           Rejouer
@@ -261,11 +261,11 @@ export default function Game() {
   const showAnswer = phase === "answer";
 
   return (
-    <div className="flex flex-col items-center gap-4 min-h-screen justify-center">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4">
       <audio ref={audioRef} autoPlay src={currentTrack.previewUrl}></audio>
 
       {phase === "transition" ? (
-        <div className="bg-black w-screen h-screen fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex h-screen w-screen items-center justify-center bg-black">
           {/* Écran noir durant la transition */}
         </div>
       ) : (
@@ -282,35 +282,35 @@ export default function Game() {
             />
           )}
           <h1>Music Blender</h1>
-          <section className="w-full md:w-1/2 relative overflow-hidden rounded-lg">
+          <section className="relative w-full overflow-hidden rounded-lg md:w-1/2">
             {trackImage ? (
               <Image
                 src={trackImage}
                 alt={currentTrack.name || "Cover"}
                 width={100}
                 height={100}
-                className={`w-full aspect-square transition-all object-cover  md:mx-auto ${phase === "guessing" ? "blur-md" : "blur-none duration-300"}`}
+                className={`aspect-square w-full object-cover transition-all md:mx-auto ${phase === "guessing" ? "blur-md" : "blur-none duration-300"}`}
               />
             ) : (
-              <div className="w-full aspect-square bg-gray-700 rounded-2xl flex items-center justify-center text-sm text-gray-400">
+              <div className="flex aspect-square w-full items-center justify-center rounded-2xl bg-gray-700 text-sm text-gray-400">
                 {"Pas d'image"}
               </div>
             )}
 
             <div
-              className={`absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center gap-1 transition-all duration-300 px-4 ${showAnswer ? "bg-black/75 opacity-100 pointer-events-auto  md:left-1/2 md:-translate-x-1/2 " : "bg-black/0 opacity-0 pointer-events-none md:left-1/2 md:-translate-x-1/2"}`}
+              className={`absolute top-0 left-0 flex h-full w-full flex-col items-center justify-center gap-1 px-4 transition-all duration-300 ${showAnswer ? "pointer-events-auto bg-black/75 opacity-100 md:left-1/2 md:-translate-x-1/2" : "pointer-events-none bg-black/0 opacity-0 md:left-1/2 md:-translate-x-1/2"}`}
             >
               <p className="text-base">La réponse est :</p>
               <p className="text-xl font-bold text-(--white)">
                 {currentTrack.artist}
               </p>
               <div className="flex flex-col items-center">
-                <p className="text-lg text-(--white) text-center">
+                <p className="text-center text-lg text-(--white)">
                   {currentTrack.name}
                 </p>
                 {currentTrack.internationalName !==
                   currentTrack.name.toLowerCase().replace(/\s+/g, "") && (
-                  <p className="text-md text-(--grey)/50 text-center italic">
+                  <p className="text-md text-center text-(--grey)/50 italic">
                     {currentTrack.internationalName}
                   </p>
                 )}
@@ -323,15 +323,15 @@ export default function Game() {
             </div>
           </section>
 
-          <section className="flex flex-col gap-4 w-full">
+          <section className="flex w-full flex-col gap-4">
             {/* Wrapper Artiste */}
-            <div className="h-18 w-full relative">
+            <div className="relative h-18 w-full">
               <motion.div
                 layout
                 transition={{ type: "spring", stiffness: 350, damping: 35 }}
                 className={`flex flex-col ${
                   guessingArtist
-                    ? "fixed top-[20%] left-1/2 -translate-x-1/2 z-50 w-80 max-w-[90vw]"
+                    ? "fixed top-[20%] left-1/2 z-50 w-80 max-w-[90vw] -translate-x-1/2"
                     : "absolute inset-0"
                 }`}
                 onClick={() => {
@@ -344,20 +344,20 @@ export default function Game() {
                   }
                 }}
               >
-                <label htmlFor="artist-guess" className="text-xl mb-1">
+                <label htmlFor="artist-guess" className="mb-1 text-xl">
                   Artiste
                 </label>
                 <input
                   id="artist-guess"
                   type="text"
-                  className={`w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-(--accent) ${
+                  className={`w-full rounded-lg px-4 py-2 focus:ring-2 focus:ring-(--accent) focus:outline-none ${
                     phase === "answer"
                       ? me?.artist_score === 1
                         ? "bg-(--green) text-white"
                         : me?.artist_score === 0.5
                           ? "bg-amber-500 text-white"
                           : "bg-(--red) text-white"
-                      : "text-(--background) bg-(--white)"
+                      : "bg-(--white) text-(--background)"
                   }`}
                   value={artistGuess}
                   onFocus={() => {
@@ -431,7 +431,7 @@ export default function Game() {
                   autoComplete="off"
                 />
                 {showArtistSuggestions && artistQuery.length > 2 && (
-                  <div className="absolute top-full left-0 right-0 z-50 mt-2 max-h-60 overflow-y-auto rounded-xl bg-neutral-900/95 border border-neutral-800/80 shadow-2xl backdrop-blur-md overflow-hidden flex flex-col">
+                  <div className="absolute top-full right-0 left-0 z-50 mt-2 flex max-h-60 flex-col overflow-hidden overflow-y-auto rounded-xl border border-neutral-800/80 bg-neutral-900/95 shadow-2xl backdrop-blur-md">
                     {filteredArtists.length > 0 ? (
                       filteredArtists.map((artist, idx) => (
                         <div
@@ -450,13 +450,15 @@ export default function Game() {
                             setShowArtistSuggestions(false);
                             setActiveArtistIndex(-1);
                           }}
-                          className={`px-4 py-3 text-sm transition-colors duration-150 flex items-center justify-between border-b border-neutral-800/50 last:border-0 cursor-pointer ${
+                          className={`grid cursor-pointer grid-cols-3 items-center justify-between border-b border-neutral-800/50 px-4 py-3 text-sm transition-colors duration-150 last:border-0 ${
                             idx === activeArtistIndex
                               ? "bg-(--semiaccent) text-(--white)"
                               : "text-gray-200 hover:bg-(--semiaccent) hover:text-(--white)"
                           }`}
                         >
-                          <span className="font-medium">{artist.artist}</span>
+                          <span className="col-span-2 font-medium">
+                            {artist.artist}
+                          </span>
                           {artist.internationalArtist &&
                             artist.internationalArtist !== artist.artist && (
                               <span className="text-xs text-gray-400 italic">
@@ -476,13 +478,13 @@ export default function Game() {
             </div>
 
             {/* Wrapper Chanson */}
-            <div className="h-18 w-full relative">
+            <div className="relative h-18 w-full">
               <motion.div
                 layout
                 transition={{ type: "spring", stiffness: 350, damping: 35 }}
                 className={`flex flex-col ${
                   guessingSong
-                    ? "fixed top-[20%] left-1/2 -translate-x-1/2 z-50 w-80 max-w-[90vw]"
+                    ? "fixed top-[20%] left-1/2 z-50 w-80 max-w-[90vw] -translate-x-1/2"
                     : "absolute inset-0"
                 }`}
                 onClick={() => {
@@ -494,18 +496,18 @@ export default function Game() {
                   }
                 }}
               >
-                <label htmlFor="track-guess" className="text-xl mb-1">
+                <label htmlFor="track-guess" className="mb-1 text-xl">
                   Chanson
                 </label>
                 <input
                   id="track-guess"
                   type="text"
-                  className={`w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-(--accent) ${
+                  className={`w-full rounded-lg px-4 py-2 focus:ring-2 focus:ring-(--accent) focus:outline-none ${
                     phase === "answer"
                       ? me?.track_answer
                         ? "bg-(--green) text-white"
                         : "bg-(--red) text-white"
-                      : "text-(--background) bg-(--white)"
+                      : "bg-(--white) text-(--background)"
                   }`}
                   value={trackGuess}
                   onFocus={() => {
@@ -567,7 +569,7 @@ export default function Game() {
                   autoComplete="off"
                 />
                 {showTrackSuggestions && trackGuess.length > 2 && (
-                  <div className="absolute top-full left-0 right-0 z-50 mt-2 max-h-60 overflow-y-auto rounded-xl bg-neutral-900/95 border border-neutral-800/80 shadow-2xl backdrop-blur-md overflow-hidden flex flex-col">
+                  <div className="absolute top-full right-0 left-0 z-50 mt-2 flex max-h-60 flex-col overflow-hidden overflow-y-auto rounded-xl border border-neutral-800/80 bg-neutral-900/95 shadow-2xl backdrop-blur-md">
                     {filteredTracks.length > 0 ? (
                       filteredTracks.map((track, idx) => (
                         <div
@@ -578,16 +580,18 @@ export default function Game() {
                             setShowTrackSuggestions(false);
                             setGuessingSong(false);
                           }}
-                          className={`px-4 py-3 text-sm transition-colors duration-150 flex items-center justify-between border-b border-neutral-800/50 last:border-0 cursor-pointer ${
+                          className={`grid cursor-pointer grid-cols-3 items-center justify-between border-b border-neutral-800/50 px-4 py-3 text-sm transition-colors duration-150 last:border-0 ${
                             idx === activeTrackIndex
                               ? "bg-(--semiaccent) text-(--white)"
                               : "text-gray-200 hover:bg-(--semiaccent) hover:text-(--white)"
                           }`}
                         >
-                          <span className="font-medium">{track.name}</span>
+                          <span className="col-span-2 font-medium">
+                            {track.name}
+                          </span>
                           {track.internationalName &&
                             track.internationalName !== track.name && (
-                              <span className="text-xs text-gray-400 italic">
+                              <span className="text-xs break-all text-gray-400 italic">
                                 ({track.internationalName})
                               </span>
                             )}
@@ -604,13 +608,13 @@ export default function Game() {
             </div>
           </section>
 
-          <div className="flex flex-col items-center w-[calc(100vw-4rem)] md:w-1/2 max-w-lg gap-2 fixed bottom-6 left-1/2 -translate-x-1/2 pointer-events-none">
+          <div className="pointer-events-none fixed bottom-6 left-1/2 flex w-[calc(100vw-4rem)] max-w-lg -translate-x-1/2 flex-col items-center gap-2 md:w-1/2">
             <span className="text-sm font-semibold tracking-wider text-gray-300">
               {phase === "guessing"
                 ? `Temps restant : ${timeLeft}s`
                 : `Révélation : ${timeLeft}s`}
             </span>
-            <div className="w-full bg-(--white)/20 h-2 rounded-full overflow-hidden">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-(--white)/20">
               <div
                 className={`h-full rounded-full transition-all duration-1000 ease-linear ${phase === "guessing" ? "bg-(--accent)" : "bg-(--green)"}`}
                 style={{

@@ -157,7 +157,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
     // Initialisation de la connexion
     const socketUrl = getSocketUrl();
-    console.log("Socket connection target URL:", socketUrl);
     const newSocket = io(socketUrl, {
       transports: ["polling", "websocket"],
     });
@@ -191,9 +190,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (socket && isConnected && roomCode && name) {
       const id = localStorage.getItem("id");
-      console.log(
-        `Tentative de reconnexion automatique à la room ${roomCode} avec l'ID ${id}`,
-      );
       socket.emit("join_game", roomCode, id, name);
     }
   }, [socket, isConnected, roomCode, name]);
@@ -268,9 +264,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   // Demande des résultats au serveur
   useEffect(() => {
     if (turn > toPlay.length && toPlay.length > 0 && socket) {
-      console.log(
-        "Game finished on client, requesting final scores from server...",
-      );
       socket.emit("get_final_scores");
       setView("result");
     }
@@ -278,7 +271,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
   // Relancer une partie
   const restart = useCallback(() => {
-    console.log("restart");
     if (socket) {
       socket.emit("restart_game");
       setView("lobby");

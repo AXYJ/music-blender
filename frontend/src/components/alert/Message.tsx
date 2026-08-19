@@ -17,16 +17,16 @@ export default function Message({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.2 }}
-          className="fixed top-8 left-1/2 transform -translate-x-1/2 z-50 pl-6 pr-10 py-3 bg-(--green) text-(--white) rounded-lg shadow-lg backdrop-blur-md flex items-center gap-3 w-[calc(100%-4rem)] justify-center max-w-[704px]"
+          className="fixed top-8 left-1/2 z-50 flex w-[calc(100%-4rem)] max-w-[704px] -translate-x-1/2 transform items-center justify-center gap-3 rounded-lg bg-(--green) py-3 pr-10 pl-6 text-(--white) shadow-lg backdrop-blur-md"
         >
           <span className="font-medium">{message}</span>
           <button
             onClick={() => setMessage("")}
-            className="ml-2 text-(--white) transition-colors cursor-pointer absolute top-1/2 right-4 -translate-y-1/2"
+            className="absolute top-1/2 right-4 ml-2 -translate-y-1/2 cursor-pointer text-(--white) transition-colors"
             aria-label="Fermer"
           >
             <svg
-              className="w-4 h-4"
+              className="h-4 w-4"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"

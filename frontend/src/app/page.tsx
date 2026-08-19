@@ -31,7 +31,7 @@ function GameContent() {
 
 export default function App() {
   return (
-    <main className="min-h-screen px-8 md:max-w-lg lg:max-w-3xl w-full mx-auto">
+    <main className="mx-auto min-h-screen w-full px-8 md:max-w-lg lg:max-w-3xl">
       <GameProvider>
         <GameContent />
       </GameProvider>

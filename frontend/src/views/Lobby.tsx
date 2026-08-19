@@ -37,6 +37,8 @@ export default function Lobby() {
   const isHost = me?.isHost || false;
   const isReady = me?.isReady || false;
 
+  const [isLoading, setIsLoading] = useState(false);
+
   // Gestion du nombre de musique par joueur
   const handleMusicAmount = (operation: "up" | "down") => {
     if (operation === "up") {
@@ -100,16 +102,23 @@ export default function Lobby() {
     };
   }, [error]);
 
+  // Reset de l'état isLoading en cas d'erreur
+  useEffect(() => {
+    if (error) {
+      setIsLoading(false);
+    }
+  }, [error]);
+
   return (
-    <div className="flex flex-col items-center gap-8 my-16 w-full">
-      <h1 className="text-4xl font-bold text-(--accent) text-center">
+    <div className="my-16 flex w-full flex-col items-center gap-8">
+      <h1 className="text-center text-4xl font-bold text-(--accent)">
         Music Blender
       </h1>
 
-      <div className="flex flex-col gap-4 w-full">
+      <div className="flex w-full flex-col gap-4">
         <div className="flex flex-col items-center gap-8">
           <p
-            className="text-xl font-bold text-(--white) text-center cursor-pointer"
+            className="cursor-pointer text-center text-xl font-bold text-(--white) transition-all duration-100 ease-out hover:scale-105 active:scale-95"
             onClick={() => {
               handleCopyCode();
             }}
@@ -118,24 +127,24 @@ export default function Lobby() {
             Code de la partie : {roomCode}
           </p>
         </div>
-        <div className="flex flex-col items-center gap-4 w-full lg:grid lg:grid-cols-3 lg:items-stretch">
+        <div className="flex w-full flex-col items-center gap-4 lg:grid lg:grid-cols-3 lg:items-stretch">
           <Section
             sectionClassName="lg:h-full"
-            className="flex flex-col gap-4 h-full"
+            className="flex h-full flex-col gap-4"
           >
             <h2>Liste des joueurs</h2>
-            <div className="flex flex-col gap-2 flex-1 min-h-48 overflow-y-auto">
+            <div className="flex min-h-48 flex-1 flex-col gap-2 overflow-y-auto">
               {players.map((player) => (
                 <p
                   key={player.id}
-                  className={`px-3 py-2 rounded-full transition-all duration-300 ${player.isReady ? "text-(--white) bg-(--accent)" : "text-(--background) bg-(--grey)"}`}
+                  className={`rounded-full px-3 py-2 transition-all duration-300 ${player.isReady ? "bg-(--accent) text-(--white)" : "bg-(--grey) text-(--background)"}`}
                 >
                   {player.name}
                 </p>
               ))}
             </div>
           </Section>
-          <div className="flex flex-col items-center gap-4 w-full lg:col-span-2">
+          <div className="flex w-full flex-col items-center gap-4 lg:col-span-2">
             <Section>
               <h2>Paramètres de la partie</h2>
               <div className="flex flex-col gap-6">
@@ -144,7 +153,7 @@ export default function Lobby() {
                   <div className="flex items-center justify-center gap-4">
                     {isHost && (
                       <button
-                        className={`rounded-full bg-(--white) aspect-square text-(--background) h-8 w-8 ${musicAmount === 1 ? "opacity-50 cursor-not-allowed" : ""}`}
+                        className={`aspect-square h-8 w-8 rounded-full bg-(--white) text-(--background) transition-all duration-100 ease-out hover:scale-105 active:scale-95 ${musicAmount === 1 ? "cursor-not-allowed opacity-50" : ""}`}
                         onClick={() => {
                           handleMusicAmount("down");
                         }}
@@ -155,7 +164,7 @@ export default function Lobby() {
                     <p>{musicAmount}</p>
                     {isHost && (
                       <button
-                        className={`rounded-full bg-(--white) aspect-square text-(--background) h-8 w-8 ${musicAmount === 20 ? "opacity-50 cursor-not-allowed" : ""}`}
+                        className={`aspect-square h-8 w-8 rounded-full bg-(--white) text-(--background) transition-all duration-100 ease-out hover:scale-105 active:scale-95 ${musicAmount === 20 ? "cursor-not-allowed opacity-50" : ""}`}
                         onClick={() => {
                           handleMusicAmount("up");
                         }}
@@ -170,7 +179,7 @@ export default function Lobby() {
                   <div className="flex items-center justify-center gap-4">
                     {isHost && (
                       <button
-                        className={`rounded-full bg-(--white) aspect-square text-(--background) h-8 w-8 ${time === 5 ? "opacity-50 cursor-not-allowed" : ""}`}
+                        className={`aspect-square h-8 w-8 rounded-full bg-(--white) text-(--background) transition-all duration-100 ease-out hover:scale-105 active:scale-95 ${time === 5 ? "cursor-not-allowed opacity-50" : ""}`}
                         onClick={() => {
                           handleTime("down");
                         }}
@@ -181,7 +190,7 @@ export default function Lobby() {
                     <p>{time}</p>
                     {isHost && (
                       <button
-                        className={`rounded-full bg-(--white) aspect-square text-(--background) h-8 w-8 ${time === 30 ? "opacity-50 cursor-not-allowed" : ""}`}
+                        className={`aspect-square h-8 w-8 rounded-full bg-(--white) text-(--background) transition-all duration-100 ease-out hover:scale-105 active:scale-95 ${time === 30 ? "cursor-not-allowed opacity-50" : ""}`}
                         onClick={() => {
                           handleTime("up");
                         }}
@@ -201,7 +210,7 @@ export default function Lobby() {
                   <select
                     name="stream-service"
                     id="stream"
-                    className="rounded-md p-2 bg-(--white) text-(--background)"
+                    className="rounded-md bg-(--white) p-2 text-(--background)"
                   >
                     <option value="spotify">Spotify</option>
                     {/* <option value="deezer">Deezer</option> */}
@@ -211,7 +220,7 @@ export default function Lobby() {
                   <p>URL de la playlist</p>
                   <input
                     type="text"
-                    className="h-8 w-full px-4 rounded-lg text-base bg-(--white) text-(--background)"
+                    className="h-8 w-full rounded-lg bg-(--white) px-4 text-base text-(--background)"
                     value={playlistUrl}
                     onChange={(e) => setPlaylistUrl(e.target.value)}
                   />
@@ -222,26 +231,31 @@ export default function Lobby() {
         </div>
       </div>
 
-      <div className="w-full flex justify-between gap-4">
+      <div className="flex w-full justify-between gap-4">
         <button
-          className="rounded-full px-8 py-2 bg-(--white) text-(--background) flex-1"
+          className="flex-1 rounded-full bg-(--white) px-8 py-2 text-(--background) transition-all duration-300 ease-out hover:bg-(--accent)/60 hover:text-(--white) active:scale-95"
           onClick={quitGame}
         >
           Quitter
         </button>
         {isHost && (
           <button
-            className="rounded-full px-8 py-2 bg-(--accent) text-(--white) flex-1"
+            className={`flex-1 rounded-full bg-(--accent) px-8 py-2 text-(--white) transition-all duration-300 ease-out hover:bg-(--accent)/60 hover:text-(--white) active:scale-95 ${players.filter((p) => p.isReady).length !== players.length ? "cursor-not-allowed opacity-50" : ""}`}
             onClick={() => {
+              setIsLoading(true);
               launchGame();
             }}
+            disabled={
+              players.filter((p) => p.isReady).length !== players.length ||
+              isLoading
+            }
           >
-            Lancer
+            Lancer ({players.filter((p) => p.isReady).length}/{players.length})
           </button>
         )}
         {!isHost && (
           <button
-            className={`rounded-full px-8 py-2 transition-colors  flex-1 duration-300 ${!isReady ? "bg-(--accent) text-(--white)" : "bg-(--grey) text-(--background)"}`}
+            className={`flex-1 rounded-full px-8 py-2 transition-all duration-300 ease-out hover:bg-(--accent)/60 hover:text-(--white) active:scale-95 ${!isReady ? "bg-(--accent) text-(--white)" : "bg-(--semiaccent) text-(--white)"}`}
             onClick={() => {
               beReady();
             }}
