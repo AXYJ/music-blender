@@ -38,6 +38,7 @@ export default function Game() {
     setError,
     message,
     setMessage,
+    quitGame,
   } = useGame();
 
   // Find current player profile
@@ -184,9 +185,14 @@ export default function Game() {
         setShowTrackSuggestions(false);
         sendAnswer(artistGuess, trackGuess, turn);
       } else if (phase === "answer") {
-        // Transition to inter-turn pause phase (2 seconds) - music fades out!
-        setPhase("transition");
-        setTimeLeft(2);
+        if (turn === toPlay.length) {
+          // Si c'est le dernier morceau, on passe directement aux résultats sans transition
+          setTurn((prev) => prev + 1);
+        } else {
+          // Transition to inter-turn pause phase (2 seconds) - music fades out!
+          setPhase("transition");
+          setTimeLeft(2);
+        }
       } else if (phase === "transition") {
         // Transition to next turn, restart guessing (time seconds)
         setTurn((prev) => prev + 1);
@@ -204,7 +210,20 @@ export default function Game() {
         );
       }
     }
-  }, [timeLeft, phase, time]);
+  }, [
+    timeLeft,
+    phase,
+    time,
+    turn,
+    toPlay,
+    artistGuess,
+    trackGuess,
+    sendAnswer,
+    setPlayers,
+    setTurn,
+    setPhase,
+    setTimeLeft,
+  ]);
 
   // Local decrescendo (fade out) of the audio during the last 2s of the answer phase
   useEffect(() => {
@@ -245,30 +264,22 @@ export default function Game() {
     }
   }, [timeLeft, phase, volume]);
 
-  if (turn > toPlay.length) {
+  const currentTrack = toPlay[turn - 1];
+
+  if (!currentTrack) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-8 lg:my-16">
-        <h1 className="text-4xl font-bold text-(--accent)">
-          {players.map((p) => (
-            <div key={p.socketId}>
-              {p.name} : {p.score}
-            </div>
-          ))}
-        </h1>
-        <p className="text-xl">{"Merci d'avoir joué."}</p>
-        <button
-          className="cursor-pointer rounded-full bg-(--accent) px-8 py-2 text-(--white)"
-          onClick={() => restart()}
-        >
-          Rejouer
-        </button>
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-(--accent) border-t-transparent"></div>
+          <p className="text-lg text-gray-400">Chargement de la partie...</p>
+        </div>
       </div>
     );
   }
 
-  const currentTrack = toPlay[turn - 1];
   const trackImage = currentTrack.imageUrl || null;
-  const totalPhaseTime = phase === "guessing" ? time : 5;
+  const totalPhaseTime =
+    phase === "guessing" ? time : phase === "transition" ? 2 : 5;
   const showAnswer = phase === "answer";
 
   const handleVolume = (operation: "up" | "down") => {
@@ -291,11 +302,7 @@ export default function Game() {
     <div className="flex min-h-screen flex-col items-center justify-center gap-4">
       <audio ref={audioRef} autoPlay src={currentTrack.previewUrl}></audio>
 
-      {phase === "transition" ? (
-        <div className="fixed inset-0 z-50 flex h-screen w-screen items-center justify-center bg-black">
-          {/* Écran noir durant la transition */}
-        </div>
-      ) : (
+      {phase !== "transition" && (
         <>
           {(guessingArtist || guessingSong) && (
             <div
@@ -380,7 +387,7 @@ export default function Game() {
             </div>
           </section>
 
-          <section className="flex w-full flex-col gap-4">
+          <section className="relative flex w-full flex-col gap-4">
             {/* Wrapper Artiste */}
             <div className="relative h-18 w-full">
               <motion.div
@@ -518,7 +525,7 @@ export default function Game() {
                           </span>
                           {artist.internationalArtist &&
                             artist.internationalArtist !== artist.artist && (
-                              <span className="text-xs text-gray-400 italic">
+                              <span className="text-right text-xs text-gray-400 italic">
                                 ({artist.internationalArtist})
                               </span>
                             )}
@@ -648,7 +655,7 @@ export default function Game() {
                           </span>
                           {track.internationalName &&
                             track.internationalName !== track.name && (
-                              <span className="text-xs break-all text-gray-400 italic">
+                              <span className="text-right text-xs text-gray-400 italic">
                                 ({track.internationalName})
                               </span>
                             )}
@@ -664,24 +671,56 @@ export default function Game() {
               </motion.div>
             </div>
           </section>
-
-          <div className="pointer-events-none fixed bottom-6 left-1/2 flex w-[calc(100vw-4rem)] max-w-lg -translate-x-1/2 flex-col items-center gap-2 md:w-1/2">
-            <span className="text-sm font-semibold tracking-wider text-gray-300">
-              {phase === "guessing"
-                ? `Temps restant : ${timeLeft}s`
-                : `Révélation : ${timeLeft}s`}
-            </span>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-(--white)/20">
-              <div
-                className={`h-full rounded-full transition-all duration-1000 ease-linear ${phase === "guessing" ? "bg-(--accent)" : "bg-(--green)"}`}
-                style={{
-                  width: `${((totalPhaseTime - timeLeft) / totalPhaseTime) * 100}%`,
-                }}
-              ></div>
-            </div>
-          </div>
         </>
       )}
+
+      {/* Barre de temps */}
+      <div className="pointer-events-none fixed bottom-6 left-1/2 flex w-[calc(100vw-4rem)] max-w-lg -translate-x-1/2 flex-col items-center gap-2 md:w-1/2">
+        <span className="text-sm font-semibold tracking-wider text-gray-300">
+          {phase === "guessing"
+            ? `Temps restant : ${timeLeft}s`
+            : phase === "transition"
+              ? `Prochain tour : ${timeLeft}s`
+              : `Révélation : ${timeLeft}s`}
+        </span>
+        <div className="h-2 w-full overflow-hidden rounded-full bg-(--white)/20">
+          <div
+            className={`h-full rounded-full transition-all duration-1000 ease-linear ${
+              phase === "guessing"
+                ? "bg-(--accent)"
+                : phase === "transition"
+                  ? "bg-(--grey)"
+                  : "bg-(--green)"
+            }`}
+            style={{
+              width: `${((totalPhaseTime - timeLeft) / totalPhaseTime) * 100}%`,
+            }}
+          ></div>
+        </div>
+      </div>
+
+      {/* Bouton quitter */}
+      <button
+        className="absolute top-4 right-4 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-(--accent) p-2 font-semibold text-(--white) shadow-md transition-all hover:scale-105 hover:bg-(--semiaccent) hover:shadow-lg active:scale-95"
+        onClick={() => quitGame()}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="lucide lucide-log-out-icon lucide-log-out"
+        >
+          <path d="m16 17 5-5-5-5" />
+          <path d="M21 12H9" />
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+        </svg>
+      </button>
 
       {/* Affichage des erreurs */}
       <Error error={error} setError={setError} />

@@ -80,6 +80,7 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     const handleConnectError = (err: Error) => {
       setError("Erreur de connexion serveur");
       setIsConnected(false);
+      setView("home");
     };
 
     const handleDisconnect = (reason: string) => {

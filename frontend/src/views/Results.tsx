@@ -67,6 +67,11 @@ export default function Results() {
                   </p>
                   <p className="track-name text-lg font-bold">{track.name}</p>
                 </div>
+                <div className="pointer-events-none absolute top-4 right-4 z-10 flex flex-col text-center">
+                  <p className="text-sm text-(--white)">
+                    {index + 1}/{toPlay.length}
+                  </p>
+                </div>
               </div>
 
               <div className="max-h-[25vh] w-full max-w-xl overflow-x-auto overflow-y-auto">

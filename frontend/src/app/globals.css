@@ -89,7 +89,11 @@ button {
 .carousel-item-top::after {
   content: "";
   background: #000000;
-  background: linear-gradient(0deg, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 80%);
+  background: linear-gradient(
+    0deg,
+    rgba(16, 8, 20, 1) 0%,
+    rgba(16, 8, 20, 0) 80%
+  );
   position: absolute;
   bottom: 0;
   left: 0;
@@ -100,8 +104,8 @@ button {
 .overlay-cover {
   background: linear-gradient(
     to bottom,
-    rgba(0, 0, 0, 0.8) 0%,
-    rgba(0, 0, 0, 0) 50%,
-    rgba(0, 0, 0, 0.8) 100%
+    rgba(16, 8, 20, 0.8) 0%,
+    rgba(16, 8, 20, 0) 50%,
+    rgba(16, 8, 20, 0.8) 100%
   );
 }

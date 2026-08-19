@@ -33,17 +33,17 @@ export default function Home() {
   }, []);
 
   // Effet pour cacher automatiquement les messages d'erreur après 3 secondes
-  // useEffect(() => {
-  //   let timer: NodeJS.Timeout | null = null;
-  //   if (error) {
-  //     timer = setTimeout(() => {
-  //       setError(null);
-  //     }, 2000);
-  //   }
-  //   return () => {
-  //     if (timer) clearTimeout(timer);
-  //   };
-  // }, [error]);
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+    if (error) {
+      timer = setTimeout(() => {
+        setError(null);
+      }, 2000);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [error]);
 
   const handleCreateGame = () => {
     if (!isConnected) {

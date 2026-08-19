@@ -42,7 +42,7 @@ export default function Lobby() {
   // Gestion du nombre de musique par joueur
   const handleMusicAmount = (operation: "up" | "down") => {
     if (operation === "up") {
-      if (musicAmount < 20) {
+      if (musicAmount < 30) {
         setMusicAmount(musicAmount + 1);
         socket?.emit("music_amount", musicAmount + 1);
       }
