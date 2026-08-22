@@ -86,6 +86,19 @@ button {
   cursor: pointer;
 }
 
+.toggle-container ol {
+  list-style-type: decimal;
+}
+
+.toggle-container ol li {
+  margin: 4px 0px;
+  list-style-position: inside;
+}
+
+.toggle-container ol li::marker {
+  color: var(--white);
+}
+
 .carousel-item-top::after {
   content: "";
   background: #000000;

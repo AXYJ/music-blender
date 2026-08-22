@@ -454,7 +454,7 @@ export default function Game() {
                   </label>
                   {guessingArtist && (
                     <span className="text-xs italic text-(--grey)">
-                      {timeLeft}s
+                      Temps restants : {timeLeft}s
                     </span>
                   )}
                 </div>
@@ -614,7 +614,7 @@ export default function Game() {
                   </label>
                   {guessingSong && (
                     <span className="text-xs italic text-(--grey)">
-                      {timeLeft}s
+                      Temps restants : {timeLeft}s
                     </span>
                   )}
                 </div>

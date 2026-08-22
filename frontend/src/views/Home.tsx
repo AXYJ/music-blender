@@ -131,7 +131,14 @@ export default function Home() {
           <h2>FAQ</h2>
           <Toggle
             question="Comment ajouter une playlist depuis Spotify ?"
-            answer={`1. Allez sur Spotify et trouvez la playlist que vous souhaitez partager (la playlist doit être en publique).<br/>2. Cliquez sur les trois petits points (...) à côté du nom de la playlist.<br/>3. Cliquez sur 'Partager', puis sur 'Copier le lien'.<br/>4. Collez ce lien dans le champ prévu à cet effet dans l'application.`}
+            answer={`
+              <ol className="space-y-2">
+              <li>Allez sur Spotify et trouvez la playlist que vous souhaitez partager (la playlist doit être en publique).</li>
+              <li>Cliquez sur les trois petits points (...) à côté du nom de la playlist.</li>
+              <li>Cliquez sur 'Partager', puis sur 'Copier le lien'.</li>
+              <li>Collez ce lien dans le champ prévu à cet effet dans l'application.</li>
+              </ol>
+              `}
           />
           {/* <Toggle
             question="Comment ajouter une playlist depuis Deezer ?"
