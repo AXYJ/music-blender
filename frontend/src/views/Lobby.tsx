@@ -233,14 +233,14 @@ export default function Lobby() {
 
       <div className="flex w-full justify-between gap-4">
         <button
-          className="flex-1 rounded-full bg-(--white) px-8 py-2 text-(--background) transition-all duration-300 ease-out hover:bg-(--accent)/60 hover:text-(--white) active:scale-95"
+          className="flex-1 rounded-full bg-(--white) px-8 py-2 text-sm text-(--background) transition-all duration-300 ease-out hover:bg-(--accent)/60 hover:text-(--white) active:scale-95 md:text-base"
           onClick={quitGame}
         >
           Quitter
         </button>
         {isHost && (
           <button
-            className={`flex-1 rounded-full bg-(--accent) px-8 py-2 text-(--white) transition-all duration-300 ease-out hover:bg-(--accent)/60 hover:text-(--white) active:scale-95 ${players.filter((p) => p.isReady).length !== players.length ? "cursor-not-allowed opacity-50" : ""} ${isLoading ? "cursor-not-allowed opacity-50" : ""}`}
+            className={`flex-1 rounded-full bg-(--accent) px-8 py-2 text-sm text-(--white) transition-all duration-300 ease-out hover:bg-(--accent)/60 hover:text-(--white) active:scale-95 md:text-base ${players.filter((p) => p.isReady).length !== players.length ? "cursor-not-allowed opacity-50" : ""} ${isLoading ? "cursor-not-allowed opacity-50" : ""}`}
             onClick={() => {
               setIsLoading(true);
               launchGame();
@@ -255,7 +255,7 @@ export default function Lobby() {
         )}
         {!isHost && (
           <button
-            className={`flex-1 rounded-full px-8 py-2 transition-all duration-300 ease-out hover:bg-(--accent)/60 hover:text-(--white) active:scale-95 ${!isReady ? "bg-(--accent) text-(--white)" : "bg-(--semiaccent) text-(--white)"}`}
+            className={`flex-1 rounded-full px-8 py-2 text-sm transition-all duration-300 ease-out hover:bg-(--accent)/60 hover:text-(--white) active:scale-95 md:text-base ${!isReady ? "bg-(--accent) text-(--white)" : "bg-(--semiaccent) text-(--white)"}`}
             onClick={() => {
               beReady();
             }}

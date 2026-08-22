@@ -61,13 +61,15 @@ export default function Results() {
                   width={250}
                   height={250}
                 />
-                <div className="pointer-events-none absolute right-4 bottom-4 z-10 flex flex-col text-right">
-                  <p className="artist-name text-sm font-semibold">
+                <div className="pointer-events-none absolute right-0 bottom-0 z-10 flex max-w-xs w-full flex-col p-2 text-right">
+                  <p className="artist-name text-sm font-semibold wrap-anywhere">
                     {track.artist}
                   </p>
-                  <p className="track-name text-lg font-bold">{track.name}</p>
+                  <p className="track-name text-lg font-bold wrap-anywhere">
+                    {track.name}
+                  </p>
                 </div>
-                <div className="pointer-events-none absolute top-4 right-4 z-10 flex flex-col text-center">
+                <div className="pointer-events-none absolute top-2 right-4 z-10 flex flex-col text-center">
                   <p className="text-sm text-(--white)">
                     {index + 1}/{toPlay.length}
                   </p>

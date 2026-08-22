@@ -63,6 +63,18 @@ export default function Game() {
     setActiveTrackIndex(-1);
   }, [trackGuess]);
 
+  // Bloquer le défilement du body lors de la saisie
+  useEffect(() => {
+    if (guessingArtist || guessingSong) {
+      document.body.classList.add("overflow-hidden");
+    } else {
+      document.body.classList.remove("overflow-hidden");
+    }
+    return () => {
+      document.body.classList.remove("overflow-hidden");
+    };
+  }, [guessingArtist, guessingSong]);
+
   // Helper to get the current artist query (the part after the last comma)
   const getArtistQuery = (input: string) => {
     const parts = input.split(",");
@@ -280,7 +292,7 @@ export default function Game() {
   const trackImage = currentTrack.imageUrl || null;
   const totalPhaseTime =
     phase === "guessing" ? time : phase === "transition" ? 2 : 5;
-  const showAnswer = phase === "answer";
+  const showAnswer = phase === "answer" || phase === "transition";
 
   const handleVolume = (operation: "up" | "down") => {
     if (operation === "up") {
@@ -302,8 +314,36 @@ export default function Game() {
     <div className="flex min-h-screen flex-col items-center justify-center gap-4">
       <audio ref={audioRef} autoPlay src={currentTrack.previewUrl}></audio>
 
-      {phase !== "transition" && (
-        <>
+      {/* Bouton quitter */}
+      <button
+        className="absolute top-4 right-4 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-(--accent) p-2 font-semibold text-(--white) shadow-md transition-all hover:scale-105 hover:bg-(--semiaccent) hover:shadow-lg active:scale-95"
+        onClick={() => quitGame()}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="lucide lucide-log-out-icon lucide-log-out"
+        >
+          <path d="m16 17 5-5-5-5" />
+          <path d="M21 12H9" />
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+        </svg>
+      </button>
+
+      <div
+        className={`w-full flex flex-col items-center gap-4 transition-opacity duration-500 ${
+          phase === "transition"
+            ? "pointer-events-none opacity-0 select-none"
+            : "opacity-100"
+        }`}
+      >
           {(guessingArtist || guessingSong) && (
             <div
               className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-all duration-300"
@@ -316,14 +356,14 @@ export default function Game() {
             />
           )}
           <h1>Music Blender</h1>
-          <section className="relative w-full overflow-hidden rounded-lg md:w-1/2">
+          <section className="relative w-full max-w-72 overflow-hidden rounded-lg">
             {trackImage ? (
               <Image
                 src={trackImage}
                 alt={currentTrack.name || "Cover"}
                 width={100}
                 height={100}
-                className={`aspect-square w-full object-cover transition-all md:mx-auto ${phase === "guessing" ? "blur-md" : "blur-none duration-300"}`}
+                className={`mx-auto aspect-square w-full overflow-hidden object-cover transition-all ${phase === "guessing" ? "blur-md" : "blur-none duration-300"}`}
               />
             ) : (
               <div className="flex aspect-square w-full items-center justify-center rounded-2xl bg-gray-700 text-sm text-gray-400">
@@ -334,7 +374,7 @@ export default function Game() {
             {/* Overlay de réponse attendu */}
             {showAnswer && (
               <div
-                className={`absolute top-0 left-0 flex h-full w-full flex-col items-center justify-center gap-1 bg-black/75 px-4 opacity-100 transition-all duration-300 md:left-1/2 md:-translate-x-1/2`}
+                className={`absolute top-0 left-0 flex h-full w-full flex-col items-center justify-center gap-1 bg-black/75 px-8 opacity-100 transition-all duration-300 md:left-1/2 md:-translate-x-1/2`}
               >
                 <p className="text-base">La réponse est :</p>
                 <p className="text-xl font-bold text-(--white)">
@@ -375,7 +415,7 @@ export default function Game() {
                     +
                   </button>
                 </div>
-                <div className="overlay-cover absolute top-0 left-0 h-full w-full"></div>
+                <div className="overlay-cover absolute top-0 left-1/2 h-full w-full -translate-x-1/2"></div>
               </>
             )}
 
@@ -408,14 +448,22 @@ export default function Game() {
                   }
                 }}
               >
-                <label htmlFor="artist-guess" className="mb-1 text-xl">
-                  Artiste
-                </label>
+                <div className="flex justify-between w-full">
+                  <label htmlFor="artist-guess" className="mb-1 text-xl">
+                    Artiste
+                  </label>
+                  {guessingArtist && (
+                    <span className="text-xs italic text-(--grey)">
+                      {timeLeft}s
+                    </span>
+                  )}
+                </div>
+
                 <input
                   id="artist-guess"
                   type="text"
                   className={`w-full rounded-lg px-4 py-2 focus:ring-2 focus:ring-(--accent) focus:outline-none ${
-                    phase === "answer"
+                    showAnswer
                       ? me?.artist_score === 1
                         ? "bg-(--green) text-white"
                         : me?.artist_score === 0.5
@@ -560,14 +608,22 @@ export default function Game() {
                   }
                 }}
               >
-                <label htmlFor="track-guess" className="mb-1 text-xl">
-                  Chanson
-                </label>
+                <div className="flex justify-between w-full">
+                  <label htmlFor="track-guess" className="mb-1 text-xl">
+                    Chanson
+                  </label>
+                  {guessingSong && (
+                    <span className="text-xs italic text-(--grey)">
+                      {timeLeft}s
+                    </span>
+                  )}
+                </div>
+
                 <input
                   id="track-guess"
                   type="text"
                   className={`w-full rounded-lg px-4 py-2 focus:ring-2 focus:ring-(--accent) focus:outline-none ${
-                    phase === "answer"
+                    showAnswer
                       ? me?.track_answer
                         ? "bg-(--green) text-white"
                         : "bg-(--red) text-white"
@@ -671,11 +727,10 @@ export default function Game() {
               </motion.div>
             </div>
           </section>
-        </>
-      )}
+      </div>
 
       {/* Barre de temps */}
-      <div className="pointer-events-none fixed bottom-6 left-1/2 flex w-[calc(100vw-4rem)] max-w-lg -translate-x-1/2 flex-col items-center gap-2 md:w-1/2">
+      <div className="pointer-events-none mt-4 flex w-[calc(100vw-4rem)] max-w-lg flex-col items-center gap-2 md:w-1/2">
         <span className="text-sm font-semibold tracking-wider text-gray-300">
           {phase === "guessing"
             ? `Temps restant : ${timeLeft}s`
@@ -699,28 +754,7 @@ export default function Game() {
         </div>
       </div>
 
-      {/* Bouton quitter */}
-      <button
-        className="absolute top-4 right-4 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-(--accent) p-2 font-semibold text-(--white) shadow-md transition-all hover:scale-105 hover:bg-(--semiaccent) hover:shadow-lg active:scale-95"
-        onClick={() => quitGame()}
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="lucide lucide-log-out-icon lucide-log-out"
-        >
-          <path d="m16 17 5-5-5-5" />
-          <path d="M21 12H9" />
-          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-        </svg>
-      </button>
+      
 
       {/* Affichage des erreurs */}
       <Error error={error} setError={setError} />

@@ -91,8 +91,9 @@ button {
   background: #000000;
   background: linear-gradient(
     0deg,
-    rgba(16, 8, 20, 1) 0%,
-    rgba(16, 8, 20, 0) 80%
+    rgba(16, 8, 20, 0.8) 0%,
+    rgba(16, 8, 20, 0) 50%,
+    rgba(16, 8, 20, 0.8) 100%
   );
   position: absolute;
   bottom: 0;
