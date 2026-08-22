@@ -2,7 +2,7 @@ import React from "react";
 import { Socket } from "socket.io-client";
 
 // Définition des vues et phases
-export type View = "home" | "lobby" | "game" | "result";
+export type View = "home" | "lobby" | "game" | "result" | "mentions";
 export type Phase = "hide-answer" | "show-answer";
 
 // Toutes les variables globales du jeu

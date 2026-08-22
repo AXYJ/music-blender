@@ -8,6 +8,7 @@ import Home from "../views/Home";
 import Lobby from "../views/Lobby";
 import Game from "../views/Game";
 import Result from "../views/Results";
+import Mentions from "../views/Mentions";
 
 function GameContent() {
   const { view } = useGame();
@@ -24,6 +25,8 @@ function GameContent() {
       return <Game />;
     case "result":
       return <Result />;
+    case "mentions":
+      return <Mentions />;
     default:
       return <Home />;
   }
