@@ -100,6 +100,7 @@ export default function Home() {
           </label>
           <input
             type="text"
+            id="name"
             className="h-8 w-full rounded-lg bg-(--white) px-4 text-base text-(--background)"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -120,6 +121,7 @@ export default function Home() {
               value={roomInput}
               onChange={(e) => setRoomInput(e.target.value)}
               list={savedCode ? "saved-room-code" : undefined}
+              aria-label="Code de la room"
             />
             {savedCode && (
               <datalist id="saved-room-code">
@@ -147,7 +149,10 @@ export default function Home() {
                 }}
               >
                 <div className="slide pointer-events-none flex w-full flex-shrink-0 flex-col items-center gap-8 rounded-lg">
-                  <div className="flex w-full flex-col gap-4 rounded-lg px-16 py-4">
+                  <div
+                    className="flex w-full flex-col gap-4 rounded-lg px-16 py-4"
+                    aria-hidden="true"
+                  >
                     <div className="w-full -rotate-2 rounded-lg bg-(--accent) px-4 py-2 text-center text-(--white)">
                       Créer
                     </div>
@@ -162,13 +167,11 @@ export default function Home() {
                 </div>
 
                 <div className="slide pointer-events-none flex w-full flex-shrink-0 flex-col items-center gap-8 rounded-lg">
-                  <div className="flex w-full flex-col items-center gap-4 rounded-lg px-16 py-4">
-                    <Image
-                      src="/spotify.svg"
-                      alt="Spotify logo"
-                      width={50}
-                      height={50}
-                    />
+                  <div
+                    className="flex w-full flex-col items-center gap-4 rounded-lg px-16 py-4"
+                    aria-hidden="true"
+                  >
+                    <Image src="/spotify.svg" alt="" width={50} height={50} />
                   </div>
                   <p className="px-2 text-center">
                     Ajouter le lien de votre playlist préférée
@@ -176,7 +179,10 @@ export default function Home() {
                 </div>
 
                 <div className="slide pointer-events-none flex w-full flex-shrink-0 flex-col items-center gap-8 rounded-lg">
-                  <div className="flex w-full flex-col gap-2 rounded-lg px-16 py-4">
+                  <div
+                    className="flex w-full flex-col gap-2 rounded-lg px-16 py-4"
+                    aria-hidden="true"
+                  >
                     <div className="rotate-2">
                       <label htmlFor="artist-guess" className="text-sm">
                         Artist
@@ -184,6 +190,8 @@ export default function Home() {
                       <input
                         id="artist-guess"
                         type="text"
+                        tabIndex={-1}
+                        readOnly
                         className={`w-full rounded-lg bg-white px-4 py-2 focus:ring-2 focus:ring-(--accent) focus:outline-none`}
                       />
                     </div>
@@ -194,6 +202,8 @@ export default function Home() {
                       <input
                         id="track-guess"
                         type="text"
+                        tabIndex={-1}
+                        readOnly
                         className={`w-full rounded-lg bg-white px-4 py-2 focus:ring-2 focus:ring-(--accent) focus:outline-none`}
                       />
                     </div>
@@ -208,22 +218,31 @@ export default function Home() {
             <button
               className={`previous absolute top-1/2 left-0 flex aspect-square h-12 w-12 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-(--accent) ${currentSlide === 0 ? "pointer-events-none opacity-50" : ""}`}
               onClick={prevSlide}
+              aria-label="Diapositive précédente"
             >
               {"<"}
             </button>
             <button
               className={`next absolute top-1/2 right-0 flex aspect-square h-12 w-12 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-(--accent) ${currentSlide === 2 ? "pointer-events-none opacity-50" : ""}`}
               onClick={nextSlide}
+              aria-label="Diapositive suivante"
             >
               {">"}
             </button>
-            <div className="mt-4 flex justify-center gap-2">
-              {[0, 1, 2].map((dot, index) => (
+            <div
+              className="mt-4 flex justify-center gap-2"
+              role="group"
+              aria-label="Sélection de la diapositive"
+            >
+              {[0, 1, 2].map((index) => (
                 <button
                   key={index}
-                  className={`h-4 w-4 rounded-full ${index === currentSlide ? "bg-(--accent)" : "bg-(--white)"} cursor-pointer transition-all duration-300`}
+                  type="button"
+                  className={`h-4 w-4 rounded-full border-none p-0 ${index === currentSlide ? "bg-(--accent)" : "bg-(--white)"} cursor-pointer transition-all duration-300`}
                   onClick={() => setCurrentSlide(index)}
-                ></button>
+                  aria-label={`Aller à la diapositive ${index + 1}`}
+                  aria-current={index === currentSlide ? "step" : undefined}
+                />
               ))}
             </div>
           </div>

@@ -117,7 +117,7 @@ export default function Lobby() {
 
       <div className="flex w-full flex-col gap-4">
         <div className="flex flex-col items-center gap-8">
-          <p
+          <button
             className="cursor-pointer text-center text-xl font-bold text-(--white) transition-all duration-100 ease-out hover:scale-105 active:scale-95"
             onClick={() => {
               handleCopyCode();
@@ -125,7 +125,8 @@ export default function Lobby() {
             title="Copier le code"
           >
             Code de la partie : {roomCode}
-          </p>
+            {/* Rajouter icone de copie */}
+          </button>
         </div>
         <div className="flex w-full flex-col items-center gap-4 lg:grid lg:grid-cols-3 lg:items-stretch">
           <Section
@@ -206,20 +207,22 @@ export default function Lobby() {
               <h2>Ajoute ta musique</h2>
               <div className="flex flex-col gap-6">
                 <div className="flex flex-col gap-2">
-                  <p>Plateforme de streaming</p>
+                  <label htmlFor="stream">Plateforme de streaming</label>
                   <select
                     name="stream-service"
                     id="stream"
                     className="rounded-md bg-(--white) p-2 text-(--background)"
+                    aria-label="Plateforme de streaming"
                   >
                     <option value="spotify">Spotify</option>
                     {/* <option value="deezer">Deezer</option> */}
                   </select>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <p>URL de la playlist</p>
+                  <label htmlFor="playlist">URL de la playlist</label>
                   <input
                     type="text"
+                    id="playlist"
                     className="h-8 w-full rounded-lg bg-(--white) px-4 text-base text-(--background)"
                     value={playlistUrl}
                     onChange={(e) => setPlaylistUrl(e.target.value)}

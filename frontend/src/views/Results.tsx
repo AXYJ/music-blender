@@ -57,17 +57,17 @@ export default function Results() {
                 <Image
                   className="h-full w-full object-cover"
                   src={track.imageUrl}
-                  alt={track.name}
+                  alt=""
                   width={250}
                   height={250}
                 />
                 <div className="pointer-events-none absolute right-0 bottom-0 z-10 flex w-full max-w-xs flex-col p-2 text-right">
-                  <p className="artist-name text-sm font-semibold wrap-anywhere">
+                  <span className="artist-name text-sm font-semibold wrap-anywhere">
                     {track.artist}
-                  </p>
-                  <p className="track-name text-lg font-bold wrap-anywhere">
+                  </span>
+                  <span className="track-name text-lg font-bold wrap-anywhere">
                     {track.name}
-                  </p>
+                  </span>
                 </div>
                 <div className="pointer-events-none absolute top-2 right-4 z-10 flex flex-col text-center">
                   <p className="text-sm text-(--white)">
@@ -138,16 +138,6 @@ export default function Results() {
         </div>
       </section>
 
-      {/* Action Buttons */}
-      <div className="mt-4 flex gap-4">
-        <button
-          className="cursor-pointer rounded-full bg-(--accent) px-8 py-2 font-semibold text-(--white) shadow-md transition-all hover:scale-105 hover:bg-(--semiaccent) hover:shadow-lg active:scale-95"
-          onClick={() => restart()}
-        >
-          Rejouer
-        </button>
-      </div>
-
       {/* Carousel controls (outside sliding div to keep them fixed) */}
       {toPlay.length > 1 && (
         <>
@@ -165,6 +155,16 @@ export default function Results() {
           </button>
         </>
       )}
+
+      {/* Action Buttons */}
+      <div className="mt-4 flex gap-4">
+        <button
+          className="cursor-pointer rounded-full bg-(--accent) px-8 py-2 font-semibold text-(--white) shadow-md transition-all hover:scale-105 hover:bg-(--semiaccent) hover:shadow-lg active:scale-95"
+          onClick={() => restart()}
+        >
+          Rejouer
+        </button>
+      </div>
     </div>
   );
 }

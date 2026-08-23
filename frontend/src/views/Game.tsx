@@ -318,6 +318,7 @@ export default function Game() {
       <button
         className="absolute top-4 right-4 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-(--accent) p-2 font-semibold text-(--white) shadow-md transition-all hover:scale-105 hover:bg-(--semiaccent) hover:shadow-lg active:scale-95"
         onClick={() => quitGame()}
+        aria-label="Quitter la partie"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -360,7 +361,7 @@ export default function Game() {
           {trackImage ? (
             <Image
               src={trackImage}
-              alt={currentTrack.name || "Cover"}
+              alt="Cover"
               width={100}
               height={100}
               className={`mx-auto aspect-square w-full overflow-hidden object-cover transition-all ${phase === "guessing" ? "blur-md" : "blur-none duration-300"}`}

@@ -67,7 +67,7 @@ export default function Mentions() {
             Politique de confidentialité
           </h2>
 
-          <p className="text-justify leading-relaxed">
+          <p className="leading-relaxed">
             La protection de votre vie privée et de vos données personnelles est
             une priorité. Cette politique de confidentialité explique en toute
             transparence quelles données sont traitées lors de votre utilisation
@@ -80,7 +80,7 @@ export default function Mentions() {
             <h3 className="text-lg font-semibold">
               1. Principe général : Le respect de la vie privée par défaut
             </h3>
-            <p className="text-justify leading-relaxed">
+            <p className="leading-relaxed">
               Le jeu est conçu selon le principe de minimisation des données :{" "}
               <strong>aucune donnée n'est conservée à long terme</strong>. Le
               traitement des données est temporaire, strictement limité au temps
@@ -95,7 +95,7 @@ export default function Mentions() {
               2. Données traitées et finalités
             </h3>
 
-            <p className="text-justify leading-relaxed">
+            <p className="leading-relaxed">
               Pendant votre navigation et vos parties, nous traitons uniquement
               les éléments suivants :
             </p>
@@ -196,13 +196,13 @@ export default function Mentions() {
             <h3 className="text-lg font-semibold">
               3. Durée de conservation et suppression automatique
             </h3>
-            <p className="text-justify leading-relaxed">
+            <p className="leading-relaxed">
               <strong>Suppression immédiate :</strong> Dès que tous les joueurs
               quittent un salon de jeu, l'intégralité des données rattachées à
               ce salon (salon, pseudos, scores, états de partie) est{" "}
               <strong>définitivement effacée de la mémoire du serveur</strong>.
             </p>
-            <p className="text-justify leading-relaxed">
+            <p className="leading-relaxed">
               <strong>Absence de base de données persistante :</strong> Aucune
               information relative à vos parties, historiques ou habitudes de
               jeu n'est enregistrée dans une base de données permanente.
@@ -216,7 +216,7 @@ export default function Mentions() {
               4. Cookies et stockage local (LocalStorage / SessionStorage)
             </h3>
 
-            <p className="text-justify leading-relaxed">
+            <p className="leading-relaxed">
               Ce site{" "}
               <strong>
                 n'utilise aucun cookie publicitaire, aucun traceur tiers et
@@ -225,12 +225,12 @@ export default function Mentions() {
               (type Google Analytics).
             </p>
 
-            <p className="text-justify leading-relaxed">
+            <p className="leading-relaxed">
               Seuls des éléments strictement techniques et nécessaires au
               fonctionnement du service peuvent être déposés sur votre terminal
               :
             </p>
-            <p className="border-l-2 border-(--accent)/50 pl-4 text-justify italic">
+            <p className="border-l-2 border-(--accent)/50 pl-4 italic">
               <strong>Stockage local de confort :</strong> Votre navigateur peut
               garder en mémoire locale votre dernier pseudonyme utilisé ou le
               dernier code de salon pour vous éviter de les retaper lors d'un
@@ -240,7 +240,7 @@ export default function Mentions() {
             <p className="mt-2 text-center font-semibold text-(--white)">
               Gestion et suppression :
             </p>
-            <p className="text-justify leading-relaxed">
+            <p className="leading-relaxed">
               Conformément aux recommandations de la CNIL et du RGPD, ces
               traceurs purement techniques ne requièrent pas de consentement
               préalable par bandeau. Si vous souhaitez supprimer ces éléments
@@ -265,13 +265,13 @@ export default function Mentions() {
           <div className="flex w-full flex-col gap-2">
             <h3 className="text-lg font-semibold">5. Vos droits (RGPD)</h3>
 
-            <p className="text-justify leading-relaxed">
+            <p className="leading-relaxed">
               Conformément au Règlement Général sur la Protection des Données
               (RGPD), vous disposez d'un droit d'accès, de rectification et de
               suppression de vos données personnelles.
             </p>
 
-            <p className="text-justify leading-relaxed">
+            <p className="leading-relaxed">
               Compte tenu de l'absence de stockage persistant et de comptes
               utilisateurs,{" "}
               <strong>
@@ -281,7 +281,7 @@ export default function Mentions() {
               .
             </p>
 
-            <p className="text-justify leading-relaxed">
+            <p className="leading-relaxed">
               Pour toute question ou demande relative à vos données, vous pouvez
               contacter l'éditeur du site à l'adresse suivante :
             </p>
