@@ -338,107 +338,141 @@ export default function Game() {
       </button>
 
       <div
-        className={`w-full flex flex-col items-center gap-4 transition-opacity duration-500 ${
+        className={`flex w-full flex-col items-center gap-4 transition-opacity duration-500 ${
           phase === "transition"
             ? "pointer-events-none opacity-0 select-none"
             : "opacity-100"
         }`}
       >
-          {(guessingArtist || guessingSong) && (
-            <div
-              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-all duration-300"
-              onClick={() => {
-                setGuessingArtist(false);
-                setGuessingSong(false);
-                setShowArtistSuggestions(false);
-                setShowTrackSuggestions(false);
-              }}
+        {(guessingArtist || guessingSong) && (
+          <div
+            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-all duration-300"
+            onClick={() => {
+              setGuessingArtist(false);
+              setGuessingSong(false);
+              setShowArtistSuggestions(false);
+              setShowTrackSuggestions(false);
+            }}
+          />
+        )}
+        <h1>Music Blender</h1>
+        <section className="relative w-full max-w-72 overflow-hidden rounded-lg">
+          {trackImage ? (
+            <Image
+              src={trackImage}
+              alt={currentTrack.name || "Cover"}
+              width={100}
+              height={100}
+              className={`mx-auto aspect-square w-full overflow-hidden object-cover transition-all ${phase === "guessing" ? "blur-md" : "blur-none duration-300"}`}
             />
-          )}
-          <h1>Music Blender</h1>
-          <section className="relative w-full max-w-72 overflow-hidden rounded-lg">
-            {trackImage ? (
-              <Image
-                src={trackImage}
-                alt={currentTrack.name || "Cover"}
-                width={100}
-                height={100}
-                className={`mx-auto aspect-square w-full overflow-hidden object-cover transition-all ${phase === "guessing" ? "blur-md" : "blur-none duration-300"}`}
-              />
-            ) : (
-              <div className="flex aspect-square w-full items-center justify-center rounded-2xl bg-gray-700 text-sm text-gray-400">
-                {"Pas d'image"}
-              </div>
-            )}
-
-            {/* Overlay de réponse attendu */}
-            {showAnswer && (
-              <div
-                className={`absolute top-0 left-0 flex h-full w-full flex-col items-center justify-center gap-1 bg-black/75 px-8 opacity-100 transition-all duration-300 md:left-1/2 md:-translate-x-1/2`}
-              >
-                <p className="text-base">La réponse est :</p>
-                <p className="text-xl font-bold text-(--white)">
-                  {currentTrack.artist}
-                </p>
-                <div className="flex flex-col items-center">
-                  <p className="text-center text-lg text-(--white)">
-                    {currentTrack.name}
-                  </p>
-                  {currentTrack.internationalName !==
-                    currentTrack.name.toLowerCase().replace(/\s+/g, "") && (
-                    <p className="text-md text-center text-(--grey)/50 italic">
-                      {currentTrack.internationalName}
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {!showAnswer && (
-              <>
-                <div className="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 items-center gap-4">
-                  <button
-                    className={`aspect-square h-8 w-8 rounded-full bg-(--white) text-(--background) transition-all duration-100 ease-out hover:scale-105 active:scale-95 ${volume === 0 ? "cursor-not-allowed opacity-50" : ""}`}
-                    onClick={() => {
-                      handleVolume("down");
-                    }}
-                  >
-                    -
-                  </button>
-                  <p>{Math.round(volume * 10) / 10}</p>
-                  <button
-                    className={`aspect-square h-8 w-8 rounded-full bg-(--white) text-(--background) transition-all duration-100 ease-out hover:scale-105 active:scale-95 ${volume === 1 ? "cursor-not-allowed opacity-50" : ""}`}
-                    onClick={() => {
-                      handleVolume("up");
-                    }}
-                  >
-                    +
-                  </button>
-                </div>
-                <div className="overlay-cover absolute top-0 left-1/2 h-full w-full -translate-x-1/2"></div>
-              </>
-            )}
-
-            {/* Compteur de tours */}
-            <div className="absolute top-2 right-2">
-              <p className="text-sm">
-                {turn}/{toPlay.length}
-              </p>
+          ) : (
+            <div className="flex aspect-square w-full items-center justify-center rounded-2xl bg-gray-700 text-sm text-gray-400">
+              {"Pas d'image"}
             </div>
-          </section>
+          )}
 
-          <section className="relative flex w-full flex-col gap-4">
-            {/* Wrapper Artiste */}
-            <div className="relative h-18 w-full">
-              <motion.div
-                layout
-                transition={{ type: "spring", stiffness: 350, damping: 35 }}
-                className={`flex flex-col ${
-                  guessingArtist
-                    ? "fixed top-[20%] left-1/2 z-50 w-80 max-w-[90vw] -translate-x-1/2"
-                    : "absolute inset-0"
+          {/* Overlay de réponse attendu */}
+          {showAnswer && (
+            <div
+              className={`absolute top-0 left-0 flex h-full w-full flex-col items-center justify-center gap-1 bg-black/75 px-8 opacity-100 transition-all duration-300 md:left-1/2 md:-translate-x-1/2`}
+            >
+              <p className="text-base">La réponse est :</p>
+              <p className="text-xl font-bold text-(--white)">
+                {currentTrack.artist}
+              </p>
+              <div className="flex flex-col items-center">
+                <p className="text-center text-lg text-(--white)">
+                  {currentTrack.name}
+                </p>
+                {currentTrack.internationalName !==
+                  currentTrack.name.toLowerCase().replace(/\s+/g, "") && (
+                  <p className="text-md text-center text-(--grey)/50 italic">
+                    {currentTrack.internationalName}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {!showAnswer && (
+            <>
+              <div className="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 items-center gap-4">
+                <button
+                  className={`aspect-square h-8 w-8 rounded-full bg-(--white) text-(--background) transition-all duration-100 ease-out hover:scale-105 active:scale-95 ${volume === 0 ? "cursor-not-allowed opacity-50" : ""}`}
+                  onClick={() => {
+                    handleVolume("down");
+                  }}
+                >
+                  -
+                </button>
+                <p>{Math.round(volume * 10) / 10}</p>
+                <button
+                  className={`aspect-square h-8 w-8 rounded-full bg-(--white) text-(--background) transition-all duration-100 ease-out hover:scale-105 active:scale-95 ${volume === 1 ? "cursor-not-allowed opacity-50" : ""}`}
+                  onClick={() => {
+                    handleVolume("up");
+                  }}
+                >
+                  +
+                </button>
+              </div>
+              <div className="overlay-cover absolute top-0 left-1/2 h-full w-full -translate-x-1/2"></div>
+            </>
+          )}
+
+          {/* Compteur de tours */}
+          <div className="absolute top-2 right-2">
+            <p className="text-sm">
+              {turn}/{toPlay.length}
+            </p>
+          </div>
+        </section>
+
+        <section className="relative flex w-full flex-col gap-4">
+          {/* Wrapper Artiste */}
+          <div className="relative h-18 w-full">
+            <motion.div
+              layout
+              transition={{ type: "spring", stiffness: 350, damping: 35 }}
+              className={`flex flex-col ${
+                guessingArtist
+                  ? "fixed top-[20%] left-1/2 z-50 w-80 max-w-[90vw] -translate-x-1/2"
+                  : "absolute inset-0"
+              }`}
+              onClick={() => {
+                if (phase !== "guessing") return;
+                setGuessingSong(false);
+                setGuessingArtist(true);
+                const query = getArtistQuery(artistGuess);
+                if (query.length > 2) {
+                  setShowArtistSuggestions(true);
+                }
+              }}
+            >
+              <div className="flex w-full justify-between">
+                <label htmlFor="artist-guess" className="mb-1 text-xl">
+                  Artiste
+                </label>
+                {guessingArtist && (
+                  <span className="text-xs text-(--grey) italic">
+                    Temps restants : {timeLeft}s
+                  </span>
+                )}
+              </div>
+
+              <input
+                id="artist-guess"
+                type="text"
+                className={`w-full rounded-lg px-4 py-2 focus:ring-2 focus:ring-(--accent) focus:outline-none ${
+                  showAnswer
+                    ? me?.artist_score === 1
+                      ? "bg-(--green) text-white"
+                      : me?.artist_score === 0.5
+                        ? "bg-amber-500 text-white"
+                        : "bg-(--red) text-white"
+                    : "bg-(--white) text-(--background)"
                 }`}
-                onClick={() => {
+                value={artistGuess}
+                onFocus={() => {
                   if (phase !== "guessing") return;
                   setGuessingSong(false);
                   setGuessingArtist(true);
@@ -447,159 +481,156 @@ export default function Game() {
                     setShowArtistSuggestions(true);
                   }
                 }}
-              >
-                <div className="flex justify-between w-full">
-                  <label htmlFor="artist-guess" className="mb-1 text-xl">
-                    Artiste
-                  </label>
-                  {guessingArtist && (
-                    <span className="text-xs italic text-(--grey)">
-                      Temps restants : {timeLeft}s
-                    </span>
+                onChange={(e) => {
+                  setArtistGuess(e.target.value);
+                  const query = getArtistQuery(e.target.value);
+                  if (query.length > 2) {
+                    setShowArtistSuggestions(true);
+                  } else {
+                    setShowArtistSuggestions(false);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Tab") {
+                    setShowArtistSuggestions(false);
+                    return;
+                  }
+                  if (showArtistSuggestions && filteredArtists.length > 0) {
+                    if (e.key === "ArrowDown") {
+                      e.preventDefault();
+                      setActiveArtistIndex((prev) =>
+                        prev < filteredArtists.length - 1 ? prev + 1 : 0,
+                      );
+                    } else if (e.key === "ArrowUp") {
+                      e.preventDefault();
+                      setActiveArtistIndex((prev) =>
+                        prev > 0 ? prev - 1 : filteredArtists.length - 1,
+                      );
+                    } else if (e.key === "Enter") {
+                      e.preventDefault();
+                      const indexToSelect =
+                        activeArtistIndex >= 0 &&
+                        activeArtistIndex < filteredArtists.length
+                          ? activeArtistIndex
+                          : 0;
+                      const selectedName =
+                        filteredArtists[indexToSelect].artist;
+
+                      const parts = artistGuess.split(",");
+                      parts[parts.length - 1] = " " + selectedName;
+                      const newValue =
+                        parts
+                          .map((p) => p.trim())
+                          .filter(Boolean)
+                          .join(", ") + ", ";
+
+                      setArtistGuess(newValue);
+                      setShowArtistSuggestions(false);
+                      setActiveArtistIndex(-1);
+                    } else if (e.key === "Escape") {
+                      setGuessingArtist(false);
+                      setShowArtistSuggestions(false);
+                      e.currentTarget.blur();
+                    }
+                  } else {
+                    if (e.key === "Enter" || e.key === "Escape") {
+                      setGuessingArtist(false);
+                      setShowArtistSuggestions(false);
+                      e.currentTarget.blur();
+                    }
+                  }
+                }}
+                autoComplete="off"
+              />
+              {showArtistSuggestions && artistQuery.length > 2 && (
+                <div className="absolute top-full right-0 left-0 z-50 mt-2 flex max-h-60 flex-col overflow-hidden overflow-y-auto rounded-xl border border-neutral-800/80 bg-neutral-900/95 shadow-2xl backdrop-blur-md">
+                  {filteredArtists.length > 0 ? (
+                    filteredArtists.map((artist, idx) => (
+                      <div
+                        key={artist.artist + "-" + idx}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          const parts = artistGuess.split(",");
+                          parts[parts.length - 1] = " " + artist.artist;
+                          const newValue =
+                            parts
+                              .map((p) => p.trim())
+                              .filter(Boolean)
+                              .join(", ") + ", ";
+
+                          setArtistGuess(newValue);
+                          setShowArtistSuggestions(false);
+                          setActiveArtistIndex(-1);
+                        }}
+                        className={`grid cursor-pointer grid-cols-3 items-center justify-between border-b border-neutral-800/50 px-4 py-3 text-sm transition-colors duration-150 last:border-0 ${
+                          idx === activeArtistIndex
+                            ? "bg-(--semiaccent) text-(--white)"
+                            : "text-gray-200 hover:bg-(--semiaccent) hover:text-(--white)"
+                        }`}
+                      >
+                        <span className="col-span-2 font-medium">
+                          {artist.artist}
+                        </span>
+                        {artist.internationalArtist &&
+                          artist.internationalArtist !== artist.artist && (
+                            <span className="text-right text-xs text-gray-400 italic">
+                              ({artist.internationalArtist})
+                            </span>
+                          )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-4 py-3 text-sm text-gray-400 italic">
+                      Aucun artiste trouvé
+                    </div>
                   )}
                 </div>
+              )}
+            </motion.div>
+          </div>
 
-                <input
-                  id="artist-guess"
-                  type="text"
-                  className={`w-full rounded-lg px-4 py-2 focus:ring-2 focus:ring-(--accent) focus:outline-none ${
-                    showAnswer
-                      ? me?.artist_score === 1
-                        ? "bg-(--green) text-white"
-                        : me?.artist_score === 0.5
-                          ? "bg-amber-500 text-white"
-                          : "bg-(--red) text-white"
-                      : "bg-(--white) text-(--background)"
-                  }`}
-                  value={artistGuess}
-                  onFocus={() => {
-                    if (phase !== "guessing") return;
-                    setGuessingSong(false);
-                    setGuessingArtist(true);
-                    const query = getArtistQuery(artistGuess);
-                    if (query.length > 2) {
-                      setShowArtistSuggestions(true);
-                    }
-                  }}
-                  onChange={(e) => {
-                    setArtistGuess(e.target.value);
-                    const query = getArtistQuery(e.target.value);
-                    if (query.length > 2) {
-                      setShowArtistSuggestions(true);
-                    } else {
-                      setShowArtistSuggestions(false);
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Tab") {
-                      setShowArtistSuggestions(false);
-                      return;
-                    }
-                    if (showArtistSuggestions && filteredArtists.length > 0) {
-                      if (e.key === "ArrowDown") {
-                        e.preventDefault();
-                        setActiveArtistIndex((prev) =>
-                          prev < filteredArtists.length - 1 ? prev + 1 : 0,
-                        );
-                      } else if (e.key === "ArrowUp") {
-                        e.preventDefault();
-                        setActiveArtistIndex((prev) =>
-                          prev > 0 ? prev - 1 : filteredArtists.length - 1,
-                        );
-                      } else if (e.key === "Enter") {
-                        e.preventDefault();
-                        const indexToSelect =
-                          activeArtistIndex >= 0 &&
-                          activeArtistIndex < filteredArtists.length
-                            ? activeArtistIndex
-                            : 0;
-                        const selectedName =
-                          filteredArtists[indexToSelect].artist;
-
-                        const parts = artistGuess.split(",");
-                        parts[parts.length - 1] = " " + selectedName;
-                        const newValue =
-                          parts
-                            .map((p) => p.trim())
-                            .filter(Boolean)
-                            .join(", ") + ", ";
-
-                        setArtistGuess(newValue);
-                        setShowArtistSuggestions(false);
-                        setActiveArtistIndex(-1);
-                      } else if (e.key === "Escape") {
-                        setGuessingArtist(false);
-                        setShowArtistSuggestions(false);
-                        e.currentTarget.blur();
-                      }
-                    } else {
-                      if (e.key === "Enter" || e.key === "Escape") {
-                        setGuessingArtist(false);
-                        setShowArtistSuggestions(false);
-                        e.currentTarget.blur();
-                      }
-                    }
-                  }}
-                  autoComplete="off"
-                />
-                {showArtistSuggestions && artistQuery.length > 2 && (
-                  <div className="absolute top-full right-0 left-0 z-50 mt-2 flex max-h-60 flex-col overflow-hidden overflow-y-auto rounded-xl border border-neutral-800/80 bg-neutral-900/95 shadow-2xl backdrop-blur-md">
-                    {filteredArtists.length > 0 ? (
-                      filteredArtists.map((artist, idx) => (
-                        <div
-                          key={artist.artist + "-" + idx}
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            const parts = artistGuess.split(",");
-                            parts[parts.length - 1] = " " + artist.artist;
-                            const newValue =
-                              parts
-                                .map((p) => p.trim())
-                                .filter(Boolean)
-                                .join(", ") + ", ";
-
-                            setArtistGuess(newValue);
-                            setShowArtistSuggestions(false);
-                            setActiveArtistIndex(-1);
-                          }}
-                          className={`grid cursor-pointer grid-cols-3 items-center justify-between border-b border-neutral-800/50 px-4 py-3 text-sm transition-colors duration-150 last:border-0 ${
-                            idx === activeArtistIndex
-                              ? "bg-(--semiaccent) text-(--white)"
-                              : "text-gray-200 hover:bg-(--semiaccent) hover:text-(--white)"
-                          }`}
-                        >
-                          <span className="col-span-2 font-medium">
-                            {artist.artist}
-                          </span>
-                          {artist.internationalArtist &&
-                            artist.internationalArtist !== artist.artist && (
-                              <span className="text-right text-xs text-gray-400 italic">
-                                ({artist.internationalArtist})
-                              </span>
-                            )}
-                        </div>
-                      ))
-                    ) : (
-                      <div className="px-4 py-3 text-sm text-gray-400 italic">
-                        Aucun artiste trouvé
-                      </div>
-                    )}
-                  </div>
+          {/* Wrapper Chanson */}
+          <div className="relative h-18 w-full">
+            <motion.div
+              layout
+              transition={{ type: "spring", stiffness: 350, damping: 35 }}
+              className={`flex flex-col ${
+                guessingSong
+                  ? "fixed top-[20%] left-1/2 z-50 w-80 max-w-[90vw] -translate-x-1/2"
+                  : "absolute inset-0"
+              }`}
+              onClick={() => {
+                if (phase !== "guessing") return;
+                setGuessingArtist(false);
+                setGuessingSong(true);
+                if (trackGuess.length > 2) {
+                  setShowTrackSuggestions(true);
+                }
+              }}
+            >
+              <div className="flex w-full justify-between">
+                <label htmlFor="track-guess" className="mb-1 text-xl">
+                  Chanson
+                </label>
+                {guessingSong && (
+                  <span className="text-xs text-(--grey) italic">
+                    Temps restants : {timeLeft}s
+                  </span>
                 )}
-              </motion.div>
-            </div>
+              </div>
 
-            {/* Wrapper Chanson */}
-            <div className="relative h-18 w-full">
-              <motion.div
-                layout
-                transition={{ type: "spring", stiffness: 350, damping: 35 }}
-                className={`flex flex-col ${
-                  guessingSong
-                    ? "fixed top-[20%] left-1/2 z-50 w-80 max-w-[90vw] -translate-x-1/2"
-                    : "absolute inset-0"
+              <input
+                id="track-guess"
+                type="text"
+                className={`w-full rounded-lg px-4 py-2 focus:ring-2 focus:ring-(--accent) focus:outline-none ${
+                  showAnswer
+                    ? me?.track_answer
+                      ? "bg-(--green) text-white"
+                      : "bg-(--red) text-white"
+                    : "bg-(--white) text-(--background)"
                 }`}
-                onClick={() => {
+                value={trackGuess}
+                onFocus={() => {
                   if (phase !== "guessing") return;
                   setGuessingArtist(false);
                   setGuessingSong(true);
@@ -607,126 +638,95 @@ export default function Game() {
                     setShowTrackSuggestions(true);
                   }
                 }}
-              >
-                <div className="flex justify-between w-full">
-                  <label htmlFor="track-guess" className="mb-1 text-xl">
-                    Chanson
-                  </label>
-                  {guessingSong && (
-                    <span className="text-xs italic text-(--grey)">
-                      Temps restants : {timeLeft}s
-                    </span>
+                onChange={(e) => {
+                  setTrackGuess(e.target.value);
+                  if (e.target.value.length > 2) {
+                    setShowTrackSuggestions(true);
+                  } else {
+                    setShowTrackSuggestions(false);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Tab") {
+                    setShowTrackSuggestions(false);
+                    return;
+                  }
+                  if (showTrackSuggestions && filteredTracks.length > 0) {
+                    if (e.key === "ArrowDown") {
+                      e.preventDefault();
+                      setActiveTrackIndex((prev) =>
+                        prev < filteredTracks.length - 1 ? prev + 1 : 0,
+                      );
+                    } else if (e.key === "ArrowUp") {
+                      e.preventDefault();
+                      setActiveTrackIndex((prev) =>
+                        prev > 0 ? prev - 1 : filteredTracks.length - 1,
+                      );
+                    } else if (e.key === "Enter") {
+                      e.preventDefault();
+                      const indexToSelect =
+                        activeTrackIndex >= 0 &&
+                        activeTrackIndex < filteredTracks.length
+                          ? activeTrackIndex
+                          : 0;
+                      setTrackGuess(filteredTracks[indexToSelect].name);
+                      setShowTrackSuggestions(false);
+                      setGuessingSong(false);
+                      e.currentTarget.blur();
+                    } else if (e.key === "Escape") {
+                      setGuessingSong(false);
+                      setShowTrackSuggestions(false);
+                      e.currentTarget.blur();
+                    }
+                  } else {
+                    if (e.key === "Enter" || e.key === "Escape") {
+                      setGuessingSong(false);
+                      setShowTrackSuggestions(false);
+                      e.currentTarget.blur();
+                    }
+                  }
+                }}
+                autoComplete="off"
+              />
+              {showTrackSuggestions && trackGuess.length > 2 && (
+                <div className="absolute top-full right-0 left-0 z-50 mt-2 flex max-h-60 flex-col overflow-hidden overflow-y-auto rounded-xl border border-neutral-800/80 bg-neutral-900/95 shadow-2xl backdrop-blur-md">
+                  {filteredTracks.length > 0 ? (
+                    filteredTracks.map((track, idx) => (
+                      <div
+                        key={track.name + "-" + idx}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setTrackGuess(track.name);
+                          setShowTrackSuggestions(false);
+                          setGuessingSong(false);
+                        }}
+                        className={`grid cursor-pointer grid-cols-3 items-center justify-between border-b border-neutral-800/50 px-4 py-3 text-sm transition-colors duration-150 last:border-0 ${
+                          idx === activeTrackIndex
+                            ? "bg-(--semiaccent) text-(--white)"
+                            : "text-gray-200 hover:bg-(--semiaccent) hover:text-(--white)"
+                        }`}
+                      >
+                        <span className="col-span-2 font-medium">
+                          {track.name}
+                        </span>
+                        {track.internationalName &&
+                          track.internationalName !== track.name && (
+                            <span className="text-right text-xs text-gray-400 italic">
+                              ({track.internationalName})
+                            </span>
+                          )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-4 py-3 text-sm text-gray-400 italic">
+                      Aucune chanson trouvée
+                    </div>
                   )}
                 </div>
-
-                <input
-                  id="track-guess"
-                  type="text"
-                  className={`w-full rounded-lg px-4 py-2 focus:ring-2 focus:ring-(--accent) focus:outline-none ${
-                    showAnswer
-                      ? me?.track_answer
-                        ? "bg-(--green) text-white"
-                        : "bg-(--red) text-white"
-                      : "bg-(--white) text-(--background)"
-                  }`}
-                  value={trackGuess}
-                  onFocus={() => {
-                    if (phase !== "guessing") return;
-                    setGuessingArtist(false);
-                    setGuessingSong(true);
-                    if (trackGuess.length > 2) {
-                      setShowTrackSuggestions(true);
-                    }
-                  }}
-                  onChange={(e) => {
-                    setTrackGuess(e.target.value);
-                    if (e.target.value.length > 2) {
-                      setShowTrackSuggestions(true);
-                    } else {
-                      setShowTrackSuggestions(false);
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Tab") {
-                      setShowTrackSuggestions(false);
-                      return;
-                    }
-                    if (showTrackSuggestions && filteredTracks.length > 0) {
-                      if (e.key === "ArrowDown") {
-                        e.preventDefault();
-                        setActiveTrackIndex((prev) =>
-                          prev < filteredTracks.length - 1 ? prev + 1 : 0,
-                        );
-                      } else if (e.key === "ArrowUp") {
-                        e.preventDefault();
-                        setActiveTrackIndex((prev) =>
-                          prev > 0 ? prev - 1 : filteredTracks.length - 1,
-                        );
-                      } else if (e.key === "Enter") {
-                        e.preventDefault();
-                        const indexToSelect =
-                          activeTrackIndex >= 0 &&
-                          activeTrackIndex < filteredTracks.length
-                            ? activeTrackIndex
-                            : 0;
-                        setTrackGuess(filteredTracks[indexToSelect].name);
-                        setShowTrackSuggestions(false);
-                        setGuessingSong(false);
-                        e.currentTarget.blur();
-                      } else if (e.key === "Escape") {
-                        setGuessingSong(false);
-                        setShowTrackSuggestions(false);
-                        e.currentTarget.blur();
-                      }
-                    } else {
-                      if (e.key === "Enter" || e.key === "Escape") {
-                        setGuessingSong(false);
-                        setShowTrackSuggestions(false);
-                        e.currentTarget.blur();
-                      }
-                    }
-                  }}
-                  autoComplete="off"
-                />
-                {showTrackSuggestions && trackGuess.length > 2 && (
-                  <div className="absolute top-full right-0 left-0 z-50 mt-2 flex max-h-60 flex-col overflow-hidden overflow-y-auto rounded-xl border border-neutral-800/80 bg-neutral-900/95 shadow-2xl backdrop-blur-md">
-                    {filteredTracks.length > 0 ? (
-                      filteredTracks.map((track, idx) => (
-                        <div
-                          key={track.name + "-" + idx}
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            setTrackGuess(track.name);
-                            setShowTrackSuggestions(false);
-                            setGuessingSong(false);
-                          }}
-                          className={`grid cursor-pointer grid-cols-3 items-center justify-between border-b border-neutral-800/50 px-4 py-3 text-sm transition-colors duration-150 last:border-0 ${
-                            idx === activeTrackIndex
-                              ? "bg-(--semiaccent) text-(--white)"
-                              : "text-gray-200 hover:bg-(--semiaccent) hover:text-(--white)"
-                          }`}
-                        >
-                          <span className="col-span-2 font-medium">
-                            {track.name}
-                          </span>
-                          {track.internationalName &&
-                            track.internationalName !== track.name && (
-                              <span className="text-right text-xs text-gray-400 italic">
-                                ({track.internationalName})
-                              </span>
-                            )}
-                        </div>
-                      ))
-                    ) : (
-                      <div className="px-4 py-3 text-sm text-gray-400 italic">
-                        Aucune chanson trouvée
-                      </div>
-                    )}
-                  </div>
-                )}
-              </motion.div>
-            </div>
-          </section>
+              )}
+            </motion.div>
+          </div>
+        </section>
       </div>
 
       {/* Barre de temps */}
@@ -753,8 +753,6 @@ export default function Game() {
           ></div>
         </div>
       </div>
-
-      
 
       {/* Affichage des erreurs */}
       <Error error={error} setError={setError} />

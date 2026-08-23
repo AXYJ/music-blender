@@ -61,7 +61,7 @@ export default function Results() {
                   width={250}
                   height={250}
                 />
-                <div className="pointer-events-none absolute right-0 bottom-0 z-10 flex max-w-xs w-full flex-col p-2 text-right">
+                <div className="pointer-events-none absolute right-0 bottom-0 z-10 flex w-full max-w-xs flex-col p-2 text-right">
                   <p className="artist-name text-sm font-semibold wrap-anywhere">
                     {track.artist}
                   </p>

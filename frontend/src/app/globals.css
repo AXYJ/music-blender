@@ -123,3 +123,7 @@ button {
     rgba(16, 8, 20, 0.8) 100%
   );
 }
+
+.toggle-container:last-of-type {
+  margin-bottom: 16px;
+}
