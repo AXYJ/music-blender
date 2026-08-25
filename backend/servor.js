@@ -24,7 +24,8 @@ const io = new Server(server, {
         origin: [
             "http://localhost:3000",
             "http://127.0.0.1:3000",
-            "https://music-blender.xiao-web.com"
+            "https://music-blender.xiao-web.com",
+            "https://museek.xiao-web.com"
         ].filter(Boolean),
         methods: ["GET", "POST"],
         credentials: true

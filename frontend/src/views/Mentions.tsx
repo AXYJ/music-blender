@@ -101,7 +101,7 @@ export default function Mentions() {
             </p>
 
             <div className="w-full overflow-x-auto rounded-lg border border-(--white)/10">
-              <table className="w-full min-w-[500px] border-collapse text-left text-xs">
+              <table className="w-full border-collapse text-left text-xs">
                 <thead>
                   <tr className="bg-(--white)/5 font-semibold text-(--white)">
                     <th className="border-b border-(--white)/10 p-3">
