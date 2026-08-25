@@ -378,7 +378,7 @@ export default function Game() {
               className={`absolute top-0 left-0 flex h-full w-full flex-col items-center justify-center gap-1 bg-black/75 px-8 opacity-100 transition-all duration-300 md:left-1/2 md:-translate-x-1/2`}
             >
               <p className="text-base">La réponse est :</p>
-              <p className="text-xl font-bold text-(--white)">
+              <p className="text-center text-xl font-bold text-(--white)">
                 {currentTrack.artist}
               </p>
               <div className="flex flex-col items-center">
@@ -387,7 +387,7 @@ export default function Game() {
                 </p>
                 {currentTrack.internationalName !==
                   currentTrack.name.toLowerCase().replace(/\s+/g, "") && (
-                  <p className="text-md text-center text-(--grey)/50 italic">
+                  <p className="text-center text-md text-(--grey)/50 italic">
                     {currentTrack.internationalName}
                   </p>
                 )}

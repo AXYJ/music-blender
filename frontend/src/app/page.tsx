@@ -9,6 +9,7 @@ import Lobby from "../views/Lobby";
 import Game from "../views/Game";
 import Result from "../views/Results";
 import Mentions from "../views/Mentions";
+import Background from "../components/Background";
 
 function GameContent() {
   const { view } = useGame();
@@ -34,10 +35,12 @@ function GameContent() {
 
 export default function App() {
   return (
-    <main className="mx-auto min-h-screen w-full px-8 md:max-w-lg lg:max-w-3xl">
-      <GameProvider>
-        <GameContent />
-      </GameProvider>
-    </main>
+    <Background>
+      <main className="mx-auto min-h-screen w-full px-8 md:max-w-lg lg:max-w-3xl">
+        <GameProvider>
+          <GameContent />
+        </GameProvider>
+      </main>
+    </Background>
   );
 }

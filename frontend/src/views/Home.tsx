@@ -150,7 +150,7 @@ export default function Home() {
               >
                 <div className="slide pointer-events-none flex w-full flex-shrink-0 flex-col items-center gap-8 rounded-lg">
                   <div
-                    className="flex w-full flex-col gap-4 rounded-lg px-16 py-4"
+                    className="flex min-h-32 w-full flex-col items-center justify-center gap-4 rounded-lg px-16 py-4"
                     aria-hidden="true"
                   >
                     <div className="w-full -rotate-2 rounded-lg bg-(--accent) px-4 py-2 text-center text-(--white)">
@@ -168,7 +168,7 @@ export default function Home() {
 
                 <div className="slide pointer-events-none flex w-full flex-shrink-0 flex-col items-center gap-8 rounded-lg">
                   <div
-                    className="flex w-full flex-col items-center gap-4 rounded-lg px-16 py-4"
+                    className="flex min-h-32 w-full flex-col items-center justify-center gap-4 rounded-lg px-16 py-4"
                     aria-hidden="true"
                   >
                     <Image src="/spotify.svg" alt="" width={50} height={50} />
@@ -180,7 +180,7 @@ export default function Home() {
 
                 <div className="slide pointer-events-none flex w-full flex-shrink-0 flex-col items-center gap-8 rounded-lg">
                   <div
-                    className="flex w-full flex-col gap-2 rounded-lg px-16 py-4"
+                    className="flex min-h-32 w-full flex-col justify-center gap-2 rounded-lg px-16 py-4"
                     aria-hidden="true"
                   >
                     <div className="rotate-2">
@@ -216,15 +216,17 @@ export default function Home() {
               </div>
             </div>
             <button
-              className={`previous absolute top-1/2 left-0 flex aspect-square h-12 w-12 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-(--accent) ${currentSlide === 0 ? "pointer-events-none opacity-50" : ""}`}
+              className="previous absolute top-1/2 left-0 flex aspect-square h-12 w-12 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-(--accent) text-(--white) transition-all duration-300 disabled:pointer-events-none disabled:opacity-0"
               onClick={prevSlide}
+              disabled={currentSlide === 0}
               aria-label="Diapositive précédente"
             >
               {"<"}
             </button>
             <button
-              className={`next absolute top-1/2 right-0 flex aspect-square h-12 w-12 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-(--accent) ${currentSlide === 2 ? "pointer-events-none opacity-50" : ""}`}
+              className="next absolute top-1/2 right-0 flex aspect-square h-12 w-12 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-(--accent) text-(--white) transition-all duration-300 disabled:pointer-events-none disabled:opacity-0"
               onClick={nextSlide}
+              disabled={currentSlide === 2}
               aria-label="Diapositive suivante"
             >
               {">"}
