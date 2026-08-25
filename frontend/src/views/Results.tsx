@@ -1,10 +1,10 @@
 "use client";
 
-// Import de next
-import Image from "next/image";
-
 //Import React
 import { useState } from "react";
+
+// Import des composants
+import TrackCover from "../components/track/TrackCover";
 
 // Import du contexte
 import { useGame } from "../context/GameContext";
@@ -48,33 +48,14 @@ export default function Results() {
               key={index}
               className="relative flex w-full flex-shrink-0 flex-col items-center gap-6 p-4"
             >
-              <div
-                className="carousel-item-top relative flex aspect-square w-3/5 max-w-xs cursor-pointer items-end gap-4 overflow-hidden rounded-lg transition-all duration-300 ease-out hover:scale-105 active:scale-95"
-                onClick={() => {
-                  window.open(track.url, "_blank");
-                }}
-              >
-                <Image
-                  className="h-full w-full object-cover"
-                  src={track.imageUrl}
-                  alt=""
-                  width={250}
-                  height={250}
-                />
-                <div className="pointer-events-none absolute right-0 bottom-0 z-10 flex w-full max-w-xs flex-col p-2 text-right">
-                  <span className="artist-name text-sm font-semibold wrap-anywhere">
-                    {track.artist}
-                  </span>
-                  <span className="track-name text-lg font-bold wrap-anywhere">
-                    {track.name}
-                  </span>
-                </div>
-                <div className="pointer-events-none absolute top-2 right-4 z-10 flex flex-col text-center">
-                  <p className="text-sm text-(--white)">
-                    {index + 1}/{toPlay.length}
-                  </p>
-                </div>
-              </div>
+              <TrackCover
+                imageUrl={track.imageUrl}
+                artist={track.artist}
+                name={track.name}
+                url={track.url}
+                counterText={`${index + 1}/${toPlay.length}`}
+                className="carousel-item-top aspect-square w-3/5 max-w-xs"
+              />
 
               <div className="max-h-[25vh] w-full max-w-xl overflow-x-auto overflow-y-auto">
                 <table className="carousel-item-bottom w-full">

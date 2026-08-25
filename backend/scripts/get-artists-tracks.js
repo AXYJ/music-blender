@@ -15,7 +15,7 @@ kuroshiro.init(new KuromojiAnalyzer())
         console.error("[Kuroshiro connectSpotify] Failed to initialize:", err);
     });
 
-async function getInternationalName(text) {
+export async function getInternationalName(text) {
     if (!text || typeof text !== "string") return "";
     
     let result = text;
@@ -79,14 +79,7 @@ async function getInternationalName(text) {
 
 
 async function getSpotifyAccessToken() {
-    // 1. Check if a user-supplied access token is configured in .env (for local testing/OAuth bypass)
-    const userToken = process.env.SPOTIFY_ACCESS_TOKEN?.trim();
-    if (userToken) {
-        console.log("[Spotify API] Using user access token from SPOTIFY_ACCESS_TOKEN env variable.");
-        return userToken;
-    }
-
-    // 2. Otherwise, fall back to Client Credentials Flow
+    // Fall back to Client Credentials Flow
     const clientId = process.env.SPOTIFY_CLIENT_ID?.trim();
     const clientSecret = process.env.SPOTIFY_CLIENT_SECRET?.trim();
     if (!clientId || !clientSecret) {
@@ -171,7 +164,7 @@ async function getSpotifyPlaylistTracks(playlistId, accessToken) {
             if (response.status === 403) {
                 console.error(`[Spotify API] Playlist tracks request failed with status 403: Forbidden.\n👉 IMPORTANT : Assurez-vous que la playlist Spotify est configurée en "Publique" dans l'application Spotify (Clic droit -> Partager -> Rendre publique). Les playlists privées ne peuvent pas être lues avec des identifiants d'application généraux.`);
             } else if (response.status === 401) {
-                console.error(`[Spotify API] Playlist tracks request failed with status 401: Unauthorized.\n👉 NOTE : Depuis fin 2024, Spotify restreint l'accès aux playlists par Client Credentials. Si vous testez en local, veuillez générer un User Token et le coller dans la variable SPOTIFY_ACCESS_TOKEN de votre fichier .env.`);
+                console.error(`[Spotify API] Playlist tracks request failed with status 401: Unauthorized. Veuillez vérifier la validité de vos identifiants Spotify dans le fichier .env.`);
             } else {
                 console.error(`[Spotify API] Playlist tracks request failed with status ${response.status}:`, errorText);
             }

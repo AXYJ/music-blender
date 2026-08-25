@@ -10,6 +10,7 @@ import { useGame } from "../context/GameContext";
 import Section from "../components/Section";
 import Error from "../components/alert/Error";
 import Message from "../components/alert/Message";
+import Stepper from "../components/stepper/Stepper";
 
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -151,55 +152,25 @@ export default function Lobby() {
               <div className="flex flex-col gap-6">
                 <div className="flex flex-col gap-4">
                   <p>Nombre de musique par playlist</p>
-                  <div className="flex items-center justify-center gap-4">
-                    {isHost && (
-                      <button
-                        className={`aspect-square h-8 w-8 rounded-full bg-(--white) text-(--background) transition-all duration-100 ease-out hover:scale-105 active:scale-95 ${musicAmount === 1 ? "cursor-not-allowed opacity-50" : ""}`}
-                        onClick={() => {
-                          handleMusicAmount("down");
-                        }}
-                      >
-                        -
-                      </button>
-                    )}
-                    <p>{musicAmount}</p>
-                    {isHost && (
-                      <button
-                        className={`aspect-square h-8 w-8 rounded-full bg-(--white) text-(--background) transition-all duration-100 ease-out hover:scale-105 active:scale-95 ${musicAmount === 20 ? "cursor-not-allowed opacity-50" : ""}`}
-                        onClick={() => {
-                          handleMusicAmount("up");
-                        }}
-                      >
-                        +
-                      </button>
-                    )}
-                  </div>
+                  <Stepper
+                    value={musicAmount}
+                    onIncrement={() => handleMusicAmount("up")}
+                    onDecrement={() => handleMusicAmount("down")}
+                    minDisabled={musicAmount <= 1}
+                    maxDisabled={musicAmount >= 30}
+                    readOnly={!isHost}
+                  />
                 </div>
                 <div className="flex flex-col gap-4">
                   <p>Temps par musique (secondes)</p>
-                  <div className="flex items-center justify-center gap-4">
-                    {isHost && (
-                      <button
-                        className={`aspect-square h-8 w-8 rounded-full bg-(--white) text-(--background) transition-all duration-100 ease-out hover:scale-105 active:scale-95 ${time === 5 ? "cursor-not-allowed opacity-50" : ""}`}
-                        onClick={() => {
-                          handleTime("down");
-                        }}
-                      >
-                        -
-                      </button>
-                    )}
-                    <p>{time}</p>
-                    {isHost && (
-                      <button
-                        className={`aspect-square h-8 w-8 rounded-full bg-(--white) text-(--background) transition-all duration-100 ease-out hover:scale-105 active:scale-95 ${time === 30 ? "cursor-not-allowed opacity-50" : ""}`}
-                        onClick={() => {
-                          handleTime("up");
-                        }}
-                      >
-                        +
-                      </button>
-                    )}
-                  </div>
+                  <Stepper
+                    value={time}
+                    onIncrement={() => handleTime("up")}
+                    onDecrement={() => handleTime("down")}
+                    minDisabled={time <= 5}
+                    maxDisabled={time >= 30}
+                    readOnly={!isHost}
+                  />
                 </div>
               </div>
             </Section>

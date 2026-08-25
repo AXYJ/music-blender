@@ -1,7 +1,8 @@
 import { Socket } from "socket.io-client";
 import { useEffect, useRef } from "react";
 import { Player, View } from "../types/game";
-import { getSocketUrl } from "../utils/config";
+import { getSocketUrl } from "./config";
+import { getSessionItem, setSessionItem } from "./storageUtils";
 
 interface SocketListenersProps {
   socket: Socket | null;
@@ -11,7 +12,6 @@ interface SocketListenersProps {
   setRoomCode: (code: string) => void;
   setPlayers: (players: Player[] | ((prev: Player[]) => Player[])) => void;
   setIsConnected: (connected: boolean) => void;
-  setNoMorePlayers: React.Dispatch<React.SetStateAction<boolean>>;
   setName: (name: string) => void;
   setMusicAmount: (amount: number) => void;
   setTime: (time: number) => void;
@@ -36,7 +36,6 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     setRoomCode,
     setPlayers,
     setIsConnected,
-    setNoMorePlayers,
     setName,
     setMusicAmount,
     setTime,
@@ -161,34 +160,8 @@ export const useSocketListeners = (props: SocketListenersProps) => {
       setPhase("guessing");
       setTimeLeft(time);
 
-      let cachedArtists: any[] = [];
-      let cachedTracks: any[] = [];
-
-      if (typeof window !== "undefined") {
-        try {
-          const storedArtists = sessionStorage.getItem("database_artists");
-          if (storedArtists) {
-            cachedArtists = JSON.parse(storedArtists);
-          }
-        } catch (e) {
-          console.error(
-            "Error reading database_artists from sessionStorage:",
-            e,
-          );
-        }
-
-        try {
-          const storedTracks = sessionStorage.getItem("database_tracks");
-          if (storedTracks) {
-            cachedTracks = JSON.parse(storedTracks);
-          }
-        } catch (e) {
-          console.error(
-            "Error reading database_tracks from sessionStorage:",
-            e,
-          );
-        }
-      }
+      const cachedArtists: any[] = getSessionItem("database_artists", []);
+      const cachedTracks: any[] = getSessionItem("database_tracks", []);
 
       const seenArtistNames = new Set(
         cachedArtists
@@ -218,20 +191,8 @@ export const useSocketListeners = (props: SocketListenersProps) => {
         }
       }
 
-      if (typeof window !== "undefined") {
-        try {
-          sessionStorage.setItem(
-            "database_artists",
-            JSON.stringify(mergedArtists),
-          );
-          sessionStorage.setItem(
-            "database_tracks",
-            JSON.stringify(mergedTracks),
-          );
-        } catch (e) {
-          console.error("Error writing to sessionStorage:", e);
-        }
-      }
+      setSessionItem("database_artists", mergedArtists);
+      setSessionItem("database_tracks", mergedTracks);
 
       setDatabaseArtists(mergedArtists);
       setDatabaseTracks(mergedTracks);
@@ -355,7 +316,6 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     setName,
     setMusicAmount,
     setTime,
-    setNoMorePlayers,
     setToPlay,
     setDatabaseArtists,
     setDatabaseTracks,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 export default function Toggle({
   question,
@@ -9,7 +9,6 @@ export default function Toggle({
   question: string;
   answer: string;
 }) {
-  const toggleRef = useRef<HTMLButtonElement>(null);
   const [isOn, setIsOn] = useState<boolean>(false);
 
   const handleToggle = () => {
@@ -20,8 +19,7 @@ export default function Toggle({
     <div className="toggle-container">
       <button
         onClick={handleToggle}
-        ref={toggleRef}
-        className="text-md flex w-full cursor-pointer justify-between rounded-t-lg border-b-2 border-(--grey) px-2 py-2 text-left transition-all duration-300 hover:bg-(--grey) hover:text-(--background)"
+        className="text-md flex w-full cursor-pointer justify-between rounded-t-md border-b-2 border-(--grey) px-2 py-2 text-left transition-all duration-300 hover:bg-(--grey) hover:text-(--background)"
       >
         {question}
       </button>

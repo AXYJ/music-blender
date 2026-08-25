@@ -10,7 +10,7 @@ export default function Mentions() {
 
   return (
     <div className="my-auto flex min-h-screen w-full flex-col items-center justify-center gap-8 px-4 py-16">
-      <h1 className="text-center text-4xl font-bold text-(--accent)">
+      <h1 className="text-center text-4xl font-bold">
         Mentions légales &amp; Politique de confidentialité
       </h1>
       <p className="self-start text-xs text-(--white)/50">

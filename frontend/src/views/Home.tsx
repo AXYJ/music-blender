@@ -92,7 +92,7 @@ export default function Home() {
 
   return (
     <div className="my-16 flex flex-col items-center gap-4 md:gap-8">
-      <h1 className="text-center text-4xl font-bold text-(--accent)">Museek</h1>
+      <h1 className="text-center text-4xl font-bold">Museek</h1>
       <Section>
         <div className="mb-4 flex flex-col gap-2">
           <label htmlFor="name" className="text-2xl font-bold text-(--white)">

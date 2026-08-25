@@ -54,20 +54,7 @@ const rooms = {};
 // Import des hooks
 import fs from "fs";
 import { transliterate } from "transliteration";
-import selectTracks from "./streaming/connectSpotify.js";
-import Kuroshiro from "kuroshiro";
-import KuromojiAnalyzer from "kuroshiro-analyzer-kuromoji";
-
-const kuroshiro = new Kuroshiro.default();
-let kuroshiroReady = false;
-
-kuroshiro.init(new KuromojiAnalyzer())
-    .then(() => {
-        kuroshiroReady = true;
-    })
-    .catch((err) => {
-        console.error("[Kuroshiro servor] Failed to initialize:", err);
-    });
+import selectTracks, { getInternationalName } from "./scripts/get-artists-tracks.js";
 
 io.on("connection", (socket) => {
     console.log(`[${new Date().toISOString()}] User connected: ${socket.id}`);
@@ -474,21 +461,21 @@ io.on("connection", (socket) => {
             if (player) {
                 const currentTrack = room.toPlay[turn - 1];
                 if (currentTrack) {
-                    const trackGuess = (track || "").trim().toLowerCase();
+                    const trackGuess = normalizeString(track);
 
 
-                    const correctTrack = (currentTrack.name || "").trim().toLowerCase();
-                    const correctIntTrack = (currentTrack.internationalName || "").trim().toLowerCase();
+                    const correctTrack = normalizeString(currentTrack.name);
+                    const correctIntTrack = normalizeString(currentTrack.internationalName);
 
                     // Split the player's artist guesses by comma
                     const playerGuesses = (artist || "")
                         .split(",")
-                        .map(a => a.trim().toLowerCase())
+                        .map(a => normalizeString(a))
                         .filter(Boolean);
 
                     // Extract the required individual artists for this track (both original and international names)
-                    const originalArtistsList = splitArtists(currentTrack.artist).map(a => a.trim().toLowerCase()).filter(Boolean);
-                    const internationalArtistsList = splitArtists(currentTrack.internationalArtist).map(a => a.trim().toLowerCase()).filter(Boolean);
+                    const originalArtistsList = splitArtists(currentTrack.artist).map(a => normalizeString(a)).filter(Boolean);
+                    const internationalArtistsList = splitArtists(currentTrack.internationalArtist).map(a => normalizeString(a)).filter(Boolean);
 
                     // Build lists of acceptable names for each individual artist
                     const requiredArtists = originalArtistsList.map((orig, idx) => {
@@ -521,8 +508,8 @@ io.on("connection", (socket) => {
                         }
                     } else {
                         // Fallback in case requiredArtists is empty
-                        const rawArtist = (currentTrack.artist || "").trim().toLowerCase();
-                        const rawIntArtist = (currentTrack.internationalArtist || "").trim().toLowerCase();
+                        const rawArtist = normalizeString(currentTrack.artist);
+                        const rawIntArtist = normalizeString(currentTrack.internationalArtist);
                         if (playerGuesses.some(guess => guess === rawArtist || guess === rawIntArtist)) {
                             artist_score = 1;
                         }
@@ -656,63 +643,13 @@ function shuffle(array) {
     return newArray;
 }
 
-async function getInternationalName(text) {
-    if (!text || typeof text !== "string") return "";
-    
-    let result = text;
-    // Use [^()]+ to ensure we match the LAST individual parenthesized block
-    const parenthesizedMatch = text.match(/^(.*?)\s*\(([^()]+)\)\s*$/);
-    if (parenthesizedMatch) {
-        const part1 = parenthesizedMatch[1].trim();
-        const part2 = parenthesizedMatch[2].trim();
-        
-        // Check if the parentheses contain a featuring artist
-        const isFeaturing = /^(feat|featuring|with)\b/i.test(part2);
-        
-        if (isFeaturing) {
-            // Recursively process the title part, then append the featuring part back
-            const p1 = await getInternationalName(part1);
-            result = `${p1} (${part2})`;
-        } else {
-            const isPart1Ascii = !/[^\x00-\x7F]/.test(part1);
-            const isPart2Ascii = !/[^\x00-\x7F]/.test(part2);
-            
-            if (isPart1Ascii && !isPart2Ascii) result = part1;
-            if (isPart2Ascii && !isPart1Ascii) result = part2;
-        }
-    } else {
-        const hasKana = /[\u3040-\u309F\u30A0-\u30FF]/.test(text);
-        const isCJK = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(text);
-        
-        if (isCJK && kuroshiroReady) {
-            try {
-                const converted = await kuroshiro.convert(text, {
-                    to: "romaji",
-                    romajiSystem: "hepburn"
-                });
-                
-                const hasRemainingCJK = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(converted);
-                if (hasRemainingCJK) {
-                    if (hasKana) {
-                        result = transliterate(converted);
-                    } else {
-                        result = transliterate(text);
-                    }
-                } else {
-                    result = converted;
-                }
-            } catch (err) {
-                console.error("Kuroshiro conversion error:", err);
-                if (/[^\x00-\x7F]/.test(text)) {
-                    result = transliterate(text);
-                }
-            }
-        } else if (/[^\x00-\x7F]/.test(text)) {
-            result = transliterate(text);
-        }
-    }
-    
-    return result.replace(/\s+/g, "");
+function normalizeString(str) {
+    if (!str) return "";
+    return str
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim();
 }
 
 function splitArtists(artistStr) {

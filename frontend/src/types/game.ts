@@ -21,8 +21,6 @@ export interface GameContextType {
   setRoomCode: (code: string) => void;
   players: Player[];
   setPlayers: React.Dispatch<React.SetStateAction<Player[]>>;
-  noMorePlayers: boolean;
-  setNoMorePlayers: React.Dispatch<React.SetStateAction<boolean>>;
   // Actions
   createGame: () => void;
   joinGame: (code: string) => void;
@@ -32,8 +30,6 @@ export interface GameContextType {
   // Volume
   volume: number;
   setVolume: (volume: number) => void;
-  sfxVolume: number;
-  setSfxVolume: (sfxVolume: number) => void;
   // Joueur
   name: string;
   setName: (name: string) => void;

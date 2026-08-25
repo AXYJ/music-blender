@@ -20,8 +20,9 @@ const VOLUME_KEY = "game_volume";
 
 // Import des types
 import { View, GameContextType, Player } from "../types/game";
-import { useSocketListeners } from "../hooks/useSocketListeners";
+import { useSocketListeners } from "../utils/useSocketListeners";
 import { getSocketUrl } from "../utils/config";
+import { getSessionItem } from "../utils/storageUtils";
 
 // Création du contexte
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -39,7 +40,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     return "";
   });
   const [players, setPlayers] = useState<Player[]>([]);
-  const [noMorePlayers, setNoMorePlayers] = useState(false);
   const [volume, setVolume] = useState(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem(VOLUME_KEY);
@@ -47,46 +47,16 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
     return 0.1;
   });
-  const [sfxVolume, setSfxVolume] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem(SFX_KEY);
-      return saved ? parseFloat(saved) : 0.5;
-    }
-    return 0.5;
-  });
   const [musicAmount, setMusicAmount] = useState(3);
   const [time, setTime] = useState(30);
-  const sfxVolumeRef = useRef(sfxVolume);
   const [playlistUrl, setPlaylistUrl] = useState("");
   const [toPlay, setToPlay] = useState<any[]>([]);
-  const [database_artists, setDatabaseArtists] = useState<any[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const saved = sessionStorage.getItem("database_artists");
-        return saved ? JSON.parse(saved) : [];
-      } catch (e) {
-        console.error(
-          "Error reading database_artists from sessionStorage during init:",
-          e,
-        );
-      }
-    }
-    return [];
-  });
-  const [database_tracks, setDatabaseTracks] = useState<any[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const saved = sessionStorage.getItem("database_tracks");
-        return saved ? JSON.parse(saved) : [];
-      } catch (e) {
-        console.error(
-          "Error reading database_tracks from sessionStorage during init:",
-          e,
-        );
-      }
-    }
-    return [];
-  });
+  const [database_artists, setDatabaseArtists] = useState<any[]>(() =>
+    getSessionItem("database_artists", []),
+  );
+  const [database_tracks, setDatabaseTracks] = useState<any[]>(() =>
+    getSessionItem("database_tracks", []),
+  );
   const [message, setMessage] = useState("");
 
   const [turn, setTurn] = useState<number>(1);
@@ -107,7 +77,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setRoomCode,
     setPlayers,
     setIsConnected,
-    setNoMorePlayers,
     setName,
     setMusicAmount,
     setTime,
@@ -127,10 +96,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.setItem(VOLUME_KEY, volume.toString());
-      localStorage.setItem(SFX_KEY, sfxVolume.toString());
     }
-    sfxVolumeRef.current = sfxVolume;
-  }, [volume, sfxVolume]);
+  }, [volume]);
 
   // ----------------------------------------------------------------
   // Gestion du pseudo dans le localStorage
@@ -287,14 +254,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       setError,
       roomCode,
       setRoomCode,
-      noMorePlayers,
-      setNoMorePlayers,
       players,
       setPlayers,
       volume,
       setVolume,
-      sfxVolume,
-      setSfxVolume,
       name,
       setName,
       createGame,
@@ -330,11 +293,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       view,
       isConnected,
       error,
-      noMorePlayers,
       roomCode,
       players,
       volume,
-      sfxVolume,
       name,
       createGame,
       joinGame,
