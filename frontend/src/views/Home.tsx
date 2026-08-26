@@ -13,6 +13,7 @@ import { useGame } from "../context/GameContext";
 import Section from "../components/Section";
 import Error from "../components/alert/Error";
 import Toggle from "../components/toggle/Toggle";
+import Logo from "../components/Logo";
 
 export default function Home() {
   const {
@@ -92,10 +93,10 @@ export default function Home() {
 
   return (
     <div className="my-16 flex flex-col items-center gap-4 md:gap-8">
-      <h1 className="text-center text-4xl font-bold">Museek</h1>
+      <Logo />
       <Section>
         <div className="mb-4 flex flex-col gap-2">
-          <label htmlFor="name" className="text-2xl font-bold text-(--white)">
+          <label htmlFor="name" className="text-2xl text-(--white)">
             Votre pseudo
           </label>
           <input

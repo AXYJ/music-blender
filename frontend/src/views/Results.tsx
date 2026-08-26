@@ -33,7 +33,7 @@ export default function Results() {
 
   return (
     <div className="relative mx-auto my-16 flex w-full max-w-4xl flex-col items-center gap-6 px-4">
-      <h1 className="text-3xl font-bold">Résultat de la partie</h1>
+      <h1 className="text-4xl font-bold">Résultat de la partie</h1>
 
       <section className="relative w-full overflow-hidden">
         {/* Sliding Track */}

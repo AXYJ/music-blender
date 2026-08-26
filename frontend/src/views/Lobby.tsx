@@ -11,6 +11,7 @@ import Section from "../components/Section";
 import Error from "../components/alert/Error";
 import Message from "../components/alert/Message";
 import Stepper from "../components/stepper/Stepper";
+import Logo from "../components/Logo";
 
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -112,7 +113,7 @@ export default function Lobby() {
 
   return (
     <div className="my-16 flex w-full flex-col items-center gap-8">
-      <h1 className="text-center text-4xl font-bold">Music Blender</h1>
+      <Logo />
 
       <div className="flex w-full flex-col gap-4">
         <div className="flex flex-col items-center gap-8">
