@@ -1,5 +1,7 @@
 import React from "react";
 import Image from "next/image";
+import Grain from "../Grain";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface TrackCoverProps {
   imageUrl?: string | null;
@@ -12,6 +14,7 @@ interface TrackCoverProps {
   showAnswerOverlay?: boolean;
   className?: string;
   children?: React.ReactNode;
+  turn?: number;
 }
 
 export default function TrackCover({
@@ -25,6 +28,7 @@ export default function TrackCover({
   showAnswerOverlay = false,
   className = "",
   children,
+  turn,
 }: TrackCoverProps) {
   const isClickable = !!url;
 
@@ -43,22 +47,39 @@ export default function TrackCover({
   return (
     <section
       onClick={handleClick}
-      className={`relative overflow-hidden rounded-lg ${
+      className={`track-cover relative overflow-hidden rounded-lg ${
         isClickable
           ? "cursor-pointer transition-all duration-300 ease-out hover:scale-102 active:scale-95"
           : ""
-      } ${className}`}
+      } ${blurImage ? "blurred" : ""} ${className}`}
     >
+      <Grain id="track-grain" baseFrequency="0.9" scale="0.8" />
       {imageUrl ? (
-        <Image
-          src={imageUrl}
-          alt="Cover"
-          width={250}
-          height={250}
-          className={`h-full w-full object-cover transition-all duration-300 ${
-            blurImage ? "blur-md" : "blur-none"
-          }`}
-        />
+        <div className="relative aspect-square h-full w-full">
+          {/* Image propre en arrière-plan */}
+          <Image
+            src={imageUrl}
+            alt={"Cover " + turn}
+            width={250}
+            height={250}
+            className="h-full w-full object-cover"
+            priority
+          />
+          {/* Image filtrée au-dessus, dont on anime l'opacité */}
+          <Image
+            src={imageUrl}
+            alt={"Cover blurred " + turn}
+            width={250}
+            height={250}
+            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${
+              blurImage ? "opacity-100 transition-none" : "opacity-0"
+            }`}
+            style={{
+              filter: "url(#track-grain) grayscale(0.8)",
+            }}
+            priority
+          />
+        </div>
       ) : (
         <div className="flex aspect-square w-full items-center justify-center bg-gray-700 text-sm text-gray-400">
           {"Pas d'image"}
@@ -66,22 +87,30 @@ export default function TrackCover({
       )}
 
       {/* Answer overlay */}
-      {showAnswerOverlay && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/75 px-8 transition-opacity duration-300">
-          <p className="text-base text-gray-300">La réponse est :</p>
-          <p className="text-center text-xl font-bold text-(--white)">
-            {artist}
-          </p>
-          <div className="flex flex-col items-center">
-            <p className="text-center text-lg text-(--white)">{name}</p>
-            {showIntName && (
-              <p className="text-md text-center text-(--grey)/50 italic">
-                {internationalName}
-              </p>
-            )}
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {showAnswerOverlay && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.0, ease: "easeInOut" }}
+            className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-1 bg-black/75 px-8"
+          >
+            <p className="text-base text-gray-300">La réponse est :</p>
+            <p className="text-center text-xl font-bold text-(--white)">
+              {artist}
+            </p>
+            <div className="flex flex-col items-center">
+              <p className="text-center text-lg text-(--white)">{name}</p>
+              {showIntName && (
+                <p className="text-md text-center text-(--grey)/50 italic">
+                  {internationalName}
+                </p>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Default overlays (only show if not revealing answer) */}
       {!showAnswerOverlay && (

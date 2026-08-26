@@ -1,6 +1,8 @@
 // components/GrainedBackground.tsx
 import React from "react";
 
+import Grain from "./Grain";
+
 export default function GrainedBackground({
   children,
 }: {
@@ -8,33 +10,8 @@ export default function GrainedBackground({
 }) {
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-[#181818]">
-      {/* 1. Définition du filtre de grain SVG (invisible dans le flux) */}
-      <svg
-        className="pointer-events-none fixed top-0 left-0"
-        width="0"
-        height="0"
-        aria-hidden="true"
-      >
-        <filter
-          id="grain"
-          colorInterpolationFilters="sRGB"
-          primitiveUnits="objectBoundingBox"
-        >
-          {/* Génération du bruit : baseFrequency contrôle la finesse du grain */}
-          <feTurbulence
-            type="fractalNoise"
-            baseFrequency="0.5"
-            numOctaves="4"
-          />
-          {/* Déplacement/déformation des pixels par le bruit */}
-          <feDisplacementMap
-            in="SourceGraphic"
-            scale="0.2"
-            xChannelSelector="R"
-          />
-          <feBlend in2="SourceGraphic" />
-        </filter>
-      </svg>
+      {/* Filtre de grain SVG global */}
+      <Grain baseFrequency=".5" scale=".2" />
 
       {/* 2. Le visuel SVG en fond */}
       <svg
@@ -58,7 +35,7 @@ export default function GrainedBackground({
             cx="10%"
             cy="0%"
             rx="50%"
-            ry="30%"
+            ry="40%"
             fill="url(#grad-1)"
             style={{
               filter: "blur(80px)",
@@ -67,8 +44,8 @@ export default function GrainedBackground({
             }}
           />
           <ellipse
-            cx="80%"
-            cy="70%"
+            cx="70%"
+            cy="100%"
             rx="50%"
             ry="40%"
             fill="url(#grad-1)"

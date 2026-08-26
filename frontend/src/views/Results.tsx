@@ -55,6 +55,7 @@ export default function Results() {
                 url={track.url}
                 counterText={`${index + 1}/${toPlay.length}`}
                 className="carousel-item-top aspect-square w-3/5 max-w-xs"
+                turn={index + 1}
               />
 
               <div className="max-h-[25vh] w-full max-w-xl overflow-x-auto overflow-y-auto">

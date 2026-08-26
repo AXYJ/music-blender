@@ -112,9 +112,7 @@ export default function Lobby() {
 
   return (
     <div className="my-16 flex w-full flex-col items-center gap-8">
-      <h1 className="text-center text-4xl font-bold text-(--accent)">
-        Music Blender
-      </h1>
+      <h1 className="text-center text-4xl font-bold">Music Blender</h1>
 
       <div className="flex w-full flex-col gap-4">
         <div className="flex flex-col items-center gap-8">

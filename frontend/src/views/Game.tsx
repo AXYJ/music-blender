@@ -331,7 +331,6 @@ export default function Game() {
             : "opacity-100"
         }`}
       >
-        <h1>Music Blender</h1>
         <TrackCover
           imageUrl={trackImage}
           artist={currentTrack.artist}
@@ -341,6 +340,7 @@ export default function Game() {
           blurImage={phase === "guessing"}
           showAnswerOverlay={showAnswer}
           className="aspect-square w-full max-w-72"
+          turn={turn}
         >
           {!showAnswer && (
             <div className="absolute bottom-2 left-1/2 z-10 -translate-x-1/2">
