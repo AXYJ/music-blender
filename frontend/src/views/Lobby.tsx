@@ -12,6 +12,7 @@ import Error from "../components/alert/Error";
 import Message from "../components/alert/Message";
 import Stepper from "../components/stepper/Stepper";
 import Logo from "../components/Logo";
+import Info from "../components/Info/Info";
 
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -40,8 +41,11 @@ export default function Lobby() {
   const isReady = me?.isReady || false;
 
   const [isLoading, setIsLoading] = useState(false);
+  const [infoType, setInfoType] = useState<"number-music" | "time" | null>(
+    null,
+  );
 
-  // Gestion du nombre de musique par joueur
+  // Gestion du nombre de morceau par playlist
   const handleMusicAmount = (operation: "up" | "down") => {
     if (operation === "up") {
       if (musicAmount < 30) {
@@ -56,7 +60,7 @@ export default function Lobby() {
     }
   };
 
-  // Gestion du temps par musique
+  // Gestion du temps par morceau
   const handleTime = (operation: "up" | "down") => {
     if (operation === "up") {
       if (time < 30) {
@@ -150,7 +154,40 @@ export default function Lobby() {
               <h2>Paramètres de la partie</h2>
               <div className="flex flex-col gap-6">
                 <div className="flex flex-col gap-4">
-                  <p>Nombre de musique par playlist</p>
+                  <p>
+                    Nombre de morceaux par playlist
+                    <button
+                      className="relative ml-1 inline-flex items-center align-middle"
+                      aria-describedby="info-number-music"
+                      onMouseOver={() => setInfoType("number-music")}
+                      onMouseOut={() => setInfoType(null)}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="lucide lucide-info-icon lucide-info"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 16v-4" />
+                        <path d="M12 8h.01" />
+                      </svg>
+                      <Info
+                        id="info-number-music"
+                        visible={infoType === "number-music"}
+                      >
+                        <p>
+                          Le nombre de morceaux choisit dans chaque playlist.
+                        </p>
+                      </Info>
+                    </button>
+                  </p>
                   <Stepper
                     value={musicAmount}
                     onIncrement={() => handleMusicAmount("up")}
@@ -161,7 +198,38 @@ export default function Lobby() {
                   />
                 </div>
                 <div className="flex flex-col gap-4">
-                  <p>Temps par musique (secondes)</p>
+                  <p>
+                    Temps par morceau (secondes)
+                    <button
+                      className="relative ml-1 inline-flex items-center align-middle"
+                      aria-describedby="info-time"
+                      onMouseOver={() => setInfoType("time")}
+                      onMouseOut={() => setInfoType(null)}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="lucide lucide-info-icon lucide-info"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 16v-4" />
+                        <path d="M12 8h.01" />
+                      </svg>
+                      <Info id="info-time" visible={infoType === "time"}>
+                        <p>
+                          Le temps accordé pour deviner et écrire les réponses
+                          pour chaque morceaux.
+                        </p>
+                      </Info>
+                    </button>
+                  </p>
                   <Stepper
                     value={time}
                     onIncrement={() => handleTime("up")}

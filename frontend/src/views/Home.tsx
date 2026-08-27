@@ -215,7 +215,7 @@ export default function Home() {
                     </div>
                   </div>
                   <p className="px-2 text-center">
-                    Devinez le titre et l'artiste de la musique et gagnez des
+                    Devinez le titre et l'artiste du morceau et gagnez des
                     points
                   </p>
                 </div>
@@ -279,7 +279,7 @@ export default function Home() {
         </Section>
       </div>
 
-      <footer className="mt-16 flex w-full flex-col items-center gap-4 text-center">
+      <footer className="mt-4 flex w-full flex-col items-center gap-4 text-center">
         <p className="text-(--white)/50">
           Ce jeu est un projet indépendant et n'est ni affilié, ni sponsorisé,
           ni approuvé par Spotify / Deezer / YouTube. Les titres, artistes et

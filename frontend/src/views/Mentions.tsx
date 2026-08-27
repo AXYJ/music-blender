@@ -230,7 +230,7 @@ export default function Mentions() {
               fonctionnement du service peuvent être déposés sur votre terminal
               :
             </p>
-            <p className="border-l-2 border-(--accent)/50 pl-4 italic">
+            <p className="border-l-2 border-(--white)/50 pl-4 italic">
               <strong>Stockage local de confort :</strong> Votre navigateur peut
               garder en mémoire locale votre dernier pseudonyme utilisé ou le
               dernier code de salon pour vous éviter de les retaper lors d'un
