@@ -107,13 +107,18 @@ export default function Home() {
             onChange={(e) => setName(e.target.value)}
           />
         </div>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
           <button
             className="rounded-lg bg-(--accent) px-4 py-2 text-(--white) transition-all duration-300 hover:bg-(--accent)/60 active:scale-95"
             onClick={handleCreateGame}
           >
             Créer
           </button>
+          <div className="flex items-center gap-2">
+            <div className="h-[1px] w-full rounded-full bg-(--white)/20"></div>
+            <p className="w-10 text-center text-(--white)">ou</p>
+            <div className="h-[1px] w-full rounded-full bg-(--white)/20"></div>
+          </div>
           <div className="flex flex-col gap-2">
             <input
               type="text"
