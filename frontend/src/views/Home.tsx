@@ -177,7 +177,10 @@ export default function Home() {
                     className="flex min-h-32 w-full flex-col items-center justify-center gap-4 rounded-lg px-16 py-4"
                     aria-hidden="true"
                   >
-                    <Image src="/spotify.svg" alt="" width={50} height={50} />
+                    <div className="flex items-center gap-8">
+                      <Image src="/spotify.svg" alt="" width={50} height={50} />
+                      <Image src="/deezer.svg" alt="" width={50} height={50} />
+                    </div>
                   </div>
                   <p className="px-2 text-center">
                     Ajouter le lien de votre playlist préférée
@@ -257,9 +260,16 @@ export default function Home() {
         </Section>
         <Section>
           <h2>FAQ</h2>
-          <Toggle
-            question="Comment ajouter une playlist depuis Spotify ?"
-            answer={`
+          <div>
+            <Toggle
+              question="Quelle plateforme de streaming sont disponible ?"
+              answer={`
+              <p>Les plateformes disponibles sont Spotify et Deezer. Si vous souhaitez voir d'autres plateformes être ajoutées, n'hésitez pas à nous contacter.</p>
+              `}
+            />
+            <Toggle
+              question="Comment ajouter une playlist depuis Spotify ?"
+              answer={`
               <ol className="space-y-2">
               <li>Allez sur Spotify et trouvez la playlist que vous souhaitez partager (la playlist doit être en publique).</li>
               <li>Cliquez sur les trois petits points (...) à côté du nom de la playlist.</li>
@@ -267,23 +277,27 @@ export default function Home() {
               <li>Collez ce lien dans le champ prévu à cet effet dans l'application.</li>
               </ol>
               `}
-          />
-          {/* <Toggle
-            question="Comment ajouter une playlist depuis Deezer ?"
-            answer=" 1. Allez sur Deezer et trouvez la playlist que vous souhaitez partager (la playlist doit être en publique). 2. Cliquez sur les trois petits points (...) à côté du nom de la playlist. 3. Cliquez sur 'Partager', puis sur 'Copier le lien'. 4. Collez ce lien dans le champ prévu à cet effet dans l'application."
-          />
-          <Toggle
-            question="Comment ajouter une playlist depuis YouTube ?"
-            answer=" 1. Allez sur YouTube et trouvez la playlist que vous souhaitez partager (la playlist doit être en publique). 2. Cliquez sur les trois petits points (...) à côté du nom de la playlist. 3. Cliquez sur 'Partager', puis sur 'Copier le lien'. 4. Collez ce lien dans le champ prévu à cet effet dans l'application."
-          /> */}
+            />
+            <Toggle
+              question="Comment ajouter une playlist depuis Deezer ?"
+              answer={`
+              <ol className="space-y-2">
+              <li>Allez sur Deezer et trouvez la playlist que vous souhaitez partager (la playlist doit être en publique).</li>
+              <li>Cliquez sur le bouton 'Partager' à côté du nom de la playlist.</li>
+              <li>Cliquez sur 'Copier'.</li>
+              <li>Collez ce lien dans le champ prévu à cet effet dans l'application.</li>
+              </ol>
+              `}
+            />
+          </div>
         </Section>
       </div>
 
       <footer className="mt-4 flex w-full flex-col items-center gap-4 text-center">
         <p className="text-(--white)/50">
           Ce jeu est un projet indépendant et n'est ni affilié, ni sponsorisé,
-          ni approuvé par Spotify / Deezer / YouTube. Les titres, artistes et
-          visuels associés restent la propriété exclusive de leurs ayants droit
+          ni approuvé par Spotify / Deezer. Les titres, artistes et visuels
+          associés restent la propriété exclusive de leurs ayants droit
           respectifs.
         </p>
         <button

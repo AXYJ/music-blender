@@ -99,6 +99,11 @@ button {
   margin-bottom: 16px;
 }
 
+.toggle-container:first-of-type button {
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+}
+
 .track-cover::after {
   content: "";
   position: absolute;

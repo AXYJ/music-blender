@@ -298,7 +298,7 @@ export default function Game() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4">
-      <audio ref={audioRef} autoPlay src={currentTrack.previewUrl}></audio>
+      <audio ref={audioRef} src={currentTrack.previewUrl}></audio>
 
       {/* Bouton quitter */}
       <button

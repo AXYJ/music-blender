@@ -19,7 +19,7 @@ export default function Toggle({
     <div className="toggle-container">
       <button
         onClick={handleToggle}
-        className="text-md flex w-full cursor-pointer justify-between rounded-t-md border-b-2 border-(--grey) px-2 py-2 text-left transition-all duration-300 hover:bg-(--grey) hover:text-(--background)"
+        className="text-md flex w-full cursor-pointer justify-between border-b-2 border-(--grey) px-2 py-2 text-left transition-all duration-300 hover:bg-(--grey) hover:text-(--background)"
       >
         {question}
       </button>
@@ -29,7 +29,7 @@ export default function Toggle({
         }`}
       >
         <div className="overflow-hidden">
-          <div className="pt-4 text-sm">
+          <div className="mb-2 pt-4 text-sm">
             <div dangerouslySetInnerHTML={{ __html: answer }} />
           </div>
         </div>

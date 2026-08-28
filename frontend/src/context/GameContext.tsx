@@ -43,9 +43,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [volume, setVolume] = useState(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem(VOLUME_KEY);
-      return saved ? parseFloat(saved) : 0.1;
+      return saved ? parseFloat(saved) : 0.05;
     }
-    return 0.1;
+    return 0.05;
   });
   const [musicAmount, setMusicAmount] = useState(3);
   const [time, setTime] = useState(30);

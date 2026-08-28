@@ -41,9 +41,9 @@ export default function Lobby() {
   const isReady = me?.isReady || false;
 
   const [isLoading, setIsLoading] = useState(false);
-  const [infoType, setInfoType] = useState<"number-music" | "time" | null>(
-    null,
-  );
+  const [infoType, setInfoType] = useState<
+    "number-music" | "time" | "url" | null
+  >(null);
 
   // Gestion du nombre de morceau par playlist
   const handleMusicAmount = (operation: "up" | "down") => {
@@ -245,19 +245,39 @@ export default function Lobby() {
               <h2>Ajoute ta musique</h2>
               <div className="flex flex-col gap-6">
                 <div className="flex flex-col gap-2">
-                  <label htmlFor="stream">Plateforme de streaming</label>
-                  <select
-                    name="stream-service"
-                    id="stream"
-                    className="rounded-md bg-(--white) p-2 text-(--background)"
-                    aria-label="Plateforme de streaming"
-                  >
-                    <option value="spotify">Spotify</option>
-                    {/* <option value="deezer">Deezer</option> */}
-                  </select>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="playlist">URL de la playlist</label>
+                  <label htmlFor="playlist">
+                    URL de la playlist
+                    <button
+                      className="relative ml-1 inline-flex items-center align-middle"
+                      aria-describedby="info-url"
+                      onMouseOver={() => setInfoType("url")}
+                      onMouseOut={() => setInfoType(null)}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="lucide lucide-info-icon lucide-info"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 16v-4" />
+                        <path d="M12 8h.01" />
+                      </svg>
+                      <Info id="info-url" visible={infoType === "url"}>
+                        <p>
+                          L'URL de la playlist. Tu peux trouver l'URL de la
+                          playlist en cliquant sur le bouton "Partager" de la
+                          playlist, puis sur "Copier le lien".
+                        </p>
+                      </Info>
+                    </button>
+                  </label>
                   <input
                     type="text"
                     id="playlist"

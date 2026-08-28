@@ -4,6 +4,9 @@ import { transliterate } from "transliteration";
 import Kuroshiro from "kuroshiro";
 import KuromojiAnalyzer from "kuroshiro-analyzer-kuromoji";
 
+import { getSpotifyTracksAnonymously, getSpotifyAccessToken, getSpotifyAlbumTracks, fetchTrackImageViaOEmbed } from "./get-from-spotify.js";
+import { getPlaylistTracksFromDeezer, getAlbumTracksFromDeezer } from "./get-from-deezer.js";
+
 const kuroshiro = new Kuroshiro.default();
 let kuroshiroReady = false;
 
@@ -15,19 +18,23 @@ kuroshiro.init(new KuromojiAnalyzer())
         console.error("[Kuroshiro connectSpotify] Failed to initialize:", err);
     });
 
+//----------------------------------
+// Convertir les noms en version internationale
+//----------------------------------
+
 export async function getInternationalName(text) {
     if (!text || typeof text !== "string") return "";
-    
+
     let result = text;
     // Use [^()]+ to ensure we match the LAST individual parenthesized block
     const parenthesizedMatch = text.match(/^(.*?)\s*\(([^()]+)\)\s*$/);
     if (parenthesizedMatch) {
         const part1 = parenthesizedMatch[1].trim();
         const part2 = parenthesizedMatch[2].trim();
-        
+
         // Check if the parentheses contain a featuring artist
         const isFeaturing = /^(feat|featuring|with)\b/i.test(part2);
-        
+
         if (isFeaturing) {
             // Recursively process the title part, then append the featuring part back
             const p1 = await getInternationalName(part1);
@@ -35,21 +42,21 @@ export async function getInternationalName(text) {
         } else {
             const isPart1Ascii = !/[^\x00-\x7F]/.test(part1);
             const isPart2Ascii = !/[^\x00-\x7F]/.test(part2);
-            
+
             if (isPart1Ascii && !isPart2Ascii) result = part1;
             if (isPart2Ascii && !isPart1Ascii) result = part2;
         }
     } else {
         const hasKana = /[\u3040-\u309F\u30A0-\u30FF]/.test(text);
         const isCJK = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(text);
-        
+
         if (isCJK && kuroshiroReady) {
             try {
                 const converted = await kuroshiro.convert(text, {
                     to: "romaji",
                     romajiSystem: "hepburn"
                 });
-                
+
                 const hasRemainingCJK = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(converted);
                 if (hasRemainingCJK) {
                     if (hasKana) {
@@ -70,131 +77,38 @@ export async function getInternationalName(text) {
             result = transliterate(text);
         }
     }
-    
+
     result = result.toLowerCase();
     result = result.replace(/\s+/g, "");
-    
+
     return result;
 }
 
-
-async function getSpotifyAccessToken() {
-    // Fall back to Client Credentials Flow
-    const clientId = process.env.SPOTIFY_CLIENT_ID?.trim();
-    const clientSecret = process.env.SPOTIFY_CLIENT_SECRET?.trim();
-    if (!clientId || !clientSecret) {
-        console.warn("[Spotify API] Missing SPOTIFY_CLIENT_ID or SPOTIFY_CLIENT_SECRET env variables.");
-        return null;
+//----------------------------------
+// Résolution des liens courts en URLs complètes
+//----------------------------------
+async function resolveUrlIfNeeded(url) {
+    if (!url || typeof url !== "string") return url;
+    
+    // Si l'URL contient déjà le motif classique (playlist/id ou album/id), pas besoin de la résoudre
+    if (url.match(/(playlist|album)\/([a-zA-Z0-9]+)/)) {
+        return url;
     }
 
     try {
-        const response = await fetch("https://accounts.spotify.com/api/token", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                Authorization: "Basic " + Buffer.from(clientId + ":" + clientSecret).toString("base64"),
-            },
-            body: "grant_type=client_credentials",
-        });
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`[Spotify API] Token request failed with status ${response.status}:`, errorText);
-            return null;
-        }
-        const data = await response.json();
-        return data.access_token;
+        console.log(`[URL Resolver] Short URL detected. Resolving: ${url}`);
+        const response = await fetch(url, { method: "GET", redirect: "follow" });
+        console.log(`[URL Resolver] Resolved to: ${response.url}`);
+        return response.url;
     } catch (e) {
-        console.error("Error getting Spotify token:", e);
-        return null;
+        console.error(`[URL Resolver] Error resolving short URL ${url}:`, e);
+        return url;
     }
 }
 
-async function getSpotifyTracksAnonymously(type, id) {
-    try {
-        console.log(`[Spotify Scraper] Fetching public embed page for ${type}: ${id}`);
-        const response = await fetch(`https://open.spotify.com/embed/${type}/${id}`, {
-            headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            }
-        });
-        if (!response.ok) {
-            console.warn(`[Spotify Scraper] Failed to fetch embed page: status ${response.status}`);
-            return null;
-        }
-        const html = await response.text();
-        const match = html.match(/<script id="__NEXT_DATA__" type="application\/json">(.*?)<\/script>/);
-        if (!match) {
-            console.warn(`[Spotify Scraper] __NEXT_DATA__ script tag not found in embed page.`);
-            return null;
-        }
-
-        const data = JSON.parse(match[1]);
-        const entity = data.props?.pageProps?.state?.data?.entity;
-        if (!entity || !Array.isArray(entity.trackList)) {
-            console.warn(`[Spotify Scraper] ${type} track list not found in parsed data.`);
-            return null;
-        }
-
-        console.log(`[Spotify Scraper] Successfully extracted ${entity.trackList.length} tracks via public embed page!`);
-        const tracks = await Promise.all(entity.trackList.map(async item => ({
-            name: item.title,
-            artist: item.subtitle,
-            internationalName: await getInternationalName(item.title),
-            internationalArtist: await getInternationalName(item.subtitle),
-            previewUrl: item.audioPreview?.url || "",
-            imageUrl: entity.coverArt?.sources?.[0]?.url || "", // fallback to cover art
-            url: item.url || (item.uri ? `https://open.spotify.com/track/${item.uri.split(":")[2]}` : "")
-        })));
-        return tracks;
-    } catch (e) {
-        console.error(`[Spotify Scraper] Error scraping ${type} tracks:`, e);
-        return null;
-    }
-}
-
-async function getSpotifyPlaylistTracks(playlistId, accessToken) {
-    try {
-        const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/items`, {
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-            },
-        });
-        if (!response.ok) {
-            const errorText = await response.text();
-            if (response.status === 403) {
-                console.error(`[Spotify API] Playlist tracks request failed with status 403: Forbidden.\n👉 IMPORTANT : Assurez-vous que la playlist Spotify est configurée en "Publique" dans l'application Spotify (Clic droit -> Partager -> Rendre publique). Les playlists privées ne peuvent pas être lues avec des identifiants d'application généraux.`);
-            } else if (response.status === 401) {
-                console.error(`[Spotify API] Playlist tracks request failed with status 401: Unauthorized. Veuillez vérifier la validité de vos identifiants Spotify dans le fichier .env.`);
-            } else {
-                console.error(`[Spotify API] Playlist tracks request failed with status ${response.status}:`, errorText);
-            }
-            return null;
-        }
-        const data = await response.json();
-        if (!data.items) return null;
-        const tracks = await Promise.all(
-            data.items
-                .filter(item => item.track)
-                .map(async item => {
-                    const t = item.track;
-                    const artistsStr = t.artists.map(a => a.name).join(", ");
-                    return {
-                        name: t.name,
-                        artist: artistsStr,
-                        internationalName: await getInternationalName(t.name),
-                        internationalArtist: await getInternationalName(artistsStr),
-                        previewUrl: t.preview_url,
-                        imageUrl: t.album?.images?.[0]?.url || "",
-                        url: t.external_urls?.spotify || (t.uri ? `https://open.spotify.com/track/${t.uri.split(":")[2]}` : "")
-                    };
-                })
-        );
-        return tracks;
-    } catch (e) {
-        console.error("Error fetching Spotify playlist tracks:", e);
-        return null;
-    }
-}
+//----------------------------------
+// Fonction principale de sélection des morceaux
+//----------------------------------
 
 export default async function selectTracks(playlistUrl, amount, player) {
     let tracks = [];
@@ -202,35 +116,66 @@ export default async function selectTracks(playlistUrl, amount, player) {
         return { tracks: [], selectedTracks: [] };
     }
 
-    const match = playlistUrl.match(/(playlist|album)\/([a-zA-Z0-9]+)/);
+    // Résoudre le lien s'il s'agit d'un lien court (ex: link.deezer.com)
+    const resolvedUrl = await resolveUrlIfNeeded(playlistUrl);
+
+    // Le format (playlist ou album) et l'ID sont présents dans les URLs de Spotify comme de Deezer.
+    // Exemples Deezer : deezer.com/fr/playlist/5922972724 ou deezer.com/fr/album/96126
+    const match = resolvedUrl.match(/(playlist|album)\/([a-zA-Z0-9]+)/);
     const type = match ? match[1] : null;
     const id = match ? match[2] : null;
+    let platform = "spotify";
+    if (resolvedUrl.includes("deezer.com")) {
+        platform = "deezer";
+    } else if (resolvedUrl.includes("spotify.com") || resolvedUrl.includes("spotify.link")) {
+        platform = "spotify";
+    }
 
     if (id) {
-        // Essayer d'abord de récupérer les morceaux de manière anonyme via la page embed publique
-        let playlistTracks = await getSpotifyTracksAnonymously(type, id);
+        let playlistTracks = null;
 
-        // Si cela échoue et que c'est une playlist, fallback sur l'API Spotify officielle
-        if ((!playlistTracks || playlistTracks.length === 0) && type === "playlist") {
-            console.log("[Spotify API] Scraper failed or returned empty. Falling back to Spotify API...");
-            const token = await getSpotifyAccessToken();
-            if (token) {
-                playlistTracks = await getSpotifyPlaylistTracks(id, token);
+        if (platform === "spotify") {
+            if (type === "playlist") {
+                // Pour les playlists, on utilise obligatoirement le scraper anonyme.
+                // L'API officielle de Spotify requiert une authentification utilisateur (User OAuth) pour les playlists
+                // et renvoie systématiquement une erreur 401 (Valid user authentication required) avec les tokens Client Credentials.
+                playlistTracks = await getSpotifyTracksAnonymously(type, id);
+            } else if (type === "album") {
+                // Pour les albums, l'API officielle fonctionne parfaitement avec le flux Client Credentials.
+                console.log(`[Spotify API] Fetching album ${id} via official Spotify API...`);
+                const token = await getSpotifyAccessToken();
+                if (token) {
+                    playlistTracks = await getSpotifyAlbumTracks(id, token);
+                }
+
+                // Fallback anonyme en cas d'échec de l'API officielle
+                if (!playlistTracks || playlistTracks.length === 0) {
+                    console.log("[Spotify API] Official album API failed. Falling back to public scraper...");
+                    playlistTracks = await getSpotifyTracksAnonymously(type, id);
+                }
+            }
+        } else if (platform === "deezer") {
+            if (type === "playlist") {
+                console.log(`[Deezer API] Fetching playlist ${id}...`);
+                playlistTracks = await getPlaylistTracksFromDeezer(id);
+            } else if (type === "album") {
+                console.log(`[Deezer API] Fetching album ${id}...`);
+                playlistTracks = await getAlbumTracksFromDeezer(id);
             }
         }
 
         if (playlistTracks && playlistTracks.length > 0) {
-            // Keep all tracks from the playlist
-            // If a track doesn't have a previewUrl from Spotify, assign a fallback audio URL so it is playable
-            tracks = playlistTracks.map((t, idx) => ({
-                ...t,
-                previewUrl: t.previewUrl || `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${(idx % 10) + 1}.mp3`,
-                submittedBy: player.name
-            }));
+            // Ne garder que les morceaux qui ont un extrait audio (previewUrl) disponible
+            tracks = playlistTracks
+                .filter(t => t.previewUrl)
+                .map(t => ({
+                    ...t,
+                    submittedBy: player.name
+                }));
         }
     }
 
-    // Select the requested amount of tracks randomly
+    // Sélectionner aléatoirement la quantité demandée
     const selectedTracks = [];
     const tracksCopy = [...tracks];
     const actualAmount = Math.min(amount, tracksCopy.length);
@@ -241,35 +186,41 @@ export default async function selectTracks(playlistUrl, amount, player) {
         tracksCopy.splice(index, 1);
     }
 
-    // Récupérer les vraies images de couverture pour les pistes sélectionnées via OEmbed si nécessaire
-    console.log(`[Spotify] Fetching real cover images for ${selectedTracks.length} selected tracks via OEmbed...`);
-    const selectedTracksWithImages = await Promise.all(selectedTracks.map(async (track) => {
-        if (track.url) {
-            const realImg = await fetchTrackImageViaOEmbed(track.url, track.imageUrl);
+    // Récupérer les vraies images de couverture pour les pistes sélectionnées via Deezer Lookup (avec OEmbed Spotify en Fallback)
+    let selectedTracksWithImages = [...selectedTracks];
+    if (platform === "spotify") {
+        console.log(`[Spotify] Fetching high-quality cover images for ${selectedTracks.length} tracks (Deezer search with Spotify OEmbed fallback)...`);
+        selectedTracksWithImages = await Promise.all(selectedTracks.map(async (track) => {
+            let realImg = null;
+            
+            // 1. Essayer de récupérer l'image sur Deezer (qualité supérieure)
+            try {
+                const query = `${track.internationalArtist} ${track.internationalName}`;
+                const response = await fetch(`https://api.deezer.com/search?q=${encodeURIComponent(query)}&limit=1`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.data && data.data.length > 0) {
+                        realImg = data.data[0].album?.cover_big;
+                    }
+                }
+            } catch (e) {
+                console.warn(`[Deezer Cover Lookup] Failed to fetch cover for ${track.name} on Deezer:`, e);
+            }
+
+            // 2. Fallback sur l'OEmbed officiel de Spotify si Deezer n'a rien trouvé
+            if (!realImg && track.url) {
+                realImg = await fetchTrackImageViaOEmbed(track.url, track.imageUrl);
+            }
+
             return {
                 ...track,
-                imageUrl: realImg
+                imageUrl: realImg || track.imageUrl
             };
-        }
-        return track;
-    }));
+        }));
+    }
 
     return {
         tracks,
         selectedTracks: selectedTracksWithImages
     };
-}
-
-async function fetchTrackImageViaOEmbed(trackUrl, fallbackUrl) {
-    if (!trackUrl) return fallbackUrl;
-    try {
-        const response = await fetch(`https://open.spotify.com/oembed?url=${encodeURIComponent(trackUrl)}`);
-        if (response.ok) {
-            const data = await response.json();
-            return data.thumbnail_url || fallbackUrl;
-        }
-    } catch (e) {
-        console.error(`[Spotify OEmbed] Error fetching cover for ${trackUrl}:`, e);
-    }
-    return fallbackUrl;
 }
