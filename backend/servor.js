@@ -97,7 +97,7 @@ io.on("connection", (socket) => {
         const room = rooms[roomCode];
 
         // Vérifier que la partie n'est pas pleine
-        if (room.players.length >= 8) {
+        if (room.players.length >= 12) {
             socket.emit("error", "Room is full");
             return;
         }

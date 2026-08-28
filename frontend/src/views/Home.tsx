@@ -115,9 +115,9 @@ export default function Home() {
             Créer
           </button>
           <div className="flex items-center gap-2">
-            <div className="h-[1px] w-full rounded-full bg-(--white)/20"></div>
+            <div className="h-px w-full rounded-full bg-(--white)/20"></div>
             <p className="w-10 text-center text-(--white)">ou</p>
-            <div className="h-[1px] w-full rounded-full bg-(--white)/20"></div>
+            <div className="h-px w-full rounded-full bg-(--white)/20"></div>
           </div>
           <div className="flex flex-col gap-2">
             <input
@@ -143,10 +143,20 @@ export default function Home() {
           </div>
         </div>
       </Section>
+      <Section>
+        <h3 className="text-2xl text-(--white)">À propos</h3>
+        <p>
+          Music Blender est un blindtest multijoueur qui réunit les playlists de
+          chaque joueur.
+          <br />
+          Copiez le lien de votre playlist préférées et rejoignez une partie
+          pour commencer à jouer.
+        </p>
+      </Section>
       <div className="grid w-full grid-cols-1 flex-col gap-4 md:flex-row md:gap-8 lg:grid-cols-2">
         <Section>
           <h2>Comment jouer ?</h2>
-          <div className="explain-container relative overflow-hidden">
+          <div className="explain-container relative overflow-hidden ">
             <div className="explain-slider flex items-center justify-between gap-4">
               <div
                 className="slides flex w-full items-center justify-start transition-transform duration-500 ease-in-out"
@@ -154,7 +164,7 @@ export default function Home() {
                   transform: `translateX(-${currentSlide * 100}%)`,
                 }}
               >
-                <div className="slide pointer-events-none flex w-full flex-shrink-0 flex-col items-center gap-8 rounded-lg">
+                <div className="slide pointer-events-none flex w-full shrink-0 flex-col items-center gap-8 rounded-lg">
                   <div
                     className="flex min-h-32 w-full flex-col items-center justify-center gap-4 rounded-lg px-16 py-4"
                     aria-hidden="true"
@@ -172,7 +182,7 @@ export default function Home() {
                   </p>
                 </div>
 
-                <div className="slide pointer-events-none flex w-full flex-shrink-0 flex-col items-center gap-8 rounded-lg">
+                <div className="slide pointer-events-none flex w-full shrink-0 flex-col items-center gap-8 rounded-lg">
                   <div
                     className="flex min-h-32 w-full flex-col items-center justify-center gap-4 rounded-lg px-16 py-4"
                     aria-hidden="true"
@@ -187,7 +197,7 @@ export default function Home() {
                   </p>
                 </div>
 
-                <div className="slide pointer-events-none flex w-full flex-shrink-0 flex-col items-center gap-8 rounded-lg">
+                <div className="slide pointer-events-none flex w-full shrink-0 flex-col items-center gap-8 rounded-lg">
                   <div
                     className="flex min-h-32 w-full flex-col justify-center gap-2 rounded-lg px-16 py-4"
                     aria-hidden="true"
@@ -260,7 +270,7 @@ export default function Home() {
         </Section>
         <Section>
           <h2>FAQ</h2>
-          <div>
+          <div className="flex flex-col overflow-hidden">
             <Toggle
               question="Quelle plateforme de streaming sont disponible ?"
               answer={`
