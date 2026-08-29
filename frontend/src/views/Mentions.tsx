@@ -6,6 +6,7 @@ import { useTranslation } from "@/context/LanguageContext";
 
 import ChangeLanguage from "@/components/button/ChangeLanguage";
 import Logo from "@/components/Logo";
+import InstallPrompt from "@/components/pwa/InstallPrompt";
 
 export default function Mentions() {
   const { setView } = useGame();
@@ -15,7 +16,11 @@ export default function Mentions() {
 
   return (
     <div className="my-16 flex flex-col items-center gap-4 md:gap-8">
-      <ChangeLanguage />
+      <div className="right-4 -my-8 flex w-full items-center justify-end gap-4 lg:absolute lg:top-0 lg:-mt-8">
+        <InstallPrompt />
+        <ChangeLanguage />
+      </div>
+
       <Logo />
       <h1 className="text-center text-4xl font-bold">{t("mentions.title")}</h1>
       <p className="self-start text-xs text-(--white)/50">
@@ -164,7 +169,7 @@ export default function Mentions() {
                       {t("mentions.duration-music-list")}
                     </td>
                   </tr>
-                  <tr className="hover:bg-(--white)/2">
+                  <tr className="border-b border-(--white)/5 hover:bg-(--white)/2">
                     <td className="p-3 font-medium text-(--white)">
                       {t("mentions.data-lang-preference")}
                     </td>
@@ -173,6 +178,24 @@ export default function Mentions() {
                     </td>
                     <td className="p-3 text-(--white)/60">
                       {t("mentions.duration-lang-preference")}
+                    </td>
+                  </tr>
+                  <tr className="border-b border-(--white)/5 hover:bg-(--white)/2">
+                    <td className="p-3 font-medium text-(--white)">
+                      {t("mentions.data-player-id")}
+                    </td>
+                    <td className="p-3">{t("mentions.purpose-player-id")}</td>
+                    <td className="p-3 text-(--white)/60">
+                      {t("mentions.duration-player-id")}
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-(--white)/2">
+                    <td className="p-3 font-medium text-(--white)">
+                      {t("mentions.data-volume")}
+                    </td>
+                    <td className="p-3">{t("mentions.purpose-volume")}</td>
+                    <td className="p-3 text-(--white)/60">
+                      {t("mentions.duration-volume")}
                     </td>
                   </tr>
                 </tbody>

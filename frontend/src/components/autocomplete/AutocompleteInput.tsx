@@ -240,7 +240,7 @@ export default function AutocompleteInput({
                       {displayLabel.main}
                     </span>
                     {displayLabel.secondary && (
-                      <span className="w-full text-right text-xs break-words whitespace-normal text-gray-400 italic">
+                      <span className="wrap-break-words w-full text-right text-xs whitespace-normal text-gray-400 italic">
                         ({displayLabel.secondary})
                       </span>
                     )}

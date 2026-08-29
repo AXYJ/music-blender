@@ -15,6 +15,7 @@ import Stepper from "@/components/stepper/Stepper";
 import Logo from "@/components/Logo";
 import Info from "@/components/Info/Info";
 import ChangeLanguage from "@/components/button/ChangeLanguage";
+import InstallPrompt from "@/components/pwa/InstallPrompt";
 
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -122,6 +123,7 @@ export default function Lobby() {
   return (
     <div className="my-16 flex w-full flex-col items-center gap-8">
       <div className="right-4 -my-8 flex w-full items-center justify-end gap-4 lg:absolute lg:top-0 lg:-mt-8">
+        <InstallPrompt />
         <ChangeLanguage />
       </div>
       <Logo />

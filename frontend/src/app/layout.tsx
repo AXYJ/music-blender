@@ -25,6 +25,19 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" className="h-full antialiased">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                window.deferredPrompt = e;
+                window.dispatchEvent(new CustomEvent('pwa-prompt-available'));
+              });
+            `,
+          }}
+        />
+      </head>
       <body suppressHydrationWarning className="flex min-h-full flex-col">
         <LanguageProvider>
           {children}

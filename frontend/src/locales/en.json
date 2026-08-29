@@ -74,6 +74,12 @@
         "data-lang-preference": "Language preference",
         "purpose-lang-preference": "Remember your preferred language for future visits.",
         "duration-lang-preference": "Persistent in your browser's local storage until you clear your browsing data.",
+        "data-player-id": "Unique session ID",
+        "purpose-player-id": "Allow the player to reconnect and resume their game session after an accidental page reload.",
+        "duration-player-id": "Persistent in your browser's local storage until you clear your browsing data.",
+        "data-volume": "Volume setting",
+        "purpose-volume": "Remember your audio volume preference from one game to another.",
+        "duration-volume": "Persistent in your browser's local storage until you clear your browsing data.",
         "data-policy-notice": "No data is sold, transferred, or shared with advertising networks or third parties for marketing purposes.",
         "section3-title": "3. Retention Period and Automatic Deletion",
         "section3-text1": "<strong>Immediate Deletion:</strong> As soon as all players leave a game lobby, all data linked to that lobby (lobby, usernames, scores, game states) is <strong>permanently erased from the server's memory</strong>.",
@@ -81,7 +87,7 @@
         "section4-title": "4. Cookies and Local Storage (LocalStorage / SessionStorage)",
         "section4-text1": "This website <strong>does not use any advertising cookies, third-party trackers, or invasive audience analysis tools</strong> (like Google Analytics).",
         "section4-text2": "Only strictly technical elements necessary for the service to function may be placed on your device:",
-        "section4-bullet1": "<strong>Convenience Local Storage:</strong> Your browser may store your last username, the last room code, or your language preference locally to prevent you from typing or selecting them again upon reloading the page.",
+        "section4-bullet1": "<strong>Convenience Local Storage:</strong> Your browser may store your last username, the last room code, your language preference, your volume level, or your unique reconnection ID locally to prevent you from losing them or having to re-enter them during a game.",
         "section4-subtitle": "Management and Deletion:",
         "section4-text3": "In accordance with CNIL and GDPR recommendations, these purely technical trackers do not require prior consent via a banner. If you wish to delete these local elements, you can do so at any time:",
         "section4-bullet2": "Directly from your browser settings (section \"History\" -> \"Clear browsing data / Cookies and site data\").",
@@ -145,6 +151,8 @@
         "install-button": "Install",
         "close": "Close",
         "offline-title": "Connection Lost",
-        "offline-message": "This game is online-only. Please verify your internet connection to continue."
+        "offline-message": "This game is online-only. Please verify your internet connection to continue.",
+        "ios-install-title": "Install on iOS",
+        "ios-install-steps": "To install Museek on your iPhone or iPad:\n\n1. Tap the Share button (icon with an arrow pointing up).\n2. Scroll down and select \"Add to Home Screen\"."
     }
 }

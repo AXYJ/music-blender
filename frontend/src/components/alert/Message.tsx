@@ -20,7 +20,7 @@ export default function Message({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.2 }}
-          className="fixed top-8 left-1/2 z-50 flex w-[calc(100%-4rem)] max-w-[704px] -translate-x-1/2 transform items-center justify-center gap-3 rounded-lg bg-(--green) py-3 pr-10 pl-6 text-(--white) shadow-lg backdrop-blur-md"
+          className="fixed top-8 left-1/2 z-50 flex w-[calc(100%-4rem)] max-w-176 -translate-x-1/2 transform items-center justify-center gap-3 rounded-lg bg-(--green) py-3 pr-10 pl-6 text-(--white) shadow-lg backdrop-blur-md"
         >
           <span className="font-medium">{message}</span>
           <button

@@ -74,6 +74,12 @@
         "data-lang-preference": "Choix de langue",
         "purpose-lang-preference": "Mémoriser votre langue préférée pour les prochaines visites.",
         "duration-lang-preference": "Persistant dans le stockage local de votre navigateur jusqu'à ce que vous effaciez vos données de navigation.",
+        "data-player-id": "Identifiant de session unique",
+        "purpose-player-id": "Permettre au joueur de se reconnecter à la même partie en cas de rechargement accidentel de la page.",
+        "duration-player-id": "Persistant dans le stockage local de votre navigateur jusqu'à ce que vous effaciez vos données de navigation.",
+        "data-volume": "Réglage du volume",
+        "purpose-volume": "Conserver votre préférence de volume sonore d'une partie à l'autre.",
+        "duration-volume": "Persistant dans le stockage local de votre navigateur jusqu'à ce que vous effaciez vos données de navigation.",
         "data-policy-notice": "Aucune donnée n'est vendue, cédée, ni partagée avec des régies publicitaires ou des tiers à des fins marketing.",
         "section3-title": "3. Durée de conservation et suppression automatique",
         "section3-text1": "<strong>Suppression immédiate :</strong> Dès que tous les joueurs quittent un salon de jeu, l'intégralité des données rattachées à ce salon (salon, pseudos, scores, états de partie) is <strong>définitivement effacée de la mémoire du serveur</strong>.",
@@ -81,7 +87,7 @@
         "section4-title": "4. Cookies et stockage local (LocalStorage / SessionStorage)",
         "section4-text1": "Ce site <strong>n'utilise aucun cookie publicitaire, aucun traceur tiers et aucun outil d'analyse d'audience invasif</strong> (type Google Analytics).",
         "section4-text2": "Seuls des éléments strictement techniques et nécessaires au fonctionnement du service peuvent être déposés sur votre terminal :",
-        "section4-bullet1": "<strong>Stockage local de confort :</strong> Votre navigateur peut garder en mémoire locale votre dernier pseudonyme utilisé, le dernier code de salon ou votre choix de langue pour vous éviter de les retaper lors d'un rechargement de page.",
+        "section4-bullet1": "<strong>Stockage local de confort :</strong> Votre navigateur peut garder en mémoire locale votre dernier pseudonyme utilisé, le dernier code de salon, votre choix de langue, votre réglage de volume ou votre identifiant unique de reconnexion pour vous éviter de les ressaisir ou de les perdre en cours de partie.",
         "section4-subtitle": "Gestion et suppression :",
         "section4-text3": "Conformément aux recommandations de la CNIL et du RGPD, ces traceurs purement techniques ne requièrent pas de consentement préalable par bandeau. Si vous souhaitez supprimer ces éléments locaux, vous pouvez le faire à tout moment :",
         "section4-bullet2": "Directement depuis les paramètres de votre navigateur (section \"Historique\" -> \"Effacer les données de navigation / Cookies et données de sites\").",
@@ -145,6 +151,8 @@
         "install-button": "Installer",
         "close": "Fermer",
         "offline-title": "Connexion perdue",
-        "offline-message": "Ce jeu se joue exclusivement en ligne. Veuillez vérifier votre connexion Internet pour continuer."
+        "offline-message": "Ce jeu se joue exclusivement en ligne. Veuillez vérifier votre connexion Internet pour continuer.",
+        "ios-install-title": "Installer sur iOS",
+        "ios-install-steps": "Pour installer Museek sur votre iPhone ou iPad :\n\n1. Appuyez sur le bouton de partage (icône avec une flèche vers le haut).\n2. Faites défiler et sélectionnez \"Sur l'écran d'accueil\"."
     }
 }

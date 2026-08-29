@@ -50,7 +50,7 @@ export default function Results() {
           {toPlay?.map((track, index) => (
             <article
               key={index}
-              className="relative flex w-full flex-shrink-0 flex-col items-center gap-6 p-4"
+              className="relative flex w-full shrink-0 flex-col items-center gap-6 p-4"
             >
               <TrackCover
                 imageUrl={track.imageUrl}

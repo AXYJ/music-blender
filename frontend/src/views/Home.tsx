@@ -98,7 +98,7 @@ export default function Home() {
 
   return (
     <div className="my-16 flex flex-col items-center gap-4 md:gap-8">
-      <div className="right-4 -my-8 flex w-full items-center justify-between gap-4 lg:absolute lg:top-0 lg:-mt-8 lg:justify-end">
+      <div className="right-4 -my-8 flex w-full items-center justify-end gap-4 lg:absolute lg:top-0 lg:-mt-8">
         <InstallPrompt />
         <ChangeLanguage />
       </div>
