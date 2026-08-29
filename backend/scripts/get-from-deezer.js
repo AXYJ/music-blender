@@ -1,5 +1,3 @@
-import { getInternationalName } from "./get-artists-tracks.js";
-
 /**
  * Fonction générique pour récupérer les morceaux d'une entité Deezer (playlist ou album)
  */
@@ -19,26 +17,41 @@ async function fetchDeezerEntityTracks(type, id) {
             return null;
         }
 
-        if (!data.tracks || !data.tracks.data) {
-            console.warn(`[Deezer API] No tracks data found for ${type} ${id}.`);
-            return null;
+        let tracksData = [];
+        let fallbackImageUrl = "";
+
+        if (type === "playlist") {
+            if (!data.tracks || !data.tracks.data) {
+                console.warn(`[Deezer API] No tracks data found for playlist ${id}.`);
+                return null;
+            }
+            tracksData = data.tracks.data;
+            fallbackImageUrl = data.picture_medium || "";
+        } else if (type === "album") {
+            // Pour un album, l'API de Deezer renvoie les morceaux directement dans data.tracks.data ou dans data.tracks
+            // si on appelle /album/id, mais attendez ! Voyons la documentation Deezer ou le code initial :
+            // data.tracks.data était utilisé de la même manière pour les deux.
+            if (data.tracks && data.tracks.data) {
+                tracksData = data.tracks.data;
+            } else if (Array.isArray(data.data)) {
+                tracksData = data.data;
+            } else {
+                console.warn(`[Deezer API] No tracks data found for album ${id}.`);
+                return null;
+            }
+            fallbackImageUrl = data.cover_big || "";
         }
 
-        const fallbackImageUrl = data.picture_medium || data.cover_medium || "";
-        const tracks = await Promise.all(
-            data.tracks.data.map(async t => {
-                const artistName = t.artist?.name || "";
-                return {
-                    name: t.title || "",
-                    artist: artistName,
-                    internationalName: await getInternationalName(t.title || ""),
-                    internationalArtist: await getInternationalName(artistName),
-                    previewUrl: t.preview || "",
-                    imageUrl: t.album?.cover_medium || fallbackImageUrl,
-                    url: t.link || (t.id ? `https://www.deezer.com/track/${t.id}` : "")
-                };
-            })
-        );
+        const tracks = tracksData.map(t => {
+            const artistName = t.artist?.name || data.artist?.name || "";
+            return {
+                name: t.title || "",
+                artist: artistName,
+                previewUrl: t.preview || "",
+                imageUrl: t.album?.cover_medium || fallbackImageUrl,
+                url: t.link || (t.id ? `https://www.deezer.com/track/${t.id}` : "")
+            };
+        });
         return tracks;
     } catch (e) {
         console.error(`Error fetching Deezer ${type} tracks:`, e);
@@ -46,10 +59,9 @@ async function fetchDeezerEntityTracks(type, id) {
     }
 }
 
-export async function getPlaylistTracksFromDeezer(playlistId) {
-    return fetchDeezerEntityTracks("playlist", playlistId);
-}
-
-export async function getAlbumTracksFromDeezer(albumId) {
-    return fetchDeezerEntityTracks("album", albumId);
+// ----------------------------------------------------------------
+// Fonction unifiée d'accès aux morceaux
+// ----------------------------------------------------------------
+export async function fetchDeezerTracks({ type, id }) {
+    return fetchDeezerEntityTracks(type, id);
 }

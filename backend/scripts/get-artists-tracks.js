@@ -4,8 +4,9 @@ import { transliterate } from "transliteration";
 import Kuroshiro from "kuroshiro";
 import KuromojiAnalyzer from "kuroshiro-analyzer-kuromoji";
 
-import { getSpotifyTracksAnonymously, getSpotifyAccessToken, getSpotifyAlbumTracks, fetchTrackImageViaOEmbed } from "./get-from-spotify.js";
-import { getPlaylistTracksFromDeezer, getAlbumTracksFromDeezer } from "./get-from-deezer.js";
+import { fetchSpotifyTracks, fetchTrackImageViaOEmbed } from "./get-from-spotify.js";
+import { fetchDeezerTracks } from "./get-from-deezer.js";
+import { fetchAppleTracks } from "./get-from-apple.js";
 
 const kuroshiro = new Kuroshiro.default();
 let kuroshiroReady = false;
@@ -129,49 +130,45 @@ export default async function selectTracks(playlistUrl, amount, player) {
         platform = "deezer";
     } else if (resolvedUrl.includes("spotify.com") || resolvedUrl.includes("spotify.link")) {
         platform = "spotify";
+    } else if (resolvedUrl.includes("music.apple.com") || resolvedUrl.includes("itunes.apple.com")) {
+        platform = "apple";
     }
 
     if (id) {
         let playlistTracks = null;
 
-        if (platform === "spotify") {
-            if (type === "playlist") {
-                // Pour les playlists, on utilise obligatoirement le scraper anonyme.
-                // L'API officielle de Spotify requiert une authentification utilisateur (User OAuth) pour les playlists
-                // et renvoie systématiquement une erreur 401 (Valid user authentication required) avec les tokens Client Credentials.
-                playlistTracks = await getSpotifyTracksAnonymously(type, id);
-            } else if (type === "album") {
-                // Pour les albums, l'API officielle fonctionne parfaitement avec le flux Client Credentials.
-                console.log(`[Spotify API] Fetching album ${id} via official Spotify API...`);
-                const token = await getSpotifyAccessToken();
-                if (token) {
-                    playlistTracks = await getSpotifyAlbumTracks(id, token);
-                }
+        const providers = {
+            spotify: fetchSpotifyTracks,
+            deezer: fetchDeezerTracks,
+            apple: fetchAppleTracks
+        };
 
-                // Fallback anonyme en cas d'échec de l'API officielle
-                if (!playlistTracks || playlistTracks.length === 0) {
-                    console.log("[Spotify API] Official album API failed. Falling back to public scraper...");
-                    playlistTracks = await getSpotifyTracksAnonymously(type, id);
-                }
-            }
-        } else if (platform === "deezer") {
-            if (type === "playlist") {
-                console.log(`[Deezer API] Fetching playlist ${id}...`);
-                playlistTracks = await getPlaylistTracksFromDeezer(id);
-            } else if (type === "album") {
-                console.log(`[Deezer API] Fetching album ${id}...`);
-                playlistTracks = await getAlbumTracksFromDeezer(id);
-            }
+        const provider = providers[platform];
+        if (provider) {
+            playlistTracks = await provider({ type, id, url: resolvedUrl });
         }
 
         if (playlistTracks && playlistTracks.length > 0) {
+            // Formater et normaliser les noms de toutes les pistes ici pour éviter la duplication de code
+            const formattedTracks = await Promise.all(
+                playlistTracks.map(async (t) => {
+                    const name = t.name || "";
+                    const artist = t.artist || "";
+                    return {
+                        name,
+                        artist,
+                        internationalName: await getInternationalName(name),
+                        internationalArtist: await getInternationalName(artist),
+                        previewUrl: t.previewUrl || "",
+                        imageUrl: t.imageUrl || "",
+                        url: t.url || "",
+                        submittedBy: player.name
+                    };
+                })
+            );
+
             // Ne garder que les morceaux qui ont un extrait audio (previewUrl) disponible
-            tracks = playlistTracks
-                .filter(t => t.previewUrl)
-                .map(t => ({
-                    ...t,
-                    submittedBy: player.name
-                }));
+            tracks = formattedTracks.filter(t => t.previewUrl);
         }
     }
 

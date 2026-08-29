@@ -1,9 +1,7 @@
-import { getInternationalName } from "./get-artists-tracks.js";
-
 //----------------------------------
 // Scraping des morceaux via la page publique (Scraper anonyme)
 //----------------------------------
-export async function getSpotifyTracksAnonymously(type, id) {
+async function getSpotifyTracksAnonymously(type, id) {
     try {
         console.log(`[Spotify Scraper] Fetching public embed page for ${type}: ${id}`);
         const response = await fetch(`https://open.spotify.com/embed/${type}/${id}`, {
@@ -30,15 +28,13 @@ export async function getSpotifyTracksAnonymously(type, id) {
         }
 
         console.log(`[Spotify Scraper] Successfully extracted ${entity.trackList.length} tracks via public embed page!`);
-        const tracks = await Promise.all(entity.trackList.map(async item => ({
+        const tracks = entity.trackList.map(item => ({
             name: item.title,
             artist: item.subtitle,
-            internationalName: await getInternationalName(item.title),
-            internationalArtist: await getInternationalName(item.subtitle),
             previewUrl: item.audioPreview?.url || "",
             imageUrl: entity.coverArt?.sources?.[0]?.url || "", // fallback to cover art
             url: item.url || (item.uri ? `https://open.spotify.com/track/${item.uri.split(":")[2]}` : "")
-        })));
+        }));
         return tracks;
     } catch (e) {
         console.error(`[Spotify Scraper] Error scraping ${type} tracks:`, e);
@@ -49,8 +45,7 @@ export async function getSpotifyTracksAnonymously(type, id) {
 //----------------------------------
 // Obtention du token d'accès Spotify (fallback)
 //----------------------------------
-
-export async function getSpotifyAccessToken() {
+async function getSpotifyAccessToken() {
     const clientId = process.env.SPOTIFY_CLIENT_ID?.trim();
     const clientSecret = process.env.SPOTIFY_CLIENT_SECRET?.trim();
     if (!clientId || !clientSecret) {
@@ -83,8 +78,7 @@ export async function getSpotifyAccessToken() {
 //----------------------------------
 // Récupération des morceaux d'un album
 //----------------------------------
-
-export async function getSpotifyAlbumTracks(albumId, accessToken) {
+async function getSpotifyAlbumTracks(albumId, accessToken) {
     try {
         const response = await fetch(`https://api.spotify.com/v1/albums/${albumId}`, {
             headers: {
@@ -99,20 +93,16 @@ export async function getSpotifyAlbumTracks(albumId, accessToken) {
         const data = await response.json();
         if (!data.tracks || !data.tracks.items) return null;
         const imageUrl = data.images?.[0]?.url || "";
-        const tracks = await Promise.all(
-            data.tracks.items.map(async t => {
-                const artistsStr = t.artists.map(a => a.name).join(", ");
-                return {
-                    name: t.name,
-                    artist: artistsStr,
-                    internationalName: await getInternationalName(t.name),
-                    internationalArtist: await getInternationalName(artistsStr),
-                    previewUrl: t.preview_url,
-                    imageUrl: imageUrl,
-                    url: t.external_urls?.spotify || (t.uri ? `https://open.spotify.com/track/${t.uri.split(":")[2]}` : "")
-                };
-            })
-        );
+        const tracks = data.tracks.items.map(t => {
+            const artistsStr = t.artists.map(a => a.name).join(", ");
+            return {
+                name: t.name,
+                artist: artistsStr,
+                previewUrl: t.preview_url || "",
+                imageUrl: imageUrl,
+                url: t.external_urls?.spotify || (t.uri ? `https://open.spotify.com/track/${t.uri.split(":")[2]}` : "")
+            };
+        });
         return tracks;
     } catch (e) {
         console.error("Error fetching Spotify album tracks:", e);
@@ -123,7 +113,6 @@ export async function getSpotifyAlbumTracks(albumId, accessToken) {
 // ----------------------------------------------------------------
 // Récuperer l'image via OEmbed
 // ----------------------------------------------------------------
-
 export async function fetchTrackImageViaOEmbed(trackUrl, fallbackUrl) {
     if (!trackUrl) return fallbackUrl;
     try {
@@ -136,4 +125,28 @@ export async function fetchTrackImageViaOEmbed(trackUrl, fallbackUrl) {
         console.error(`[Spotify OEmbed] Error fetching cover for ${trackUrl}:`, e);
     }
     return fallbackUrl;
+}
+
+// ----------------------------------------------------------------
+// Fonction unifiée d'accès aux morceaux
+// ----------------------------------------------------------------
+export async function fetchSpotifyTracks({ type, id }) {
+    if (type === "playlist") {
+        return getSpotifyTracksAnonymously(type, id);
+    } else if (type === "album") {
+        console.log(`[Spotify API] Fetching album ${id} via official Spotify API...`);
+        const token = await getSpotifyAccessToken();
+        let playlistTracks = null;
+        if (token) {
+            playlistTracks = await getSpotifyAlbumTracks(id, token);
+        }
+
+        // Fallback anonyme en cas d'échec de l'API officielle
+        if (!playlistTracks || playlistTracks.length === 0) {
+            console.log("[Spotify API] Official album API failed. Falling back to public scraper...");
+            playlistTracks = await getSpotifyTracksAnonymously(type, id);
+        }
+        return playlistTracks;
+    }
+    return [];
 }

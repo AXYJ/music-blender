@@ -156,7 +156,7 @@ export default function Home() {
       <div className="grid w-full grid-cols-1 flex-col gap-4 md:flex-row md:gap-8 lg:grid-cols-2">
         <Section>
           <h2>Comment jouer ?</h2>
-          <div className="explain-container relative overflow-hidden ">
+          <div className="explain-container relative overflow-hidden">
             <div className="explain-slider flex items-center justify-between gap-4">
               <div
                 className="slides flex w-full items-center justify-start transition-transform duration-500 ease-in-out"
@@ -187,9 +187,10 @@ export default function Home() {
                     className="flex min-h-32 w-full flex-col items-center justify-center gap-4 rounded-lg px-16 py-4"
                     aria-hidden="true"
                   >
-                    <div className="flex items-center gap-8">
+                    <div className="flex flex-wrap items-center justify-center gap-8">
                       <Image src="/spotify.svg" alt="" width={50} height={50} />
                       <Image src="/deezer.svg" alt="" width={50} height={50} />
+                      <Image src="/apple.webp" alt="" width={50} height={50} />
                     </div>
                   </div>
                   <p className="px-2 text-center">
@@ -274,7 +275,7 @@ export default function Home() {
             <Toggle
               question="Quelle plateforme de streaming sont disponible ?"
               answer={`
-              <p>Les plateformes disponibles sont Spotify et Deezer. Si vous souhaitez voir d'autres plateformes être ajoutées, n'hésitez pas à nous contacter.</p>
+              <p>Les plateformes disponibles sont Spotify, Deezer et Apple Music. Si vous souhaitez voir d'autres plateformes être ajoutées, n'hésitez pas à nous contacter.</p>
               `}
             />
             <Toggle
@@ -299,6 +300,17 @@ export default function Home() {
               </ol>
               `}
             />
+            <Toggle
+              question="Comment ajouter une playlist depuis Apple Music ?"
+              answer={`
+              <ol className="space-y-2">
+              <li>Allez sur Apple Music et trouvez la playlist que vous souhaitez partager (la playlist doit être en publique).</li>
+              <li>Cliquez sur les trois petits points (...) à côté du nom de la playlist.</li>
+              <li>Cliquez sur 'Copier le lien'.</li>
+              <li>Collez ce lien dans le champ prévu à cet effet dans l'application.</li>
+              </ol>
+              `}
+            />
           </div>
         </Section>
       </div>
@@ -306,9 +318,9 @@ export default function Home() {
       <footer className="mt-4 flex w-full flex-col items-center gap-4 text-center">
         <p className="text-(--white)/50">
           Ce jeu est un projet indépendant et n'est ni affilié, ni sponsorisé,
-          ni approuvé par Spotify / Deezer. Les titres, artistes et visuels
-          associés restent la propriété exclusive de leurs ayants droit
-          respectifs.
+          ni approuvé par Spotify / Deezer / Apple Music. Les titres, artistes
+          et visuels associés restent la propriété exclusive de leurs ayants
+          droit respectifs.
         </p>
         <button
           className="rounded-lg bg-(--accent) px-4 py-2 text-(--white) transition-all duration-300 hover:bg-(--accent)/60 active:scale-95"
