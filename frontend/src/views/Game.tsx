@@ -48,6 +48,27 @@ export default function Game() {
   const [trackGuess, setTrackGuess] = useState<string>("");
   const [guessingArtist, setGuessingArtist] = useState<boolean>(false);
   const [guessingSong, setGuessingSong] = useState<boolean>(false);
+  const [isChangingVolume, setIsChangingVolume] = useState<boolean>(false);
+  const volumeControlRef = useRef<HTMLDivElement>(null);
+
+  // Close volume control when clicking outside
+  useEffect(() => {
+    if (!isChangingVolume) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        volumeControlRef.current &&
+        !volumeControlRef.current.contains(event.target as Node)
+      ) {
+        setIsChangingVolume(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isChangingVolume]);
 
   // Bloquer le défilement du body lors de la saisie
   useEffect(() => {
@@ -343,14 +364,49 @@ export default function Game() {
           turn={turn}
         >
           {!showAnswer && (
-            <div className="absolute bottom-2 left-1/2 z-10 -translate-x-1/2">
-              <Stepper
+            <div className="absolute bottom-2 right-2 z-10" ref={volumeControlRef}>
+              {/* <Stepper
                 value={Math.round(volume * 10) / 10}
                 onIncrement={() => handleVolume("up")}
                 onDecrement={() => handleVolume("down")}
                 minDisabled={volume <= 0}
                 maxDisabled={volume >= 1}
-              />
+              /> */}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="lucide lucide-volume2-icon lucide-volume-2"
+                onClick={() => {
+                  setIsChangingVolume(!isChangingVolume);
+                }}
+              >
+                <path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" />
+                <path d="M16 9a5 5 0 0 1 0 6" />
+                <path d="M19.364 18.364a9 9 0 0 0 0-12.728" />
+              </svg>
+              {isChangingVolume && (
+                <div className="absolute -top-[250%] left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 -rotate-90">
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value={volume}
+                    onMouseDown={() => setIsChangingVolume(true)}
+                    onChange={(e) => {
+                      setVolume(Number(e.target.value))
+                      socket?.emit("volume", Number(e.target.value));
+                    }}
+                    className="w-24 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-(--accent) [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-(--accent) [&::-moz-range-thumb]:border-0" />
+                </div>
+              )}
             </div>
           )}
         </TrackCover>
