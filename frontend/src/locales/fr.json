@@ -139,5 +139,12 @@
     },
     "autocomplete": {
         "no-results": "Aucun résultat trouvé"
+    },
+    "pwa": {
+        "install-text": "Installez l'application Museek sur votre écran d'accueil pour y accéder plus rapidement.",
+        "install-button": "Installer",
+        "close": "Fermer",
+        "offline-title": "Connexion perdue",
+        "offline-message": "Ce jeu se joue exclusivement en ligne. Veuillez vérifier votre connexion Internet pour continuer."
     }
 }
