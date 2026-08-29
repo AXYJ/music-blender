@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
+import { useTranslation } from "@/context/LanguageContext";
 
 interface AutocompleteInputProps {
   id: string;
@@ -39,12 +40,15 @@ export default function AutocompleteInput({
   placeholder = "",
   getSuggestionValue,
   getSuggestionLabel,
-  emptyText = "Aucun résultat trouvé",
+  emptyText,
   phase,
 }: AutocompleteInputProps) {
+  const { t } = useTranslation();
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const finalEmptyText = emptyText || t("autocomplete.no-results");
 
   const getQuery = (inputVal: string) => {
     if (isMultiple) {
@@ -194,7 +198,7 @@ export default function AutocompleteInput({
           </label>
           {isActive && (
             <span className="text-xs text-(--grey) italic">
-              Temps restants : {timeLeft}s
+              {t("game.time-remaining")} : {timeLeft}s
             </span>
           )}
         </div>
@@ -245,7 +249,7 @@ export default function AutocompleteInput({
               })
             ) : (
               <div className="px-4 py-3 text-sm text-gray-400 italic">
-                {emptyText}
+                {finalEmptyText}
               </div>
             )}
           </div>

@@ -7,13 +7,15 @@ import React from "react";
 import Image from "next/image";
 
 // Import du contexte
-import { useGame } from "../context/GameContext";
+import { useGame } from "@/context/GameContext";
+import { useTranslation } from "@/context/LanguageContext";
 
 // Import des composants
-import Section from "../components/Section";
-import Error from "../components/alert/Error";
-import Toggle from "../components/toggle/Toggle";
-import Logo from "../components/Logo";
+import Section from "@/components/Section";
+import Error from "@/components/alert/Error";
+import Toggle from "@/components/toggle/Toggle";
+import Logo from "@/components/Logo";
+import ChangeLanguage from "@/components/button/ChangeLanguage";
 
 export default function Home() {
   const {
@@ -26,6 +28,8 @@ export default function Home() {
     createGame,
     joinGame,
   } = useGame();
+  const { locale, setLocale, t } = useTranslation();
+
   const [roomInput, setRoomInput] = useState("");
   const [savedCode, setSavedCode] = useState<string | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -63,11 +67,11 @@ export default function Home() {
 
   const handleCreateGame = () => {
     if (!isConnected) {
-      setError("Connexion au serveur en cours... Veuillez patienter.");
+      setError(t("home.error-connecting"));
       return;
     }
     if (!name.trim()) {
-      setError("Veuillez entrer un pseudo.");
+      setError(t("home.error-no-username"));
       return;
     }
     setError(null);
@@ -76,15 +80,15 @@ export default function Home() {
 
   const handleJoinGame = () => {
     if (!isConnected) {
-      setError("Connexion au serveur en cours... Veuillez patienter.");
+      setError(t("home.error-connecting"));
       return;
     }
     if (!name.trim()) {
-      setError("Veuillez entrer un pseudo.");
+      setError(t("home.error-no-username"));
       return;
     }
     if (!roomInput.trim()) {
-      setError("Veuillez entrer un code de room.");
+      setError(t("home.error-no-room"));
       return;
     }
     setError(null);
@@ -93,11 +97,12 @@ export default function Home() {
 
   return (
     <div className="my-16 flex flex-col items-center gap-4 md:gap-8">
+      <ChangeLanguage />
       <Logo />
       <Section>
         <div className="mb-4 flex flex-col gap-2">
           <label htmlFor="name" className="text-2xl text-(--white)">
-            Votre pseudo
+            {t("home.username")}
           </label>
           <input
             type="text"
@@ -112,22 +117,22 @@ export default function Home() {
             className="rounded-lg bg-(--accent) px-4 py-2 text-(--white) transition-all duration-300 hover:bg-(--accent)/60 active:scale-95"
             onClick={handleCreateGame}
           >
-            Créer
+            {t("home.create")}
           </button>
           <div className="flex items-center gap-2">
             <div className="h-px w-full rounded-full bg-(--white)/20"></div>
-            <p className="w-10 text-center text-(--white)">ou</p>
+            <p className="w-10 text-center text-(--white)">{t("home.or")}</p>
             <div className="h-px w-full rounded-full bg-(--white)/20"></div>
           </div>
           <div className="flex flex-col gap-2">
             <input
               type="text"
-              placeholder="Code de la room"
+              placeholder={t("home.room-placeholder")}
               className="h-8 w-full rounded-lg bg-(--white) px-4 text-base text-(--background)"
               value={roomInput}
               onChange={(e) => setRoomInput(e.target.value)}
               list={savedCode ? "saved-room-code" : undefined}
-              aria-label="Code de la room"
+              aria-label={t("home.room-placeholder")}
             />
             {savedCode && (
               <datalist id="saved-room-code">
@@ -138,24 +143,22 @@ export default function Home() {
               className="rounded-lg bg-(--accent) px-4 py-2 text-(--white) transition-all duration-300 hover:bg-(--accent)/60 active:scale-95"
               onClick={handleJoinGame}
             >
-              Rejoindre
+              {t("home.join")}
             </button>
           </div>
         </div>
       </Section>
       <Section>
-        <h3 className="text-2xl text-(--white)">À propos</h3>
+        <h3 className="text-2xl text-(--white)">{t("home.about")}</h3>
         <p>
-          Music Blender est un blindtest multijoueur qui réunit les playlists de
-          chaque joueur.
+          {t("home.about-text-1")}
           <br />
-          Copiez le lien de votre playlist préférées et rejoignez une partie
-          pour commencer à jouer.
+          {t("home.about-text-2")}
         </p>
       </Section>
       <div className="grid w-full grid-cols-1 flex-col gap-4 md:flex-row md:gap-8 lg:grid-cols-2">
         <Section>
-          <h2>Comment jouer ?</h2>
+          <h2>{t("home.how-to-play")}</h2>
           <div className="explain-container relative overflow-hidden">
             <div className="explain-slider flex items-center justify-between gap-4">
               <div
@@ -170,16 +173,13 @@ export default function Home() {
                     aria-hidden="true"
                   >
                     <div className="w-full -rotate-2 rounded-lg bg-(--accent) px-4 py-2 text-center text-(--white)">
-                      Créer
+                      {t("home.create")}
                     </div>
                     <div className="w-full -rotate-6 rounded-lg bg-(--accent) px-4 py-2 text-center text-(--white)">
-                      Rejoindre
+                      {t("home.join")}
                     </div>
                   </div>
-                  <p className="px-2 text-center">
-                    Créer une partie ou rejoingnez en une avec le code de la
-                    partie
-                  </p>
+                  <p className="px-2 text-center">{t("home.step1")}</p>
                 </div>
 
                 <div className="slide pointer-events-none flex w-full shrink-0 flex-col items-center gap-8 rounded-lg">
@@ -193,9 +193,7 @@ export default function Home() {
                       <Image src="/apple.webp" alt="" width={50} height={50} />
                     </div>
                   </div>
-                  <p className="px-2 text-center">
-                    Ajouter le lien de votre playlist préférée
-                  </p>
+                  <p className="px-2 text-center">{t("home.step2")}</p>
                 </div>
 
                 <div className="slide pointer-events-none flex w-full shrink-0 flex-col items-center gap-8 rounded-lg">
@@ -205,7 +203,7 @@ export default function Home() {
                   >
                     <div className="rotate-2">
                       <label htmlFor="artist-guess" className="text-sm">
-                        Artist
+                        {t("home.artist")}
                       </label>
                       <input
                         id="artist-guess"
@@ -217,7 +215,7 @@ export default function Home() {
                     </div>
                     <div className="rotate-6">
                       <label htmlFor="track-guess" className="text-sm">
-                        Chanson
+                        {t("home.track")}
                       </label>
                       <input
                         id="track-guess"
@@ -228,10 +226,7 @@ export default function Home() {
                       />
                     </div>
                   </div>
-                  <p className="px-2 text-center">
-                    Devinez le titre et l'artiste du morceau et gagnez des
-                    points
-                  </p>
+                  <p className="px-2 text-center">{t("home.step3")}</p>
                 </div>
               </div>
             </div>
@@ -239,7 +234,7 @@ export default function Home() {
               className="previous absolute top-1/2 left-0 flex aspect-square h-12 w-12 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-(--accent) text-(--white) transition-all duration-300 disabled:pointer-events-none disabled:opacity-0"
               onClick={prevSlide}
               disabled={currentSlide === 0}
-              aria-label="Diapositive précédente"
+              aria-label={t("home.prev-slide")}
             >
               {"<"}
             </button>
@@ -247,14 +242,14 @@ export default function Home() {
               className="next absolute top-1/2 right-0 flex aspect-square h-12 w-12 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-(--accent) text-(--white) transition-all duration-300 disabled:pointer-events-none disabled:opacity-0"
               onClick={nextSlide}
               disabled={currentSlide === 2}
-              aria-label="Diapositive suivante"
+              aria-label={t("home.next-slide")}
             >
               {">"}
             </button>
             <div
               className="mt-4 flex justify-center gap-2"
               role="group"
-              aria-label="Sélection de la diapositive"
+              aria-label={t("home.select-slide")}
             >
               {[0, 1, 2].map((index) => (
                 <button
@@ -262,7 +257,7 @@ export default function Home() {
                   type="button"
                   className={`h-4 w-4 rounded-full border-none p-0 ${index === currentSlide ? "bg-(--accent)" : "bg-(--white)"} cursor-pointer transition-all duration-300`}
                   onClick={() => setCurrentSlide(index)}
-                  aria-label={`Aller à la diapositive ${index + 1}`}
+                  aria-label={`${t("home.go-to-slide")} ${index + 1}`}
                   aria-current={index === currentSlide ? "step" : undefined}
                 />
               ))}
@@ -270,67 +265,25 @@ export default function Home() {
           </div>
         </Section>
         <Section>
-          <h2>FAQ</h2>
+          <h2>{t("home.faq-title")}</h2>
           <div className="flex flex-col overflow-hidden">
-            <Toggle
-              question="Quelle plateforme de streaming sont disponible ?"
-              answer={`
-              <p>Les plateformes disponibles sont Spotify, Deezer et Apple Music. Si vous souhaitez voir d'autres plateformes être ajoutées, n'hésitez pas à nous contacter.</p>
-              `}
-            />
-            <Toggle
-              question="Comment ajouter une playlist depuis Spotify ?"
-              answer={`
-              <ol className="space-y-2">
-              <li>Allez sur Spotify et trouvez la playlist que vous souhaitez partager (la playlist doit être en publique).</li>
-              <li>Cliquez sur les trois petits points (...) à côté du nom de la playlist.</li>
-              <li>Cliquez sur 'Partager', puis sur 'Copier le lien'.</li>
-              <li>Collez ce lien dans le champ prévu à cet effet dans l'application.</li>
-              </ol>
-              `}
-            />
-            <Toggle
-              question="Comment ajouter une playlist depuis Deezer ?"
-              answer={`
-              <ol className="space-y-2">
-              <li>Allez sur Deezer et trouvez la playlist que vous souhaitez partager (la playlist doit être en publique).</li>
-              <li>Cliquez sur le bouton 'Partager' à côté du nom de la playlist.</li>
-              <li>Cliquez sur 'Copier'.</li>
-              <li>Collez ce lien dans le champ prévu à cet effet dans l'application.</li>
-              </ol>
-              `}
-            />
-            <Toggle
-              question="Comment ajouter une playlist depuis Apple Music ?"
-              answer={`
-              <ol className="space-y-2">
-              <li>Allez sur Apple Music et trouvez la playlist que vous souhaitez partager (la playlist doit être en publique).</li>
-              <li>Cliquez sur les trois petits points (...) à côté du nom de la playlist.</li>
-              <li>Cliquez sur 'Copier le lien'.</li>
-              <li>Collez ce lien dans le champ prévu à cet effet dans l'application.</li>
-              </ol>
-              `}
-            />
+            <Toggle question={t("home.faq-q1")} answer={t("home.faq-a1")} />
+            <Toggle question={t("home.faq-q2")} answer={t("home.faq-a2")} />
+            <Toggle question={t("home.faq-q3")} answer={t("home.faq-a3")} />
+            <Toggle question={t("home.faq-q4")} answer={t("home.faq-a4")} />
           </div>
         </Section>
       </div>
 
       <footer className="mt-4 flex w-full flex-col items-center gap-4 text-center">
-        <p className="text-(--white)/50">
-          Ce jeu est un projet indépendant et n'est ni affilié, ni sponsorisé,
-          ni approuvé par Spotify / Deezer / Apple Music. Les titres, artistes
-          et visuels associés restent la propriété exclusive de leurs ayants
-          droit respectifs.
-        </p>
+        <p className="text-(--white)/50">{t("home.message")}</p>
         <button
           className="rounded-lg bg-(--accent) px-4 py-2 text-(--white) transition-all duration-300 hover:bg-(--accent)/60 active:scale-95"
           onClick={() => setView("mentions")}
         >
-          Mentions légales &amp; Politique de confidentialité
+          {t("home.mentions")}
         </button>
-        <p className="mt-2 text-(--white)/50">
-          © 2026 Museek - Tous droits réservés
-        </p>
+        <p className="mt-2 text-(--white)/50">{t("home.copyright")}</p>
       </footer>
 
       <Error error={error} setError={setError} />

@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import { useTranslation } from "@/context/LanguageContext";
 
 export default function Message({
   message,
@@ -9,6 +10,8 @@ export default function Message({
   message: string;
   setMessage: (message: string) => void;
 }) {
+  const { t } = useTranslation();
+
   return (
     <AnimatePresence>
       {message && (
@@ -23,7 +26,7 @@ export default function Message({
           <button
             onClick={() => setMessage("")}
             className="absolute top-1/2 right-4 ml-2 -translate-y-1/2 cursor-pointer text-(--white) transition-colors"
-            aria-label="Fermer"
+            aria-label={t("alert.close")}
           >
             <svg
               className="h-4 w-4"

@@ -4,13 +4,16 @@
 import { useState } from "react";
 
 // Import des composants
-import TrackCover from "../components/track/TrackCover";
+import TrackCover from "@/components/track/TrackCover";
+import QuitGame from "@/components/button/QuitGame";
 
 // Import du contexte
-import { useGame } from "../context/GameContext";
+import { useGame } from "@/context/GameContext";
+import { useTranslation } from "@/context/LanguageContext";
 
 export default function Results() {
   const { players, toPlay, restart } = useGame();
+  const { t } = useTranslation();
   const [currentTrackIndex, setCurrentTrackIndex] = useState(1);
 
   players.sort((a, b) => b.score - a.score);
@@ -33,7 +36,8 @@ export default function Results() {
 
   return (
     <div className="relative mx-auto my-16 flex w-full max-w-4xl flex-col items-center gap-6 px-4">
-      <h1 className="text-4xl font-bold">Résultat de la partie</h1>
+      <QuitGame />
+      <h1 className="text-4xl font-bold">{t("results.title")}</h1>
 
       <section className="relative w-full overflow-hidden">
         {/* Sliding Track */}
@@ -63,13 +67,13 @@ export default function Results() {
                   <thead className="border-b-2 border-(--accent)">
                     <tr>
                       <th className="px-4 py-2 text-center text-xs font-semibold tracking-wider uppercase">
-                        Joueur
+                        {t("results.player")}
                       </th>
                       <th className="px-4 py-2 text-center text-xs font-semibold tracking-wider uppercase">
-                        Artiste(s)
+                        {t("results.artists")}
                       </th>
                       <th className="px-4 py-2 text-center text-xs font-semibold tracking-wider uppercase">
-                        Morceau
+                        {t("results.track")}
                       </th>
                     </tr>
                   </thead>
@@ -144,7 +148,7 @@ export default function Results() {
           className="cursor-pointer rounded-full bg-(--accent) px-8 py-2 font-semibold text-(--white) shadow-md transition-all hover:scale-105 hover:bg-(--semiaccent) hover:shadow-lg active:scale-95"
           onClick={() => restart()}
         >
-          Rejouer
+          {t("results.replay")}
         </button>
       </div>
     </div>

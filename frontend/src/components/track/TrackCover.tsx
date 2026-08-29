@@ -2,6 +2,7 @@ import React from "react";
 import Image from "next/image";
 import Grain from "../Grain";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "@/context/LanguageContext";
 
 interface TrackCoverProps {
   imageUrl?: string | null;
@@ -31,6 +32,7 @@ export default function TrackCover({
   turn,
 }: TrackCoverProps) {
   const isClickable = !!url;
+  const { t } = useTranslation();
 
   const handleClick = () => {
     if (isClickable && url) {
@@ -42,15 +44,16 @@ export default function TrackCover({
     internationalName &&
     name &&
     internationalName.toLowerCase().replace(/\s+/g, "") !==
-    name.toLowerCase().replace(/\s+/g, "");
+      name.toLowerCase().replace(/\s+/g, "");
 
   return (
     <section
       onClick={handleClick}
-      className={`track-cover relative overflow-hidden rounded-lg ${isClickable
+      className={`track-cover relative overflow-hidden rounded-lg ${
+        isClickable
           ? "cursor-pointer transition-all duration-300 ease-out hover:scale-102 active:scale-95"
           : ""
-        } ${blurImage ? "blurred" : ""} ${className}`}
+      } ${blurImage ? "blurred" : ""} ${className}`}
     >
       <Grain id="track-grain" baseFrequency="0.9" scale="0.8" />
       {imageUrl ? (
@@ -70,8 +73,9 @@ export default function TrackCover({
             alt={"Cover blurred " + turn}
             width={250}
             height={250}
-            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${blurImage ? "opacity-100 transition-none" : "opacity-0"
-              }`}
+            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${
+              blurImage ? "opacity-100 transition-none" : "opacity-0"
+            }`}
             style={{
               filter: "url(#track-grain) grayscale(0.8)",
             }}
@@ -80,7 +84,7 @@ export default function TrackCover({
         </div>
       ) : (
         <div className="flex aspect-square w-full items-center justify-center bg-gray-700 text-sm text-gray-400">
-          {"Pas d'image"}
+          {t("track-cover.no-image")}
         </div>
       )}
 
@@ -94,7 +98,9 @@ export default function TrackCover({
             transition={{ duration: 1.0, ease: "easeInOut" }}
             className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-1 bg-black/75 px-8"
           >
-            <p className="text-base text-gray-300">La réponse est :</p>
+            <p className="text-base text-gray-300">
+              {t("track-cover.answer-is")}
+            </p>
             <p className="text-center text-xl font-bold text-(--white)">
               {artist}
             </p>
@@ -115,7 +121,7 @@ export default function TrackCover({
         <>
           {/* Bottom left/right info on hover/clickable results */}
           {isClickable && (artist || name) && (
-            <div className="pointer-events-none absolute right-0 bottom-0 z-10 flex items-end p-2 justify-between w-full">
+            <div className="pointer-events-none absolute right-0 bottom-0 z-10 flex w-full items-end justify-between p-2">
               <div className="flex flex-col">
                 {artist && (
                   <span className="artist-name text-sm font-semibold">
@@ -123,9 +129,7 @@ export default function TrackCover({
                   </span>
                 )}
                 {name && (
-                  <span className="track-name text-lg font-bold">
-                    {name}
-                  </span>
+                  <span className="track-name text-lg font-bold">{name}</span>
                 )}
               </div>
               <div className="pointer-events-none z-10 flex flex-col p-2 text-right">
@@ -136,9 +140,9 @@ export default function TrackCover({
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                   className="lucide lucide-square-arrow-out-up-right-icon lucide-square-arrow-out-up-right"
                 >
                   <path d="M21 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6" />
@@ -159,7 +163,7 @@ export default function TrackCover({
 
       {/* Counter indicator */}
       {counterText && (
-        <div className="pointer-events-none absolute top-2 right-4 z-10 flex flex-col text-center">
+        <div className="pointer-events-none absolute top-2 right-4 z-50 flex flex-col text-center">
           <p className="text-sm text-(--white)">{counterText}</p>
         </div>
       )}

@@ -4,15 +4,17 @@
 import { useState, useEffect } from "react";
 
 // Import du contexte
-import { useGame } from "../context/GameContext";
+import { useGame } from "@/context/GameContext";
+import { useTranslation } from "@/context/LanguageContext";
 
 // Import des composants
-import Section from "../components/Section";
-import Error from "../components/alert/Error";
-import Message from "../components/alert/Message";
-import Stepper from "../components/stepper/Stepper";
-import Logo from "../components/Logo";
-import Info from "../components/Info/Info";
+import Section from "@/components/Section";
+import Error from "@/components/alert/Error";
+import Message from "@/components/alert/Message";
+import Stepper from "@/components/stepper/Stepper";
+import Logo from "@/components/Logo";
+import Info from "@/components/Info/Info";
+import ChangeLanguage from "@/components/button/ChangeLanguage";
 
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -35,6 +37,8 @@ export default function Lobby() {
     setError,
     quitGame,
   } = useGame();
+
+  const { t } = useTranslation();
 
   const me = players.find((p) => p.socketId === socket?.id);
   const isHost = me?.isHost || false;
@@ -79,7 +83,7 @@ export default function Lobby() {
   const handleCopyCode = () => {
     if (!roomCode) return;
     navigator.clipboard.writeText(roomCode);
-    setMessage("Code copié !");
+    setMessage(t("lobby.code-copied"));
   };
 
   // Reset du message après 2 secondes
@@ -117,6 +121,7 @@ export default function Lobby() {
 
   return (
     <div className="my-16 flex w-full flex-col items-center gap-8">
+      <ChangeLanguage />
       <Logo />
 
       <div className="flex w-full flex-col gap-4">
@@ -126,9 +131,9 @@ export default function Lobby() {
             onClick={() => {
               handleCopyCode();
             }}
-            title="Copier le code"
+            title={t("lobby.copy-code-title")}
           >
-            Code de la partie : {roomCode}
+            {t("lobby.game-code-label")} {roomCode}
             {/* Rajouter icone de copie */}
           </button>
         </div>
@@ -137,7 +142,7 @@ export default function Lobby() {
             sectionClassName="lg:h-full"
             className="flex h-full flex-col gap-4"
           >
-            <h2>Liste des joueurs</h2>
+            <h2>{t("lobby.players-list")}</h2>
             <div className="flex min-h-48 flex-1 flex-col gap-2 overflow-y-auto">
               {players.map((player) => (
                 <p
@@ -151,11 +156,11 @@ export default function Lobby() {
           </Section>
           <div className="flex w-full flex-col items-center gap-4 lg:col-span-2">
             <Section>
-              <h2>Paramètres de la partie</h2>
+              <h2>{t("lobby.game-settings")}</h2>
               <div className="flex flex-col gap-6">
                 <div className="flex flex-col gap-4">
                   <p>
-                    Nombre de morceaux par playlist
+                    {t("lobby.tracks-per-playlist")}
                     <button
                       className="relative ml-1 inline-flex items-center align-middle"
                       aria-describedby="info-number-music"
@@ -182,9 +187,7 @@ export default function Lobby() {
                         id="info-number-music"
                         visible={infoType === "number-music"}
                       >
-                        <p>
-                          Le nombre de morceaux choisit dans chaque playlist.
-                        </p>
+                        <p>{t("lobby.tracks-per-playlist-tooltip")}</p>
                       </Info>
                     </button>
                   </p>
@@ -199,7 +202,7 @@ export default function Lobby() {
                 </div>
                 <div className="flex flex-col gap-4">
                   <p>
-                    Temps par morceau (secondes)
+                    {t("lobby.time-per-track")}
                     <button
                       className="relative ml-1 inline-flex items-center align-middle"
                       aria-describedby="info-time"
@@ -223,10 +226,7 @@ export default function Lobby() {
                         <path d="M12 8h.01" />
                       </svg>
                       <Info id="info-time" visible={infoType === "time"}>
-                        <p>
-                          Le temps accordé pour deviner et écrire les réponses
-                          pour chaque morceaux.
-                        </p>
+                        <p>{t("lobby.time-per-track-tooltip")}</p>
                       </Info>
                     </button>
                   </p>
@@ -242,11 +242,11 @@ export default function Lobby() {
               </div>
             </Section>
             <Section>
-              <h2>Ajoute ta musique</h2>
+              <h2>{t("lobby.add-your-music")}</h2>
               <div className="flex flex-col gap-6">
                 <div className="flex flex-col gap-2">
                   <label htmlFor="playlist">
-                    URL de la playlist
+                    {t("lobby.playlist-url")}
                     <button
                       className="relative ml-1 inline-flex items-center align-middle"
                       aria-describedby="info-url"
@@ -270,11 +270,7 @@ export default function Lobby() {
                         <path d="M12 8h.01" />
                       </svg>
                       <Info id="info-url" visible={infoType === "url"}>
-                        <p>
-                          L'URL de la playlist. Tu peux trouver l'URL de la
-                          playlist en cliquant sur le bouton "Partager" de la
-                          playlist, puis sur "Copier le lien".
-                        </p>
+                        <p>{t("lobby.playlist-url-tooltip")}</p>
                       </Info>
                     </button>
                   </label>
@@ -297,7 +293,7 @@ export default function Lobby() {
           className="flex-1 rounded-full bg-(--white) px-8 py-2 text-sm text-(--background) transition-all duration-300 ease-out hover:bg-(--accent)/60 hover:text-(--white) active:scale-95 md:text-base"
           onClick={quitGame}
         >
-          Quitter
+          {t("lobby.quit")}
         </button>
         {isHost && (
           <button
@@ -311,7 +307,8 @@ export default function Lobby() {
               isLoading
             }
           >
-            Lancer ({players.filter((p) => p.isReady).length}/{players.length})
+            {t("lobby.launch")} ({players.filter((p) => p.isReady).length}/
+            {players.length})
           </button>
         )}
         {!isHost && (
@@ -321,7 +318,7 @@ export default function Lobby() {
               beReady();
             }}
           >
-            {isReady ? "Annuler" : "Prêt"}
+            {isReady ? t("lobby.cancel") : t("lobby.ready")}
           </button>
         )}
       </div>

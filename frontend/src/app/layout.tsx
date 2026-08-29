@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
+import { LanguageProvider } from "@/context/LanguageContext";
+
 export const metadata: Metadata = {
   title: "Museek",
   description:
@@ -22,7 +24,7 @@ export default function RootLayout({
   return (
     <html lang="fr" className="h-full antialiased">
       <body suppressHydrationWarning className="flex min-h-full flex-col">
-        {children}
+        <LanguageProvider>{children}</LanguageProvider>
       </body>
     </html>
   );

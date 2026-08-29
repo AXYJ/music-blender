@@ -1,31 +1,39 @@
 "use client";
 
 import React from "react";
-import { useGame } from "../context/GameContext";
+import { useGame } from "@/context/GameContext";
+import { useTranslation } from "@/context/LanguageContext";
+
+import ChangeLanguage from "@/components/button/ChangeLanguage";
+import Logo from "@/components/Logo";
 
 export default function Mentions() {
   const { setView } = useGame();
+  const { t } = useTranslation();
   const emailUser = "contact";
   const emailDomain = "xiao-web.com";
 
   return (
-    <div className="my-auto flex min-h-screen w-full flex-col items-center justify-center gap-8 px-4 py-16">
-      <h1 className="text-center text-4xl font-bold">
-        Mentions légales &amp; Politique de confidentialité
-      </h1>
+    <div className="my-16 flex flex-col items-center gap-4 md:gap-8">
+      <ChangeLanguage />
+      <Logo />
+      <h1 className="text-center text-4xl font-bold">{t("mentions.title")}</h1>
       <p className="self-start text-xs text-(--white)/50">
-        Dernière mise à jour : 22 août 2026
+        {t("mentions.last-updated")}
       </p>
       <div className="flex w-full max-w-2xl flex-col items-center gap-8 text-sm text-(--white)/80">
         {/* SECTION 1: MENTIONS LEGALES */}
         <div className="bg flex w-full flex-col items-center gap-4">
           <h2 className="mb-2 text-center text-xl font-bold text-(--accent)">
-            Mentions légales
+            {t("mentions.legal-title")}
           </h2>
           <div className="flex w-full flex-col justify-between gap-2 md:flex-row">
             <div className="flex w-full flex-col items-center justify-center">
               <p>
-                <span className="font-semibold">Éditeur :</span> Alex Xiao
+                <span className="font-semibold">
+                  {t("mentions.publisher-label")}
+                </span>{" "}
+                Alex Xiao
               </p>
               <a
                 className="text-(--white) underline transition-all duration-300 hover:text-(--accent) active:text-(--accent)"
@@ -38,16 +46,19 @@ export default function Mentions() {
             </div>
             <div className="mt-4 flex w-full flex-col items-center justify-center md:mt-0">
               <p>
-                <span className="font-semibold">Hébergeur :</span> Hostinger
+                <span className="font-semibold">
+                  {t("mentions.host-label")}
+                </span>{" "}
+                Hostinger
               </p>
               <p className="text-center leading-relaxed">
-                Adresse postale :
+                {t("mentions.host-address-label")}
                 <br />
                 UAB "HOSTINGER LT",
                 <br />
                 Švitrigailos g. 34C, LT-03110 Vilnius,
                 <br />
-                Lituanie
+                {t("mentions.host-country")}
               </p>
               <a
                 className="text-(--white) underline transition-all duration-300 hover:text-(--accent) active:text-(--accent)"
@@ -64,120 +75,93 @@ export default function Mentions() {
         {/* SECTION 2: POLITIQUE DE CONFIDENTIALITE */}
         <div className="mt-8 flex w-full flex-col gap-6">
           <h2 className="text-center text-2xl font-bold text-(--accent)">
-            Politique de confidentialité
+            {t("mentions.privacy-title")}
           </h2>
 
-          <p className="leading-relaxed">
-            La protection de votre vie privée et de vos données personnelles est
-            une priorité. Cette politique de confidentialité explique en toute
-            transparence quelles données sont traitées lors de votre utilisation
-            du jeu, pour quelles finalités et comment elles sont gérées.
-          </p>
+          <p className="leading-relaxed">{t("mentions.privacy-intro")}</p>
 
           <hr className="w-full border-(--white)/10" />
 
           <div className="flex w-full flex-col gap-2">
             <h3 className="text-lg font-semibold">
-              1. Principe général : Le respect de la vie privée par défaut
+              {t("mentions.section1-title")}
             </h3>
-            <p className="leading-relaxed">
-              Le jeu est conçu selon le principe de minimisation des données :{" "}
-              <strong>aucune donnée n'est conservée à long terme</strong>. Le
-              traitement des données est temporaire, strictement limité au temps
-              d'une session de jeu, et hébergé en mémoire volatile (RAM).
-            </p>
+            <p
+              className="leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: t("mentions.section1-text") }}
+            />
           </div>
 
           <hr className="w-full border-(--white)/10" />
 
           <div className="flex w-full flex-col gap-4">
             <h3 className="text-lg font-semibold">
-              2. Données traitées et finalités
+              {t("mentions.section2-title")}
             </h3>
 
-            <p className="leading-relaxed">
-              Pendant votre navigation et vos parties, nous traitons uniquement
-              les éléments suivants :
-            </p>
+            <p className="leading-relaxed">{t("mentions.section2-intro")}</p>
 
             <div className="w-full overflow-x-auto rounded-lg border border-(--white)/10">
               <table className="w-full border-collapse text-left text-xs">
                 <thead>
                   <tr className="bg-(--white)/5 font-semibold text-(--white)">
                     <th className="border-b border-(--white)/10 p-3">
-                      Donnée collectée
+                      {t("mentions.table-header-data")}
                     </th>
                     <th className="border-b border-(--white)/10 p-3">
-                      Finalité
+                      {t("mentions.table-header-purpose")}
                     </th>
                     <th className="border-b border-(--white)/10 p-3">
-                      Durée de conservation
+                      {t("mentions.table-header-duration")}
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr className="border-b border-(--white)/5 hover:bg-(--white)/2">
                     <td className="p-3 font-medium text-(--white)">
-                      Pseudonyme
+                      {t("mentions.data-username")}
                     </td>
-                    <td className="p-3">
-                      Identifier le joueur auprès des autres participants dans
-                      le salon.
-                    </td>
+                    <td className="p-3">{t("mentions.purpose-username")}</td>
                     <td className="p-3 text-(--white)/60">
-                      Supprimé dès la fermeture du salon. (Peut être stocké
-                      localement sur votre navigateur pour votre confort).
+                      {t("mentions.duration-username")}
                     </td>
                   </tr>
                   <tr className="border-b border-(--white)/5 hover:bg-(--white)/2">
                     <td className="p-3 font-medium text-(--white)">
-                      Code / Numéro de salon
+                      {t("mentions.data-room-code")}
                     </td>
-                    <td className="p-3">
-                      Permettre aux joueurs de rejoindre la même partie
-                      multijoueur.
-                    </td>
+                    <td className="p-3">{t("mentions.purpose-room-code")}</td>
                     <td className="p-3 text-(--white)/60">
-                      Supprimé dès que la partie se termine ou que tous les
-                      joueurs quittent le salon.
+                      {t("mentions.duration-room-code")}
                     </td>
                   </tr>
                   <tr className="border-b border-(--white)/5 hover:bg-(--white)/2">
                     <td className="p-3 font-medium text-(--white)">
-                      URL de playlist
+                      {t("mentions.data-playlist-url")}
                     </td>
                     <td className="p-3">
-                      Charger et synchroniser les pistes audio pour la partie en
-                      cours.
+                      {t("mentions.purpose-playlist-url")}
                     </td>
                     <td className="p-3 text-(--white)/60">
-                      Supprimée à la fermeture du salon.
+                      {t("mentions.duration-playlist-url")}
                     </td>
                   </tr>
                   <tr className="border-b border-(--white)/5 hover:bg-(--white)/2">
                     <td className="p-3 font-medium text-(--white)">
-                      Données de partie
+                      {t("mentions.data-game-data")}
                     </td>
-                    <td className="p-3">
-                      Assurer le bon fonctionnement des mécaniques de jeu en
-                      temps réel via WebSockets (scores, réponses, état du jeu).
-                    </td>
+                    <td className="p-3">{t("mentions.purpose-game-data")}</td>
                     <td className="p-3 text-(--white)/60">
-                      Supprimées automatiquement dès que tous les joueurs
-                      quittent le salon.
+                      {t("mentions.duration-game-data")}
                     </td>
                   </tr>
                   <tr className="hover:bg-(--white)/2">
                     <td className="p-3 font-medium text-(--white)">
-                      Liste des musiques
+                      {t("mentions.data-music-list")}
                     </td>
-                    <td className="p-3">
-                      Optimiser le chargement et éviter les requêtes répétitives
-                      pendant la session (Cache technique).
-                    </td>
+                    <td className="p-3">{t("mentions.purpose-music-list")}</td>
                     <td className="p-3 text-(--white)/60">
-                      Conservée temporairement en mémoire cache et purgée
-                      régulièrement.
+                      {t("mentions.duration-music-list")}
                     </td>
                   </tr>
                 </tbody>
@@ -185,8 +169,7 @@ export default function Mentions() {
             </div>
 
             <p className="mt-2 text-center font-semibold">
-              Aucune donnée n'est vendue, cédée, ni partagée avec des régies
-              publicitaires ou des tiers à des fins marketing.
+              {t("mentions.data-policy-notice")}
             </p>
           </div>
 
@@ -194,97 +177,63 @@ export default function Mentions() {
 
           <div className="flex w-full flex-col gap-2">
             <h3 className="text-lg font-semibold">
-              3. Durée de conservation et suppression automatique
+              {t("mentions.section3-title")}
             </h3>
-            <p className="leading-relaxed">
-              <strong>Suppression immédiate :</strong> Dès que tous les joueurs
-              quittent un salon de jeu, l'intégralité des données rattachées à
-              ce salon (salon, pseudos, scores, états de partie) est{" "}
-              <strong>définitivement effacée de la mémoire du serveur</strong>.
-            </p>
-            <p className="leading-relaxed">
-              <strong>Absence de base de données persistante :</strong> Aucune
-              information relative à vos parties, historiques ou habitudes de
-              jeu n'est enregistrée dans une base de données permanente.
-            </p>
+            <p
+              className="leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: t("mentions.section3-text1") }}
+            />
+            <p
+              className="leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: t("mentions.section3-text2") }}
+            />
           </div>
 
           <hr className="w-full border-(--white)/10" />
 
           <div className="flex w-full flex-col gap-3">
             <h3 className="text-lg font-semibold">
-              4. Cookies et stockage local (LocalStorage / SessionStorage)
+              {t("mentions.section4-title")}
             </h3>
 
-            <p className="leading-relaxed">
-              Ce site{" "}
-              <strong>
-                n'utilise aucun cookie publicitaire, aucun traceur tiers et
-                aucun outil d'analyse d'audience invasif
-              </strong>{" "}
-              (type Google Analytics).
-            </p>
+            <p
+              className="leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: t("mentions.section4-text1") }}
+            />
 
-            <p className="leading-relaxed">
-              Seuls des éléments strictement techniques et nécessaires au
-              fonctionnement du service peuvent être déposés sur votre terminal
-              :
-            </p>
-            <p className="border-l-2 border-(--white)/50 pl-4 italic">
-              <strong>Stockage local de confort :</strong> Votre navigateur peut
-              garder en mémoire locale votre dernier pseudonyme utilisé ou le
-              dernier code de salon pour vous éviter de les retaper lors d'un
-              rechargement de page.
-            </p>
+            <p className="leading-relaxed">{t("mentions.section4-text2")}</p>
+            <p
+              className="border-l-2 border-(--white)/50 pl-4 italic"
+              dangerouslySetInnerHTML={{
+                __html: t("mentions.section4-bullet1"),
+              }}
+            />
 
             <p className="mt-2 text-center font-semibold text-(--white)">
-              Gestion et suppression :
+              {t("mentions.section4-subtitle")}
             </p>
-            <p className="leading-relaxed">
-              Conformément aux recommandations de la CNIL et du RGPD, ces
-              traceurs purement techniques ne requièrent pas de consentement
-              préalable par bandeau. Si vous souhaitez supprimer ces éléments
-              locaux, vous pouvez le faire à tout moment :
-            </p>
+            <p className="leading-relaxed">{t("mentions.section4-text3")}</p>
             <ul className="flex list-disc flex-col gap-2 pl-6">
-              <li className="text-justify">
-                Directement depuis les paramètres de votre navigateur (section
-                "Historique" {"->"} "Effacer les données de navigation / Cookies
-                et données de sites").
-              </li>
-              <li className="text-justify">
-                Via l'outil d'inspection de votre navigateur (F12 {"->"} Onglet
-                Application ou Stockage {"->"} Local Storage / Cookies {"->"}{" "}
-                Effacer).
-              </li>
+              <li className="text-justify">{t("mentions.section4-bullet2")}</li>
+              <li className="text-justify">{t("mentions.section4-bullet3")}</li>
             </ul>
           </div>
 
           <hr className="w-full border-(--white)/10" />
 
           <div className="flex w-full flex-col gap-2">
-            <h3 className="text-lg font-semibold">5. Vos droits (RGPD)</h3>
+            <h3 className="text-lg font-semibold">
+              {t("mentions.section5-title")}
+            </h3>
 
-            <p className="leading-relaxed">
-              Conformément au Règlement Général sur la Protection des Données
-              (RGPD), vous disposez d'un droit d'accès, de rectification et de
-              suppression de vos données personnelles.
-            </p>
+            <p className="leading-relaxed">{t("mentions.section5-text1")}</p>
 
-            <p className="leading-relaxed">
-              Compte tenu de l'absence de stockage persistant et de comptes
-              utilisateurs,{" "}
-              <strong>
-                quitter la partie et fermer votre navigateur supprime de facto
-                l'ensemble de vos données de session
-              </strong>
-              .
-            </p>
+            <p
+              className="leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: t("mentions.section5-text2") }}
+            />
 
-            <p className="leading-relaxed">
-              Pour toute question ou demande relative à vos données, vous pouvez
-              contacter l'éditeur du site à l'adresse suivante :
-            </p>
+            <p className="leading-relaxed">{t("mentions.section5-text3")}</p>
             <div className="mt-2 text-center">
               <a
                 className="font-semibold text-(--white) underline transition-all duration-300 hover:text-(--accent) active:text-(--accent)"
@@ -301,7 +250,7 @@ export default function Mentions() {
         className="rounded-lg bg-(--accent) px-4 py-2 text-(--white) transition-all duration-300 hover:bg-(--accent)/60 active:scale-95"
         onClick={() => setView("home")}
       >
-        Retour
+        {t("mentions.back")}
       </button>
     </div>
   );

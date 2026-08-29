@@ -4,17 +4,19 @@
 import { useState, useEffect, useRef } from "react";
 
 // Import des composants
-import Error from "../components/alert/Error";
-import Message from "../components/alert/Message";
-import Stepper from "../components/stepper/Stepper";
-import TrackCover from "../components/track/TrackCover";
-import AutocompleteInput from "../components/autocomplete/AutocompleteInput";
+import Error from "@/components/alert/Error";
+import Message from "@/components/alert/Message";
+import Stepper from "@/components/stepper/Stepper";
+import TrackCover from "@/components/track/TrackCover";
+import AutocompleteInput from "@/components/autocomplete/AutocompleteInput";
+import QuitGame from "@/components/button/QuitGame";
 
 // Import du contexte
-import { useGame } from "../context/GameContext";
+import { useGame } from "@/context/GameContext";
+import { useTranslation } from "@/context/LanguageContext";
 
 // Import des utilitaires
-import { normalizeString } from "../utils/stringUtils";
+import { normalizeString } from "@/utils/stringUtils";
 
 export default function Game() {
   const {
@@ -41,6 +43,8 @@ export default function Game() {
     setMessage,
     quitGame,
   } = useGame();
+
+  const { t } = useTranslation();
 
   // Find current player profile
   const me = players?.find((p) => p.socketId === socket?.id);
@@ -290,7 +294,7 @@ export default function Game() {
       <div className="flex min-h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-(--accent) border-t-transparent"></div>
-          <p className="text-lg text-gray-400">Chargement de la partie...</p>
+          <p className="text-lg text-gray-400">{t("game.loading")}</p>
         </div>
       </div>
     );
@@ -321,29 +325,7 @@ export default function Game() {
     <div className="flex min-h-screen flex-col items-center justify-center gap-4">
       <audio ref={audioRef} src={currentTrack.previewUrl}></audio>
 
-      {/* Bouton quitter */}
-      <button
-        className="absolute top-4 right-4 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-(--accent) p-2 font-semibold text-(--white) shadow-md transition-all hover:scale-105 hover:bg-(--semiaccent) hover:shadow-lg active:scale-95"
-        onClick={() => quitGame()}
-        aria-label="Quitter la partie"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="lucide lucide-log-out-icon lucide-log-out"
-        >
-          <path d="m16 17 5-5-5-5" />
-          <path d="M21 12H9" />
-          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-        </svg>
-      </button>
+      <QuitGame />
 
       <div
         className={`flex w-full flex-col items-center gap-4 transition-opacity duration-500 ${
@@ -364,7 +346,10 @@ export default function Game() {
           turn={turn}
         >
           {!showAnswer && (
-            <div className="absolute bottom-2 right-2 z-10" ref={volumeControlRef}>
+            <div
+              className="absolute right-2 bottom-2 z-10"
+              ref={volumeControlRef}
+            >
               {/* <Stepper
                 value={Math.round(volume * 10) / 10}
                 onIncrement={() => handleVolume("up")}
@@ -401,10 +386,11 @@ export default function Game() {
                     value={volume}
                     onMouseDown={() => setIsChangingVolume(true)}
                     onChange={(e) => {
-                      setVolume(Number(e.target.value))
+                      setVolume(Number(e.target.value));
                       socket?.emit("volume", Number(e.target.value));
                     }}
-                    className="w-24 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-(--accent) [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-(--accent) [&::-moz-range-thumb]:border-0" />
+                    className="h-2 w-24 cursor-pointer appearance-none rounded-lg bg-gray-200 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-(--accent) [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-(--accent)"
+                  />
                 </div>
               )}
             </div>
@@ -416,7 +402,7 @@ export default function Game() {
           <div className="relative h-18 w-full">
             <AutocompleteInput
               id="artist-guess"
-              label="Artiste"
+              label={t("game.artist")}
               value={artistGuess}
               onChange={setArtistGuess}
               suggestions={filteredArtists}
@@ -439,7 +425,7 @@ export default function Game() {
                     ? item.internationalArtist
                     : undefined,
               })}
-              emptyText="Aucun artiste trouvé"
+              emptyText={t("game.no-artist-found")}
               phase={phase}
             />
           </div>
@@ -448,7 +434,7 @@ export default function Game() {
           <div className="relative h-18 w-full">
             <AutocompleteInput
               id="track-guess"
-              label="Chanson"
+              label={t("game.track")}
               value={trackGuess}
               onChange={setTrackGuess}
               suggestions={filteredTracks}
@@ -470,7 +456,7 @@ export default function Game() {
                     ? item.internationalName
                     : undefined,
               })}
-              emptyText="Aucune chanson trouvée"
+              emptyText={t("game.no-track-found")}
               phase={phase}
             />
           </div>
@@ -481,10 +467,10 @@ export default function Game() {
       <div className="pointer-events-none mt-4 flex w-[calc(100vw-4rem)] max-w-lg flex-col items-center gap-2 md:w-1/2">
         <span className="text-sm font-semibold tracking-wider text-gray-300">
           {phase === "guessing"
-            ? `Temps restant : ${timeLeft}s`
+            ? `${t("game.time-remaining")} : ${timeLeft}s`
             : phase === "transition"
-              ? `Prochain tour : ${timeLeft}s`
-              : `Révélation : ${timeLeft}s`}
+              ? `${t("game.next-turn")} : ${timeLeft}s`
+              : `${t("game.revelation")} : ${timeLeft}s`}
         </span>
         <div className="h-2 w-full overflow-hidden rounded-full bg-(--white)/20">
           <div
