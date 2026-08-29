@@ -155,13 +155,24 @@ export default function Mentions() {
                       {t("mentions.duration-game-data")}
                     </td>
                   </tr>
-                  <tr className="hover:bg-(--white)/2">
+                  <tr className="border-b border-(--white)/5 hover:bg-(--white)/2">
                     <td className="p-3 font-medium text-(--white)">
                       {t("mentions.data-music-list")}
                     </td>
                     <td className="p-3">{t("mentions.purpose-music-list")}</td>
                     <td className="p-3 text-(--white)/60">
                       {t("mentions.duration-music-list")}
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-(--white)/2">
+                    <td className="p-3 font-medium text-(--white)">
+                      {t("mentions.data-lang-preference")}
+                    </td>
+                    <td className="p-3">
+                      {t("mentions.purpose-lang-preference")}
+                    </td>
+                    <td className="p-3 text-(--white)/60">
+                      {t("mentions.duration-lang-preference")}
                     </td>
                   </tr>
                 </tbody>
