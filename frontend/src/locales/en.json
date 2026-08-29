@@ -106,7 +106,7 @@
         "playlist-url": "Playlist URL",
         "playlist-url-tooltip": "The playlist URL. You can find the playlist URL by clicking on the \"Share\" button on the playlist, then \"Copy link\".",
         "quit": "Quit",
-        "launch": "Launch",
+        "launch": "Start",
         "cancel": "Cancel",
         "ready": "Ready"
     },

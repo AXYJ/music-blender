@@ -16,6 +16,7 @@ import Error from "@/components/alert/Error";
 import Toggle from "@/components/toggle/Toggle";
 import Logo from "@/components/Logo";
 import ChangeLanguage from "@/components/button/ChangeLanguage";
+import InstallPrompt from "@/components/pwa/InstallPrompt";
 
 export default function Home() {
   const {
@@ -97,7 +98,11 @@ export default function Home() {
 
   return (
     <div className="my-16 flex flex-col items-center gap-4 md:gap-8">
-      <ChangeLanguage />
+      <div className="right-4 -my-8 flex w-full items-center justify-between gap-4 lg:absolute lg:top-0 lg:-mt-8 lg:justify-end">
+        <InstallPrompt />
+        <ChangeLanguage />
+      </div>
+
       <Logo />
       <Section>
         <div className="mb-4 flex flex-col gap-2">

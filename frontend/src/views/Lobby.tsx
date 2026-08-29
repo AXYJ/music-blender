@@ -121,7 +121,9 @@ export default function Lobby() {
 
   return (
     <div className="my-16 flex w-full flex-col items-center gap-8">
-      <ChangeLanguage />
+      <div className="right-4 -my-8 flex w-full items-center justify-end gap-4 lg:absolute lg:top-0 lg:-mt-8">
+        <ChangeLanguage />
+      </div>
       <Logo />
 
       <div className="flex w-full flex-col gap-4">

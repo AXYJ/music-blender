@@ -322,7 +322,7 @@ export default function Game() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4">
+    <div className="relative mx-auto my-16 flex min-h-[calc(100vh-128px)] max-w-4xl flex-col items-center justify-center gap-4 px-4">
       <audio ref={audioRef} src={currentTrack.previewUrl}></audio>
 
       <QuitGame />

@@ -9,7 +9,7 @@ export default function QuitGame() {
 
   return (
     <button
-      className="static z-50 flex h-12 w-12 cursor-pointer items-center justify-center self-start rounded-full bg-(--accent) p-2 font-semibold text-(--white) shadow-md transition-all hover:scale-105 hover:bg-(--semiaccent) hover:shadow-lg active:scale-95 lg:absolute lg:top-4 lg:left-4"
+      className="static z-50 flex h-12 w-12 cursor-pointer items-center justify-center self-start rounded-full bg-(--accent) p-2 font-semibold text-(--white) shadow-md transition-all hover:scale-105 hover:bg-(--semiaccent) hover:shadow-lg active:scale-95 lg:absolute lg:top-0 lg:left-0"
       onClick={() => quitGame()}
       aria-label={t("button.quit-game")}
     >

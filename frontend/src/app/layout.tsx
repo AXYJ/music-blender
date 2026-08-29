@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 import { LanguageProvider } from "@/context/LanguageContext";
-import InstallPrompt from "@/components/pwa/InstallPrompt";
 import OfflineBanner from "@/components/pwa/OfflineBanner";
 
 export const metadata: Metadata = {
@@ -29,7 +28,6 @@ export default function RootLayout({
       <body suppressHydrationWarning className="flex min-h-full flex-col">
         <LanguageProvider>
           {children}
-          <InstallPrompt />
           <OfflineBanner />
         </LanguageProvider>
       </body>
