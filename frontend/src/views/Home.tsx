@@ -241,7 +241,20 @@ export default function Home() {
               disabled={currentSlide === 0}
               aria-label={t("home.prev-slide")}
             >
-              {"<"}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="lucide lucide-chevron-left-icon lucide-chevron-left"
+              >
+                <path d="m15 18-6-6 6-6" />
+              </svg>
             </button>
             <button
               className="next absolute top-1/2 right-0 flex aspect-square h-12 w-12 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-(--accent) text-(--white) transition-all duration-300 disabled:pointer-events-none disabled:opacity-0"
@@ -249,7 +262,20 @@ export default function Home() {
               disabled={currentSlide === 2}
               aria-label={t("home.next-slide")}
             >
-              {">"}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="lucide lucide-chevron-right-icon lucide-chevron-right"
+              >
+                <path d="m9 18 6-6-6-6" />
+              </svg>
             </button>
             <div
               className="mt-4 flex justify-center gap-2"

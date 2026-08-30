@@ -68,6 +68,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   // Pseudo du joueur
   const [name, setName] = useState("");
 
+  const isPopStateRef = useRef(false);
+  const currentViewRef = useRef<View>("home");
+
   // Enregistrement des écouteurs de socket
   useSocketListeners({
     socket,
@@ -243,6 +246,85 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       setView("lobby");
     }
   }, [socket]);
+
+  // Initialisation de l'historique
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (!window.history.state || !window.history.state.view) {
+        window.history.replaceState({ view: "home" }, "");
+      }
+    }
+  }, []);
+
+  // Gestion des évènements PopState (bouton retour du navigateur)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handlePopState = (event: PopStateEvent) => {
+      const targetView = (event.state?.view as View) || "home";
+      const previousView = currentViewRef.current;
+
+      isPopStateRef.current = true;
+
+      if (previousView === "lobby" && targetView === "home") {
+        quitGame();
+      } else if (previousView === "game" && targetView === "home") {
+        quitGame();
+      } else if (previousView === "result" && targetView === "lobby") {
+        restart();
+      } else if (previousView === "mentions" && targetView === "home") {
+        setView("home");
+      } else {
+        setView(targetView);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [quitGame, restart]);
+
+  // Synchronisation de la vue actuelle avec l'historique
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const prevView = currentViewRef.current;
+    currentViewRef.current = view;
+
+    // Si la transition vient d'un popstate, on ne modifie pas à nouveau l'historique
+    if (isPopStateRef.current) {
+      isPopStateRef.current = false;
+      return;
+    }
+
+    if (view === "home") {
+      if (
+        prevView === "lobby" ||
+        prevView === "game" ||
+        prevView === "mentions"
+      ) {
+        isPopStateRef.current = true;
+        window.history.back();
+      } else {
+        window.history.replaceState({ view: "home" }, "");
+      }
+    } else if (view === "mentions") {
+      window.history.pushState({ view: "mentions" }, "");
+    } else if (view === "lobby") {
+      if (prevView === "result") {
+        isPopStateRef.current = true;
+        window.history.back();
+      } else {
+        window.history.pushState({ view: "lobby" }, "");
+      }
+    } else if (view === "game") {
+      window.history.replaceState({ view: "game" }, "");
+    } else if (view === "result") {
+      window.history.replaceState({ view: "lobby" }, "");
+      window.history.pushState({ view: "result" }, "");
+    }
+  }, [view]);
 
   const value = useMemo(
     () => ({
