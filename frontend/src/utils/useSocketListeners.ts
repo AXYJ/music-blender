@@ -25,6 +25,7 @@ interface SocketListenersProps {
   >;
   setTimeLeft: React.Dispatch<React.SetStateAction<number>>;
   time: number;
+  t: (key: string, replace?: Record<string, string>) => string;
 }
 
 export const useSocketListeners = (props: SocketListenersProps) => {
@@ -47,6 +48,7 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     setPhase,
     setTimeLeft,
     time,
+    t,
   } = props;
 
   const playlistUrlRef = useRef(playlistUrl);
@@ -77,7 +79,7 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     };
 
     const handleConnectError = (err: Error) => {
-      setError("Erreur de connexion serveur");
+      setError(t("errors.connection_error"));
       setIsConnected(false);
       setView("home");
     };
@@ -90,7 +92,7 @@ export const useSocketListeners = (props: SocketListenersProps) => {
         reason === "io client disconnect"
       ) {
         setView("home");
-        setError("Vous avez été déconnecté du serveur.");
+        setError(t("errors.disconnected"));
       }
     };
 
@@ -102,7 +104,17 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     // Gestion des erreurs
     // ----------------
     const handleError = (error: string) => {
-      setError(error);
+      if (error.startsWith("playlist_load_error:")) {
+        const name = error.substring("playlist_load_error:".length);
+        setError(t("errors.playlist_load_error", { name }));
+      } else {
+        const translated = t(`errors.${error}`);
+        if (translated !== `errors.${error}`) {
+          setError(translated);
+        } else {
+          setError(error);
+        }
+      }
     };
     socket.on("error", handleError);
 
@@ -256,7 +268,7 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     socket.on("final_scores", handleFinalScores);
 
     const handleNoPlaylist = () => {
-      setError("Aucune musique trouvée dans les playlists");
+      setError(t("errors.no_playlist_tracks"));
       setView("lobby");
       setTimeout(() => {
         setError(null);

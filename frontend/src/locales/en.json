@@ -154,5 +154,14 @@
         "offline-message": "This game is online-only. Please verify your internet connection to continue.",
         "ios-install-title": "Install on iOS",
         "ios-install-steps": "To install Museek on your iPhone or iPad:\n\n1. Tap the Share button (icon with an arrow pointing up).\n2. Scroll down and select \"Add to Home Screen\"."
+    },
+    "errors": {
+        "room_not_found": "Room not found.",
+        "room_full": "The room is full.",
+        "playlist_load_error": "{{name}}'s playlist could not be loaded.",
+        "internal_error": "An internal error occurred while preparing the game.",
+        "connection_error": "Server connection error.",
+        "disconnected": "You have been disconnected from the server.",
+        "no_playlist_tracks": "No music found in the playlists."
     }
 }

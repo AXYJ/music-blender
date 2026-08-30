@@ -90,7 +90,7 @@ io.on("connection", (socket) => {
     // --------------------------------------------------------
     socket.on("join_game", (roomCode, id, name) => {
         if (!rooms[roomCode]) {
-            socket.emit("error", "Room not found");
+            socket.emit("error", "room_not_found");
             return;
         }
 
@@ -98,7 +98,7 @@ io.on("connection", (socket) => {
 
         // Vérifier que la partie n'est pas pleine
         if (room.players.length >= 12) {
-            socket.emit("error", "Room is full");
+            socket.emit("error", "room_full");
             return;
         }
         // Vérifier si le joueur existe déjà
@@ -341,7 +341,7 @@ io.on("connection", (socket) => {
                                 const result = await selectTracks(p.playlistUrl, room.musicAmount, p);
                                 if (!result || !result.selectedTracks || result.selectedTracks.length === 0) {
                                     p.tracks = [];
-                                    io.to(roomCode).emit("error", `La playlist de ${p.name} n'a pas pu être chargée.`);
+                                    io.to(roomCode).emit("error", `playlist_load_error:${p.name}`);
                                     hasError = true;
                                 } else {
                                     p.tracks = result.selectedTracks;
@@ -351,7 +351,7 @@ io.on("connection", (socket) => {
                             } catch (err) {
                                 console.error(`Error processing tracks for player ${p.name}:`, err);
                                 p.tracks = [];
-                                io.to(roomCode).emit("error", `La playlist de ${p.name} n'a pas pu être chargée.`);
+                                io.to(roomCode).emit("error", `playlist_load_error:${p.name}`);
                                 hasError = true;
                             }
                         } else {
@@ -362,7 +362,7 @@ io.on("connection", (socket) => {
                     if (hasError || allPlaylistTracks.length < 1) {
                         room.isLoadingTracks = false;
                         if (allPlaylistTracks.length < 1 && !hasError) {
-                            io.to(roomCode).emit("no_playlist", "Aucune musique trouvée dans les playlists.");
+                            io.to(roomCode).emit("no_playlist", "no_playlist_tracks");
                         }
                         return;
                     }
@@ -418,7 +418,7 @@ io.on("connection", (socket) => {
                     io.to(roomCode).emit("data_loaded", room.toPlay, room.database_artists, room.database_tracks);
                 } catch (processingErr) {
                     room.isLoadingTracks = false;
-                    socket.emit("error", "Une erreur interne est survenue lors de la préparation de la partie.");
+                    socket.emit("error", "internal_error");
                 }
             }
         }

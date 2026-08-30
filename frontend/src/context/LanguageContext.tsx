@@ -10,7 +10,7 @@ const translations = { fr, en };
 interface LanguageContextType {
   locale: Locale;
   setLocale: (locale: Locale) => void;
-  t: (key: string) => string;
+  t: (key: string, replace?: Record<string, string>) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(
@@ -35,13 +35,20 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("game_lang", newLocale);
   };
 
-  // Fonction helper pour accéder aux clés imbriquées (ex: "common.play")
-  const t = (path: string): string => {
+  // Fonction helper pour accéder aux clés imbriquées (ex: "common.play") et remplacer des placeholders
+  const t = (path: string, replace?: Record<string, string>): string => {
     const keys = path.split(".");
     let current: any = translations[locale];
     for (const key of keys) {
       if (!current || current[key] === undefined) return path;
       current = current[key];
+    }
+    if (typeof current === "string" && replace) {
+      let result = current;
+      for (const [key, value] of Object.entries(replace)) {
+        result = result.replace(new RegExp(`{{\\s*${key}\\s*}}`, "g"), value);
+      }
+      return result;
     }
     return current;
   };

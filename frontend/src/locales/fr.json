@@ -154,5 +154,14 @@
         "offline-message": "Ce jeu se joue exclusivement en ligne. Veuillez vérifier votre connexion Internet pour continuer.",
         "ios-install-title": "Installer sur iOS",
         "ios-install-steps": "Pour installer Museek sur votre iPhone ou iPad :\n\n1. Appuyez sur le bouton de partage (icône avec une flèche vers le haut).\n2. Faites défiler et sélectionnez \"Sur l'écran d'accueil\"."
+    },
+    "errors": {
+        "room_not_found": "Salon introuvable.",
+        "room_full": "Le salon est plein.",
+        "playlist_load_error": "La playlist de {{name}} n'a pas pu être chargée.",
+        "internal_error": "Une erreur interne est survenue lors de la préparation de la partie.",
+        "connection_error": "Erreur de connexion serveur.",
+        "disconnected": "Vous avez été déconnecté du serveur.",
+        "no_playlist_tracks": "Aucune musique trouvée dans les playlists."
     }
 }

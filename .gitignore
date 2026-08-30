@@ -44,8 +44,5 @@ next-env.d.ts
 .idea/
 
 # Autres pages
-Ambiance_Jeu.md
-AUDIT_REPORT.md
-DEPLOIEMENT.md
-CHECK_UP.md
-RituelsRegles.md
+todo.txt
+

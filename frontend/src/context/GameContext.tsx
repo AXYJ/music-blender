@@ -23,12 +23,14 @@ import { View, GameContextType, Player } from "../types/game";
 import { useSocketListeners } from "../utils/useSocketListeners";
 import { getSocketUrl } from "../utils/config";
 import { getSessionItem } from "../utils/storageUtils";
+import { useTranslation } from "./LanguageContext";
 
 // Création du contexte
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
 // Création du provider
 export const GameProvider = ({ children }: { children: ReactNode }) => {
+  const { t } = useTranslation();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -91,6 +93,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setPhase,
     setTimeLeft,
     time,
+    t,
   });
 
   // ----------------------------------------------------------------
