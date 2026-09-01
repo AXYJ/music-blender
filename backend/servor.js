@@ -106,8 +106,16 @@ io.on("connection", (socket) => {
         if (existingPlayer) {
             existingPlayer.socketId = socket.id;
             existingPlayer.leavedPlayer = false;
+            if (existingPlayer.disconnectTimeout) {
+                clearTimeout(existingPlayer.disconnectTimeout);
+                delete existingPlayer.disconnectTimeout;
+            }
+            if (room.cleanupTimeout) {
+                clearTimeout(room.cleanupTimeout);
+                delete room.cleanupTimeout;
+            }
             socket.join(roomCode);
-            console.log(`[${new Date().toISOString()}] User ${socket.id} reconnected to room ${roomCode}`);
+            console.log(`[${new Date().toISOString()}] User ${socket.id} (${existingPlayer.name}) reconnected to room ${roomCode}`);
             io.to(roomCode).emit("room_updated", roomCode, room.players);
             
             // Sync settings to the reconnecting player
@@ -251,16 +259,19 @@ io.on("connection", (socket) => {
         }
 
         if (foundRoom && foundPlayer) {
+            if (foundPlayer.disconnectTimeout) {
+                clearTimeout(foundPlayer.disconnectTimeout);
+            }
             foundPlayer.leavedPlayer = true;
             foundRoom.leavedPlayers = foundRoom.leavedPlayers || [];
             foundRoom.leavedPlayers.push(foundPlayer);
-            foundRoom.players = foundRoom.players.filter((p) => p.socketId !== socket.id);
+            foundRoom.players = foundRoom.players.filter((p) => p.id !== foundPlayer.id);
             console.log(`[${new Date().toISOString()}] User ${foundPlayer.name} left room ${foundRoomCode}`);
             socket.leave(foundRoomCode);
 
-            // Si l'hôte est parti dans le lobby ou si la partie est finie, on attribue l'hôte à un autre joueur
+            // Si l'hôte est parti dans le lobby ou si la partie est finie, on attribue l'hôte à un autre joueur actif
             if (foundPlayer.isHost && (!foundRoom.gameStartTime || foundRoom.isGameOver)) {
-                const newHost = foundRoom.players.find(p => !p.leavedPlayer);
+                const newHost = foundRoom.players.find(p => !p.leavedPlayer) || foundRoom.players[0];
                 if (newHost) {
                     newHost.isHost = true;
                     newHost.isReady = true;
@@ -269,6 +280,9 @@ io.on("connection", (socket) => {
 
             // Si plus aucun joueur dans la room, on supprime la room
             if (foundRoom.players.length === 0) {
+                if (foundRoom.cleanupTimeout) {
+                    clearTimeout(foundRoom.cleanupTimeout);
+                }
                 delete rooms[foundRoomCode];
                 console.log(`[${new Date().toISOString()}] Room ${foundRoomCode} deleted because it is empty`);
             } else {
@@ -579,55 +593,75 @@ io.on("connection", (socket) => {
         }
     });
 
+    const GRACE_PERIOD = 5 * 60 * 1000; // 5 minutes de délai de grâce
+
     socket.on("disconnect", () => {
         console.log(`[${new Date().toISOString()}] User disconnected: ${socket.id}`);
         for (const code in rooms) {
             const room = rooms[code];
             const player = room.players.find((p) => p.socketId === socket.id);
             if (player) {
-                // Si la partie n'a pas commencé, ou est finie, on peut le supprimer
-                if (!room.gameStartTime || room.isGameOver) {
-                    room.players = room.players.filter((p) => p.socketId !== socket.id);
-                    // Si plus aucun joueur dans la room, on supprime la room
-                    if (room.players.length === 0) {
-                        delete rooms[code];
-                        console.log(`[${new Date().toISOString()}] Room ${code} deleted because it is empty`);
-                    } else {
-                        // S'il reste des gens, on met à jour la liste des joueurs
-                        io.to(code).emit("room_updated", code, room.players);
-                        
-                        // Si l'hôte est parti, on attribue l'hôte à un autre joueur
-                        if (player.isHost) {
-                            const newHost = room.players.find(p => !p.leavedPlayer);
-                            if (newHost) {
-                                newHost.isHost = true;
-                                newHost.isReady = true;
-                                io.to(code).emit("room_updated", code, room.players);
+                // Marquer le joueur comme temporairement déconnecté
+                player.leavedPlayer = true;
+
+                const activePlayers = room.players.filter((p) => !p.leavedPlayer);
+
+                if (activePlayers.length === 0) {
+                    // Tous les joueurs sont déconnectés : on démarre le timer de suppression de la room
+                    console.log(`[${new Date().toISOString()}] All players in room ${code} disconnected. Starting 5min cleanup timer.`);
+                    if (!room.cleanupTimeout) {
+                        room.cleanupTimeout = setTimeout(() => {
+                            const currentRoom = rooms[code];
+                            if (currentRoom && currentRoom.players.every((p) => p.leavedPlayer)) {
+                                delete rooms[code];
+                                console.log(`[${new Date().toISOString()}] Room ${code} deleted after 5min grace period expiration`);
                             }
-                        }
-                        checkAndResetGame(code, rooms, io);
+                        }, GRACE_PERIOD);
                     }
                 } else {
-                    // Sinon (partie en cours), on le marque simplement comme déconnecté temporaire
-                    player.leavedPlayer = true;
-                    
-                    // Si plus aucun joueur n'est actif dans la room, on supprime la room
-                    const activePlayers = room.players.filter((p) => !p.leavedPlayer);
-                    if (activePlayers.length === 0) {
-                        delete rooms[code];
-                        console.log(`[${new Date().toISOString()}] Room ${code} deleted because all players left`);
-                    } else {
-                        // Si l'hôte est parti, on attribue l'hôte à un autre joueur actif
-                        if (player.isHost) {
-                            player.isHost = false;
-                            const newHost = activePlayers[0];
-                            if (newHost) {
-                                newHost.isHost = true;
-                            }
+                    // D'autres joueurs sont encore connectés
+                    if (player.isHost) {
+                        // L'hôte s'est déconnecté : donner 5 minutes avant de transférer l'hôte
+                        if (player.disconnectTimeout) {
+                            clearTimeout(player.disconnectTimeout);
                         }
-                        io.to(code).emit("room_updated", code, room.players);
+                        player.disconnectTimeout = setTimeout(() => {
+                            const currentRoom = rooms[code];
+                            if (currentRoom) {
+                                const currentHost = currentRoom.players.find((p) => p.id === player.id);
+                                if (currentHost && currentHost.leavedPlayer && currentHost.isHost) {
+                                    const nextHost = currentRoom.players.find((p) => !p.leavedPlayer);
+                                    if (nextHost) {
+                                        currentHost.isHost = false;
+                                        nextHost.isHost = true;
+                                        nextHost.isReady = true;
+                                        console.log(`[${new Date().toISOString()}] Host transferred to ${nextHost.name} in room ${code} after 5min timeout`);
+                                        io.to(code).emit("room_updated", code, currentRoom.players);
+                                    }
+                                }
+                            }
+                        }, GRACE_PERIOD);
+                    } else if (!room.gameStartTime || room.isGameOver) {
+                        // Joueur non-hôte dans le lobby : le retirer s'il ne revient pas après 5 minutes
+                        if (player.disconnectTimeout) {
+                            clearTimeout(player.disconnectTimeout);
+                        }
+                        player.disconnectTimeout = setTimeout(() => {
+                            const currentRoom = rooms[code];
+                            if (currentRoom) {
+                                const p = currentRoom.players.find((x) => x.id === player.id);
+                                if (p && p.leavedPlayer) {
+                                    currentRoom.players = currentRoom.players.filter((x) => x.id !== player.id);
+                                    console.log(`[${new Date().toISOString()}] Disconnected player ${p.name} removed from room ${code} after 5min timeout`);
+                                    io.to(code).emit("room_updated", code, currentRoom.players);
+                                    checkAndResetGame(code, rooms, io);
+                                }
+                            }
+                        }, GRACE_PERIOD);
                     }
                 }
+
+                io.to(code).emit("room_updated", code, room.players);
                 break;
             }
         }

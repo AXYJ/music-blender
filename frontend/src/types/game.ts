@@ -33,6 +33,7 @@ export interface GameContextType {
   // Joueur
   name: string;
   setName: (name: string) => void;
+  playerId: string;
 
   // Paramètres de partie
   musicAmount: number;

@@ -67,8 +67,14 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   );
   const [timeLeft, setTimeLeft] = useState<number>(30);
 
-  // Pseudo du joueur
+  // Pseudo et identifiant du joueur
   const [name, setName] = useState("");
+  const [playerId, setPlayerId] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("id") || "";
+    }
+    return "";
+  });
 
   const isPopStateRef = useRef(false);
   const currentViewRef = useRef<View>("home");
@@ -94,6 +100,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setTimeLeft,
     time,
     t,
+    playerId,
   });
 
   // ----------------------------------------------------------------
@@ -127,6 +134,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       id = crypto.randomUUID();
       localStorage.setItem("id", id);
     }
+    setPlayerId(id);
 
     // Initialisation de la connexion
     const socketUrl = getSocketUrl();
@@ -197,12 +205,14 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   // Prêt
   const beReady = useCallback(() => {
     if (socket) {
-      const me = players.find((p) => p.socketId === socket.id);
+      const me = players.find(
+        (p) => (playerId && p.id === playerId) || p.socketId === socket.id,
+      );
       if (me) {
         socket.emit("ready", !me.isReady);
       }
     }
-  }, [socket, players]);
+  }, [socket, players, playerId]);
 
   //Lancer une partie
   const launchGame = useCallback(() => {
@@ -345,6 +355,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       setVolume,
       name,
       setName,
+      playerId,
       createGame,
       joinGame,
       beReady,
@@ -382,6 +393,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       players,
       volume,
       name,
+      playerId,
       createGame,
       joinGame,
       beReady,

@@ -42,12 +42,15 @@ export default function Game() {
     message,
     setMessage,
     quitGame,
+    playerId,
   } = useGame();
 
   const { t } = useTranslation();
 
   // Find current player profile
-  const me = players?.find((p) => p.socketId === socket?.id);
+  const me = players?.find(
+    (p) => (playerId && p.id === playerId) || p.socketId === socket?.id,
+  );
   const [artistGuess, setArtistGuess] = useState<string>("");
   const [trackGuess, setTrackGuess] = useState<string>("");
   const [guessingArtist, setGuessingArtist] = useState<boolean>(false);
@@ -377,7 +380,7 @@ export default function Game() {
                 <path d="M19.364 18.364a9 9 0 0 0 0-12.728" />
               </svg>
               {isChangingVolume && (
-                <div className="top--[250%] absolute left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 -rotate-90">
+                <div className="top-[-300%] absolute left-1/2 z-10 -translate-x-1/2  -rotate-90">
                   <input
                     type="range"
                     min="0"

@@ -24,6 +24,7 @@ export default function Lobby() {
     roomCode,
     players,
     socket,
+    playerId,
     beReady,
     musicAmount,
     setMusicAmount,
@@ -41,7 +42,9 @@ export default function Lobby() {
 
   const { t } = useTranslation();
 
-  const me = players.find((p) => p.socketId === socket?.id);
+  const me = players.find(
+    (p) => (playerId && p.id === playerId) || p.socketId === socket?.id,
+  );
   const isHost = me?.isHost || false;
   const isReady = me?.isReady || false;
 

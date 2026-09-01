@@ -26,6 +26,7 @@ interface SocketListenersProps {
   setTimeLeft: React.Dispatch<React.SetStateAction<number>>;
   time: number;
   t: (key: string, replace?: Record<string, string>) => string;
+  playerId?: string;
 }
 
 export const useSocketListeners = (props: SocketListenersProps) => {
@@ -49,6 +50,7 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     setTimeLeft,
     time,
     t,
+    playerId,
   } = props;
 
   const playlistUrlRef = useRef(playlistUrl);
@@ -115,6 +117,14 @@ export const useSocketListeners = (props: SocketListenersProps) => {
           setError(error);
         }
       }
+
+      if (error === "room_not_found" || error === "room_full") {
+        setRoomCode("");
+        if (typeof window !== "undefined") {
+          sessionStorage.removeItem("game_code");
+        }
+        setView("home");
+      }
     };
     socket.on("error", handleError);
 
@@ -125,7 +135,10 @@ export const useSocketListeners = (props: SocketListenersProps) => {
       setRoomCode(roomCode);
       setPlayers(players);
       setView("lobby");
-      const me = players.find((p: any) => p.socketId === socket.id);
+      const me = players.find(
+        (p: any) =>
+          (playerId && p.id === playerId) || p.socketId === socket.id,
+      );
       if (me) {
         setName(me.name);
       }
