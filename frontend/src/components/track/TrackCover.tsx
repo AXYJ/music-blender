@@ -163,7 +163,7 @@ export default function TrackCover({
 
       {/* Counter indicator */}
       {counterText && (
-        <div className="pointer-events-none absolute top-2 right-4 z-50 flex flex-col text-center">
+        <div className="pointer-events-none absolute top-2 right-4 z-30 flex flex-col text-center">
           <p className="text-sm text-(--white)">{counterText}</p>
         </div>
       )}
