@@ -2,12 +2,12 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useTranslation } from "@/context/LanguageContext";
 
-interface AutocompleteInputProps {
+interface AutocompleteInputProps<T> {
   id: string;
   label: string;
   value: string;
   onChange: (value: string) => void;
-  suggestions: any[];
+  suggestions: T[];
   isActive: boolean;
   onActivate: () => void;
   onDeactivate: () => void;
@@ -17,13 +17,13 @@ interface AutocompleteInputProps {
   isHalfCorrect?: boolean;
   isMultiple?: boolean;
   placeholder?: string;
-  getSuggestionValue: (item: any) => string;
-  getSuggestionLabel: (item: any) => { main: string; secondary?: string };
+  getSuggestionValue: (item: T) => string;
+  getSuggestionLabel: (item: T) => { main: string; secondary?: string };
   emptyText?: string;
   phase: string;
 }
 
-export default function AutocompleteInput({
+export default function AutocompleteInput<T>({
   id,
   label,
   value,
@@ -42,11 +42,11 @@ export default function AutocompleteInput({
   getSuggestionLabel,
   emptyText,
   phase,
-}: AutocompleteInputProps) {
+}: AutocompleteInputProps<T>) {
   const { t } = useTranslation();
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(-1);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
+  const [activeIndex, setActiveIndex] = useState<number>(-1);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const finalEmptyText = emptyText || t("autocomplete.no-results");
 
@@ -70,7 +70,7 @@ export default function AutocompleteInput({
     }
   }, [isActive]);
 
-  const handleSelect = (item: any) => {
+  const handleSelect = (item: T) => {
     const selectedText = getSuggestionValue(item);
     if (isMultiple) {
       const parts = value.split(",");

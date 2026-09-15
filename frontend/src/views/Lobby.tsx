@@ -48,10 +48,10 @@ export default function Lobby() {
   const isHost = me?.isHost || false;
   const isReady = me?.isReady || false;
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [infoType, setInfoType] = useState<
-    "number-music" | "time" | "url" | null
-  >(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [infoType, setInfoType] = useState<"number-music" | "time" | "url" | null>(
+    null,
+  );
 
   // Gestion du nombre de morceau par playlist
   const handleMusicAmount = (operation: "up" | "down") => {

@@ -3,11 +3,31 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "@/context/LanguageContext";
 
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: string[];
+  readonly userChoice: Promise<{
+    outcome: "accepted" | "dismissed";
+    platform: string;
+  }>;
+  prompt(): Promise<void>;
+}
+
+declare global {
+  interface Window {
+    deferredPrompt?: BeforeInstallPromptEvent;
+  }
+  interface Navigator {
+    standalone?: boolean;
+  }
+}
+
 export default function InstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [showPrompt, setShowPrompt] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
-  const [showIOSInstructions, setShowIOSInstructions] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
+  const [showPrompt, setShowPrompt] = useState<boolean>(false);
+  const [isIOS, setIsIOS] = useState<boolean>(false);
+  const [showIOSInstructions, setShowIOSInstructions] =
+    useState<boolean>(false);
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -28,7 +48,7 @@ export default function InstallPrompt() {
 
       const isStandaloneMode =
         window.matchMedia("(display-mode: standalone)").matches ||
-        (window.navigator as any).standalone === true;
+        window.navigator.standalone === true;
 
       // Si c'est iOS et que ce n'est pas déjà lancé en mode standalone (déjà installé)
       if (isIPadOrIPhone && !isStandaloneMode) {
@@ -39,20 +59,20 @@ export default function InstallPrompt() {
     checkIOS();
 
     // Si l'événement a déjà été intercepté par le script du layout avant l'hydratation (Android/Desktop)
-    if (typeof window !== "undefined" && (window as any).deferredPrompt) {
-      setDeferredPrompt((window as any).deferredPrompt);
+    if (typeof window !== "undefined" && window.deferredPrompt) {
+      setDeferredPrompt(window.deferredPrompt);
       setShowPrompt(true);
     }
 
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e);
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
       setShowPrompt(true);
     };
 
     const handlePwaPromptAvailable = () => {
-      if (typeof window !== "undefined" && (window as any).deferredPrompt) {
-        setDeferredPrompt((window as any).deferredPrompt);
+      if (typeof window !== "undefined" && window.deferredPrompt) {
+        setDeferredPrompt(window.deferredPrompt);
         setShowPrompt(true);
       }
     };

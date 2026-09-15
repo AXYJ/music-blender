@@ -1,6 +1,12 @@
 import { Socket } from "socket.io-client";
 import { useEffect, useRef } from "react";
-import { Player, View } from "../types/game";
+import {
+  Player,
+  View,
+  Track,
+  DatabaseArtist,
+  DatabaseTrack,
+} from "../types/game";
 import { getSocketUrl } from "./config";
 import { getSessionItem, setSessionItem } from "./storageUtils";
 
@@ -16,9 +22,9 @@ interface SocketListenersProps {
   setMusicAmount: (amount: number) => void;
   setTime: (time: number) => void;
   playlistUrl: string;
-  setToPlay: (toPlay: any[]) => void;
-  setDatabaseArtists: (database_artists: any[]) => void;
-  setDatabaseTracks: (database_tracks: any[]) => void;
+  setToPlay: (toPlay: Track[]) => void;
+  setDatabaseArtists: (database_artists: DatabaseArtist[]) => void;
+  setDatabaseTracks: (database_tracks: DatabaseTrack[]) => void;
   setTurn: React.Dispatch<React.SetStateAction<number>>;
   setPhase: React.Dispatch<
     React.SetStateAction<"guessing" | "answer" | "transition">
@@ -53,10 +59,10 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     playerId,
   } = props;
 
-  const playlistUrlRef = useRef(playlistUrl);
+  const playlistUrlRef = useRef<string>(playlistUrl);
   playlistUrlRef.current = playlistUrl;
 
-  const viewRef = useRef(view);
+  const viewRef = useRef<View>(view);
   viewRef.current = view;
 
   useEffect(() => {
@@ -98,10 +104,6 @@ export const useSocketListeners = (props: SocketListenersProps) => {
       }
     };
 
-    socket.on("connect", handleConnect);
-    socket.on("connect_error", handleConnectError);
-    socket.on("disconnect", handleDisconnect);
-
     // ----------------
     // Gestion des erreurs
     // ----------------
@@ -126,17 +128,21 @@ export const useSocketListeners = (props: SocketListenersProps) => {
         setView("home");
       }
     };
+
+    socket.on("connect", handleConnect);
+    socket.on("connect_error", handleConnectError);
+    socket.on("disconnect", handleDisconnect);
     socket.on("error", handleError);
 
     // ----------------
     // Gestion des parties
     // ----------------
-    const handleRoomCreated = (roomCode: string, players: any[]) => {
+    const handleRoomCreated = (roomCode: string, players: Player[]) => {
       setRoomCode(roomCode);
       setPlayers(players);
       setView("lobby");
       const me = players.find(
-        (p: any) =>
+        (p: Player) =>
           (playerId && p.id === playerId) || p.socketId === socket.id,
       );
       if (me) {
@@ -144,7 +150,7 @@ export const useSocketListeners = (props: SocketListenersProps) => {
       }
     };
 
-    const handleRoomUpdated = (roomCode: string, players: any[]) => {
+    const handleRoomUpdated = (roomCode: string, players: Player[]) => {
       if (viewRef.current !== "game" && viewRef.current !== "result") {
         setView("lobby");
       }
@@ -175,9 +181,9 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     socket.on("game_started", handleGameStarted);
 
     const handleDataLoaded = (
-      toPlay: any[],
-      database_artists: any[],
-      database_tracks: any[],
+      toPlay: Track[],
+      database_artists: DatabaseArtist[],
+      database_tracks: DatabaseTrack[],
     ) => {
       setView("game");
       setToPlay(toPlay);
@@ -185,8 +191,14 @@ export const useSocketListeners = (props: SocketListenersProps) => {
       setPhase("guessing");
       setTimeLeft(time);
 
-      const cachedArtists: any[] = getSessionItem("database_artists", []);
-      const cachedTracks: any[] = getSessionItem("database_tracks", []);
+      const cachedArtists: DatabaseArtist[] = getSessionItem<DatabaseArtist[]>(
+        "database_artists",
+        [],
+      );
+      const cachedTracks: DatabaseTrack[] = getSessionItem<DatabaseTrack[]>(
+        "database_tracks",
+        [],
+      );
 
       const seenArtistNames = new Set(
         cachedArtists
@@ -228,7 +240,7 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     // ----------------
     // Gestion des paramètres de partie
     // ----------------
-    const handleGameSetting = (key: string, value: any) => {
+    const handleGameSetting = (key: string, value: number) => {
       console.log("Game setting:", key, value);
       if (key === "music_amount") {
         setMusicAmount(value);
@@ -290,7 +302,10 @@ export const useSocketListeners = (props: SocketListenersProps) => {
 
     socket.on("no_playlist", handleNoPlaylist);
 
-    const handleGameReset = (rules: any, players: Player[]) => {
+    const handleGameReset = (
+      rules: { musicAmount?: number; time?: number },
+      players: Player[],
+    ) => {
       if (rules) {
         if (rules.musicAmount !== undefined) setMusicAmount(rules.musicAmount);
         if (rules.time !== undefined) setTime(rules.time);
@@ -301,7 +316,15 @@ export const useSocketListeners = (props: SocketListenersProps) => {
 
     socket.on("game_reset", handleGameReset);
 
-    const handleGameReconnected = (data: any) => {
+    const handleGameReconnected = (data: {
+      toPlay: Track[];
+      database_artists: DatabaseArtist[];
+      database_tracks: DatabaseTrack[];
+      turn: number;
+      phase: "guessing" | "answer" | "transition";
+      timeLeft: number;
+      time: number;
+    }) => {
       setToPlay(data.toPlay);
       setDatabaseArtists(data.database_artists);
       setDatabaseTracks(data.database_tracks);

@@ -9,7 +9,7 @@ interface InfoProps {
 }
 
 export default function Info({ id, children, visible }: InfoProps) {
-  const tooltipRef = useRef<HTMLDivElement>(null);
+  const tooltipRef = useRef<HTMLDivElement | null>(null);
   const [coords, setCoords] = useState<{
     leftRelative: number;
     width: number;

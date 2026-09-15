@@ -56,7 +56,7 @@ export default function Game() {
   const [guessingArtist, setGuessingArtist] = useState<boolean>(false);
   const [guessingSong, setGuessingSong] = useState<boolean>(false);
   const [isChangingVolume, setIsChangingVolume] = useState<boolean>(false);
-  const volumeControlRef = useRef<HTMLDivElement>(null);
+  const volumeControlRef = useRef<HTMLDivElement | null>(null);
 
   // Close volume control when clicking outside
   useEffect(() => {
@@ -134,8 +134,8 @@ export default function Game() {
     })
     .slice(0, 5);
 
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const volumeRef = useRef(volume);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const volumeRef = useRef<number>(volume);
 
   useEffect(() => {
     volumeRef.current = volume;

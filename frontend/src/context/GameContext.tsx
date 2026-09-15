@@ -19,7 +19,14 @@ const SFX_KEY = "game_sfx_volume";
 const VOLUME_KEY = "game_volume";
 
 // Import des types
-import { View, GameContextType, Player } from "../types/game";
+import {
+  View,
+  GameContextType,
+  Player,
+  Track,
+  DatabaseArtist,
+  DatabaseTrack,
+} from "../types/game";
 import { useSocketListeners } from "../utils/useSocketListeners";
 import { getSocketUrl } from "../utils/config";
 import { getSessionItem } from "../utils/storageUtils";
@@ -32,34 +39,34 @@ const GameContext = createContext<GameContextType | undefined>(undefined);
 export const GameProvider = ({ children }: { children: ReactNode }) => {
   const { t } = useTranslation();
   const [socket, setSocket] = useState<Socket | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<View>("home");
-  const [roomCode, setRoomCode] = useState(() => {
+  const [roomCode, setRoomCode] = useState<string>(() => {
     if (typeof window !== "undefined") {
       return sessionStorage.getItem("game_code") || "";
     }
     return "";
   });
   const [players, setPlayers] = useState<Player[]>([]);
-  const [volume, setVolume] = useState(() => {
+  const [volume, setVolume] = useState<number>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem(VOLUME_KEY);
       return saved ? parseFloat(saved) : 0.05;
     }
     return 0.05;
   });
-  const [musicAmount, setMusicAmount] = useState(3);
-  const [time, setTime] = useState(30);
-  const [playlistUrl, setPlaylistUrl] = useState("");
-  const [toPlay, setToPlay] = useState<any[]>([]);
-  const [database_artists, setDatabaseArtists] = useState<any[]>(() =>
-    getSessionItem("database_artists", []),
+  const [musicAmount, setMusicAmount] = useState<number>(3);
+  const [time, setTime] = useState<number>(30);
+  const [playlistUrl, setPlaylistUrl] = useState<string>("");
+  const [toPlay, setToPlay] = useState<Track[]>([]);
+  const [database_artists, setDatabaseArtists] = useState<DatabaseArtist[]>(
+    () => getSessionItem<DatabaseArtist[]>("database_artists", []),
   );
-  const [database_tracks, setDatabaseTracks] = useState<any[]>(() =>
-    getSessionItem("database_tracks", []),
+  const [database_tracks, setDatabaseTracks] = useState<DatabaseTrack[]>(() =>
+    getSessionItem<DatabaseTrack[]>("database_tracks", []),
   );
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<string>("");
 
   const [turn, setTurn] = useState<number>(1);
   const [phase, setPhase] = useState<"guessing" | "answer" | "transition">(
@@ -68,15 +75,15 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [timeLeft, setTimeLeft] = useState<number>(30);
 
   // Pseudo et identifiant du joueur
-  const [name, setName] = useState("");
-  const [playerId, setPlayerId] = useState(() => {
+  const [name, setName] = useState<string>("");
+  const [playerId, setPlayerId] = useState<string>(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("id") || "";
     }
     return "";
   });
 
-  const isPopStateRef = useRef(false);
+  const isPopStateRef = useRef<boolean>(false);
   const currentViewRef = useRef<View>("home");
 
   // Enregistrement des écouteurs de socket

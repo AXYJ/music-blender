@@ -5,6 +5,29 @@ import { Socket } from "socket.io-client";
 export type View = "home" | "lobby" | "game" | "result" | "mentions";
 export type Phase = "hide-answer" | "show-answer";
 
+// Définition des structures de données
+export interface Track {
+  order?: number;
+  name: string;
+  artist: string;
+  internationalName?: string;
+  internationalArtist?: string;
+  previewUrl?: string;
+  imageUrl?: string | null;
+  submittedBy?: string;
+  url?: string;
+}
+
+export interface DatabaseArtist {
+  artist: string;
+  internationalArtist?: string;
+}
+
+export interface DatabaseTrack {
+  name: string;
+  internationalName?: string;
+}
+
 // Toutes les variables globales du jeu
 // Utilisation de variables globales pour éviter de passer des props à chaque composant
 export interface GameContextType {
@@ -42,12 +65,12 @@ export interface GameContextType {
   setTime: (time: number) => void;
   playlistUrl: string;
   setPlaylistUrl: React.Dispatch<React.SetStateAction<string>>;
-  toPlay: any[];
-  setToPlay: React.Dispatch<React.SetStateAction<any[]>>;
-  database_artists: any[];
-  setDatabaseArtists: React.Dispatch<React.SetStateAction<any[]>>;
-  database_tracks: any[];
-  setDatabaseTracks: React.Dispatch<React.SetStateAction<any[]>>;
+  toPlay: Track[];
+  setToPlay: React.Dispatch<React.SetStateAction<Track[]>>;
+  database_artists: DatabaseArtist[];
+  setDatabaseArtists: React.Dispatch<React.SetStateAction<DatabaseArtist[]>>;
+  database_tracks: DatabaseTrack[];
+  setDatabaseTracks: React.Dispatch<React.SetStateAction<DatabaseTrack[]>>;
   sendAnswer: (artist: string, track: string, turn: number) => void;
   quitGame: () => void;
   message: string;
@@ -73,7 +96,7 @@ export interface Player {
   score: number;
   leavedPlayer: boolean;
   playlistUrl?: string;
-  tracks?: any[];
+  tracks?: Track[];
   artist_answer: boolean;
   artist_score?: number;
   track_answer: boolean;

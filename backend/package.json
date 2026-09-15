@@ -5,9 +5,12 @@
   "license": "ISC",
   "author": "",
   "type": "module",
-  "main": "servor.js",
+  "main": "servor.ts",
   "scripts": {
-    "dev": "nodemon servor.js"
+    "dev": "tsx watch servor.ts",
+    "build": "tsc",
+    "start": "node dist/servor.js",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "cheerio": "^1.2.0",
@@ -22,6 +25,11 @@
     "transliteration": "^2.6.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.11"
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.5.1",
+    "nodemon": "^3.1.11",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2"
   }
 }

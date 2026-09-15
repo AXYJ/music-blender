@@ -38,19 +38,31 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   // Fonction helper pour accéder aux clés imbriquées (ex: "common.play") et remplacer des placeholders
   const t = (path: string, replace?: Record<string, string>): string => {
     const keys = path.split(".");
-    let current: any = translations[locale];
+    let current: unknown = translations[locale];
     for (const key of keys) {
-      if (!current || current[key] === undefined) return path;
-      current = current[key];
-    }
-    if (typeof current === "string" && replace) {
-      let result = current;
-      for (const [key, value] of Object.entries(replace)) {
-        result = result.replace(new RegExp(`{{\\s*${key}\\s*}}`, "g"), value);
+      if (
+        !current ||
+        typeof current !== "object" ||
+        (current as Record<string, unknown>)[key] === undefined
+      ) {
+        return path;
       }
-      return result;
+      current = (current as Record<string, unknown>)[key];
     }
-    return current;
+    if (typeof current === "string") {
+      if (replace) {
+        let result = current;
+        for (const [key, value] of Object.entries(replace)) {
+          result = result.replace(
+            new RegExp(`{{\\s*${key}\\s*}}`, "g"),
+            value,
+          );
+        }
+        return result;
+      }
+      return current;
+    }
+    return path;
   };
 
   return (

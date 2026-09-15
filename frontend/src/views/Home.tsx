@@ -31,9 +31,9 @@ export default function Home() {
   } = useGame();
   const { locale, setLocale, t } = useTranslation();
 
-  const [roomInput, setRoomInput] = useState("");
+  const [roomInput, setRoomInput] = useState<string>("");
   const [savedCode, setSavedCode] = useState<string | null>(null);
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const [currentSlide, setCurrentSlide] = useState<number>(0);
 
   const nextSlide = () => {
     if (currentSlide < 2) {

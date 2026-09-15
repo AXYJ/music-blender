@@ -14,7 +14,7 @@ import { useTranslation } from "@/context/LanguageContext";
 export default function Results() {
   const { players, toPlay, restart } = useGame();
   const { t } = useTranslation();
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(1);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(1);
 
   players.sort((a, b) => b.score - a.score);
 
