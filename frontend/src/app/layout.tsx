@@ -6,7 +6,7 @@ import OfflineBanner from "@/components/pwa/OfflineBanner";
 
 export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL || "https://museek.app"
+    process.env.NEXT_PUBLIC_APP_URL || "https://museek.app",
   ),
   title: {
     default: "Museek - Le Blindtest Musical Multijoueur Personnalisé",

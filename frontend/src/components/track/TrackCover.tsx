@@ -7,6 +7,7 @@ import { useTranslation } from "@/context/LanguageContext";
 interface TrackCoverProps {
   imageUrl?: string | null;
   artist?: string;
+  internationalArtist?: string;
   name?: string;
   internationalName?: string;
   url?: string;
@@ -21,6 +22,7 @@ interface TrackCoverProps {
 export default function TrackCover({
   imageUrl,
   artist = "",
+  internationalArtist = "",
   name = "",
   internationalName = "",
   url,
@@ -40,11 +42,15 @@ export default function TrackCover({
     }
   };
 
+  const showIntArtist =
+    internationalArtist &&
+    artist &&
+    internationalArtist.toLowerCase().trim() !== artist.toLowerCase().trim();
+
   const showIntName =
     internationalName &&
     name &&
-    internationalName.toLowerCase().replace(/\s+/g, "") !==
-      name.toLowerCase().replace(/\s+/g, "");
+    internationalName.toLowerCase().trim() !== name.toLowerCase().trim();
 
   return (
     <section
@@ -101,9 +107,16 @@ export default function TrackCover({
             <p className="text-base text-gray-300">
               {t("track-cover.answer-is")}
             </p>
-            <p className="text-center text-xl font-bold text-(--white)">
-              {artist}
-            </p>
+            <div className="flex flex-col items-center">
+              <p className="text-center text-xl font-bold text-(--white)">
+                {artist}
+              </p>
+              {showIntArtist && (
+                <p className="text-center text-sm text-(--grey)/60 italic">
+                  {internationalArtist}
+                </p>
+              )}
+            </div>
             <div className="flex flex-col items-center">
               <p className="text-center text-lg text-(--white)">{name}</p>
               {showIntName && (
@@ -125,7 +138,7 @@ export default function TrackCover({
               <div className="flex flex-col">
                 {artist && (
                   <span className="artist-name text-sm font-semibold">
-                    {artist}
+                    {artist} {showIntArtist ? `(${internationalArtist})` : ""}
                   </span>
                 )}
                 {name && (

@@ -8,14 +8,21 @@ export interface Track {
   imageUrl?: string | null;
   submittedBy?: string;
   url?: string;
+  _normalizedName?: string;
+  _normalizedIntName?: string;
+  _requiredArtists?: string[][];
+  _rawArtist?: string;
+  _rawIntArtist?: string;
 }
 
 export interface DatabaseArtist {
+  id?: string;
   artist: string;
   internationalArtist?: string;
 }
 
 export interface DatabaseTrack {
+  id?: string;
   name: string;
   internationalName?: string;
 }

@@ -49,9 +49,9 @@ export default function Lobby() {
   const isReady = me?.isReady || false;
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [infoType, setInfoType] = useState<"number-music" | "time" | "url" | null>(
-    null,
-  );
+  const [infoType, setInfoType] = useState<
+    "number-music" | "time" | "url" | null
+  >(null);
 
   // Gestion du nombre de morceau par playlist
   const handleMusicAmount = (operation: "up" | "down") => {
@@ -134,14 +134,28 @@ export default function Lobby() {
       <div className="flex w-full flex-col gap-4">
         <div className="flex flex-col items-center gap-8">
           <button
-            className="cursor-pointer text-center text-xl font-bold text-(--white) transition-all duration-100 ease-out hover:scale-105 active:scale-95"
+            className="text-md flex cursor-pointer gap-2 text-center font-bold text-(--white) transition-all duration-100 ease-out hover:scale-105 active:scale-95 md:text-xl"
             onClick={() => {
               handleCopyCode();
             }}
             title={t("lobby.copy-code-title")}
           >
             {t("lobby.game-code-label")} {roomCode}
-            {/* Rajouter icone de copie */}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="lucide lucide-copy preview-icon"
+            >
+              <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+              <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+            </svg>
           </button>
         </div>
         <div className="flex w-full flex-col items-center gap-4 lg:grid lg:grid-cols-3 lg:items-stretch">
@@ -314,8 +328,26 @@ export default function Lobby() {
               isLoading
             }
           >
-            {t("lobby.launch")} ({players.filter((p) => p.isReady).length}/
-            {players.length})
+            {isLoading ? (
+              <div className="flex items-center justify-center gap-2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="lucide lucide-loader-circle preview-icon animate-spin"
+                >
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                </svg>
+              </div>
+            ) : (
+              `${t("lobby.launch")} (${players.filter((p) => p.isReady).length}/${players.length})`
+            )}
           </button>
         )}
         {!isHost && (

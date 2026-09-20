@@ -149,10 +149,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       transports: ["polling", "websocket"],
     });
 
-    setTimeout(() => {
-      setSocket(newSocket);
-      setIsConnected(newSocket.connected);
-    }, 0);
+    setSocket(newSocket);
+    setIsConnected(newSocket.connected);
 
     return () => {
       newSocket.disconnect();

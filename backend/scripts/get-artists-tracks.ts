@@ -23,6 +23,43 @@ kuroshiro
   });
 
 //----------------------------------
+// Translitération locale (Kuroshiro / Japonais si Kana & Fallback transliteration)
+//----------------------------------
+export async function transliterateText(text: string): Promise<string> {
+  if (!text || typeof text !== "string") return "";
+
+  const hasKana = /[\u3040-\u309F\u30A0-\u30FF]/.test(text);
+
+  if (hasKana && kuroshiroReady) {
+    try {
+      const converted = await kuroshiro.convert(text, {
+        to: "romaji",
+        romajiSystem: "hepburn",
+      });
+
+      const hasRemainingKana = /[\u3040-\u309F\u30A0-\u30FF]/.test(converted);
+      if (hasRemainingKana) {
+        return transliterate(converted);
+      }
+      return converted;
+    } catch (err) {
+      console.error("Kuroshiro conversion error:", err);
+      if (/[^\x00-\x7F]/.test(text)) {
+        return transliterate(text);
+      }
+    }
+  } else if (/[^\x00-\x7F]/.test(text)) {
+    return transliterate(text);
+  }
+
+  return text;
+}
+import {
+  transliterate as transliterateGroq,
+  TransliterateItem,
+} from "./transliterate.js";
+
+//----------------------------------
 // Convertir les noms en version internationale
 //----------------------------------
 
@@ -48,46 +85,14 @@ export async function getInternationalName(text: string): Promise<string> {
       const isPart2Ascii = !/[^\x00-\x7F]/.test(part2);
 
       if (isPart1Ascii && !isPart2Ascii) result = part1;
-      if (isPart2Ascii && !isPart1Ascii) result = part2;
+      else if (isPart2Ascii && !isPart1Ascii) result = part2;
+      else result = await transliterateText(part1);
     }
   } else {
-    const hasKana = /[\u3040-\u309F\u30A0-\u30FF]/.test(text);
-    const isCJK = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(text);
-
-    if (isCJK && kuroshiroReady) {
-      try {
-        const converted = await kuroshiro.convert(text, {
-          to: "romaji",
-          romajiSystem: "hepburn",
-        });
-
-        const hasRemainingCJK = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(
-          converted,
-        );
-        if (hasRemainingCJK) {
-          if (hasKana) {
-            result = transliterate(converted);
-          } else {
-            result = transliterate(text);
-          }
-        } else {
-          result = converted;
-        }
-      } catch (err) {
-        console.error("Kuroshiro conversion error:", err);
-        if (/[^\x00-\x7F]/.test(text)) {
-          result = transliterate(text);
-        }
-      }
-    } else if (/[^\x00-\x7F]/.test(text)) {
-      result = transliterate(text);
-    }
+    result = await transliterateText(text);
   }
 
-  result = result.toLowerCase();
-  result = result.replace(/\s+/g, "");
-
-  return result;
+  return result.trim();
 }
 
 //----------------------------------
@@ -107,19 +112,26 @@ async function resolveUrlIfNeeded(url: string): Promise<string> {
     console.log(`[URL Resolver] Resolved to: ${response.url}`);
     return response.url;
   } catch (e) {
-    console.error(`[URL Resolver] Error resolving short URL ${url}:`, e);
+    console.error(`[URL Resolver] Failed to resolve URL: ${url}`, e);
     return url;
   }
 }
 
 //----------------------------------
-// Fonction principale de sélection des morceaux
+// Caches en mémoire (Playlists & Pochettes)
+//----------------------------------
+const PLAYLIST_CACHE_TTL = 60 * 60 * 1000; // 1 heure
+const playlistCache = new Map<string, { tracks: Track[]; timestamp: number }>();
+const coverCache = new Map<string, string>();
+
+//----------------------------------
+// Sélection aléatoire de musiques
 //----------------------------------
 
 export default async function selectTracks(
   playlistUrl: string,
   amount: number,
-  player: { name: string },
+  player: { name: string; isHost?: boolean },
 ): Promise<{ tracks: Track[]; selectedTracks: Track[] }> {
   let tracks: Track[] = [];
   if (!playlistUrl || typeof playlistUrl !== "string") {
@@ -129,64 +141,140 @@ export default async function selectTracks(
   // Résoudre le lien s'il s'agit d'un lien court (ex: link.deezer.com)
   const resolvedUrl = await resolveUrlIfNeeded(playlistUrl);
 
-  const match = resolvedUrl.match(/(playlist|album)\/([a-zA-Z0-9]+)/);
-  const type = match ? match[1] : null;
-  const id = match ? match[2] : null;
-  let platform: "spotify" | "deezer" | "apple" = "spotify";
-  if (resolvedUrl.includes("deezer.com")) {
-    platform = "deezer";
-  } else if (
-    resolvedUrl.includes("spotify.com") ||
-    resolvedUrl.includes("spotify.link")
+  // 1. Vérifier si les pistes de cette playlist sont déjà en cache
+  const cachedPlaylist = playlistCache.get(resolvedUrl);
+  if (
+    cachedPlaylist &&
+    Date.now() - cachedPlaylist.timestamp < PLAYLIST_CACHE_TTL
   ) {
-    platform = "spotify";
-  } else if (
-    resolvedUrl.includes("music.apple.com") ||
-    resolvedUrl.includes("itunes.apple.com")
-  ) {
-    platform = "apple";
-  }
-
-  if (id && type) {
-    let playlistTracks:
-      | {
-          name: string;
-          artist: string;
-          previewUrl: string;
-          imageUrl: string;
-          url: string;
-        }[]
-      | null = null;
-
-    if (platform === "spotify") {
-      playlistTracks = await fetchSpotifyTracks({ type, id });
-    } else if (platform === "deezer") {
-      playlistTracks = await fetchDeezerTracks({ type, id });
-    } else if (platform === "apple") {
-      playlistTracks = await fetchAppleTracks({ type, id, url: resolvedUrl });
+    console.log(
+      `[Playlist Cache] Hit pour ${resolvedUrl} (${cachedPlaylist.tracks.length} pistes en mémoire)`,
+    );
+    tracks = cachedPlaylist.tracks.map((t) => ({
+      ...t,
+      submittedBy: player.name,
+    }));
+  } else {
+    const match = resolvedUrl.match(/(playlist|album)\/([a-zA-Z0-9]+)/);
+    const type = match ? match[1] : null;
+    const id = match ? match[2] : null;
+    let platform: "spotify" | "deezer" | "apple" = "spotify";
+    if (resolvedUrl.includes("deezer.com")) {
+      platform = "deezer";
+    } else if (
+      resolvedUrl.includes("spotify.com") ||
+      resolvedUrl.includes("spotify.link")
+    ) {
+      platform = "spotify";
+    } else if (
+      resolvedUrl.includes("music.apple.com") ||
+      resolvedUrl.includes("itunes.apple.com")
+    ) {
+      platform = "apple";
     }
 
-    if (playlistTracks && playlistTracks.length > 0) {
-      // Formater et normaliser les noms de toutes les pistes ici pour éviter la duplication de code
-      const formattedTracks: Track[] = await Promise.all(
-        playlistTracks.map(async (t) => {
-          const name = t.name || "";
-          const artist = t.artist || "";
-          return {
-            name,
-            artist,
-            internationalName: await getInternationalName(name),
-            internationalArtist: await getInternationalName(artist),
-            previewUrl: t.previewUrl || "",
-            imageUrl: t.imageUrl || "",
-            url: t.url || "",
-            submittedBy: player.name,
-          };
-        }),
-      );
+    if (id && type) {
+      let playlistTracks:
+        | {
+            name: string;
+            artist: string;
+            previewUrl: string;
+            imageUrl: string;
+            url: string;
+          }[]
+        | null = null;
 
-      // Ne garder que les morceaux qui ont un extrait audio (previewUrl) disponible
-      tracks = formattedTracks.filter((t) => t.previewUrl);
+      if (platform === "spotify") {
+        playlistTracks = await fetchSpotifyTracks({ type, id });
+      } else if (platform === "deezer") {
+        playlistTracks = await fetchDeezerTracks({ type, id });
+      } else if (platform === "apple") {
+        playlistTracks = await fetchAppleTracks({ type, id, url: resolvedUrl });
+      }
+
+      if (playlistTracks && playlistTracks.length > 0) {
+        // 1. Détecter les morceaux ayant des caractères non-ASCII à translitérer avec Groq
+        const itemsToTranslate: TransliterateItem[] = [];
+        playlistTracks.forEach((t, index) => {
+          const hasNonAscii =
+            /[^\x00-\x7F]/.test(t.name) || /[^\x00-\x7F]/.test(t.artist);
+          if (hasNonAscii) {
+            itemsToTranslate.push({
+              id: index,
+              artist: t.artist,
+              title: t.name,
+            });
+          }
+        });
+
+        // 2. Appel Groq en batch (si des morceaux non-ASCII existent)
+        const groqTranslations = new Map<
+          number,
+          { internationalArtist: string; internationalTitle: string }
+        >();
+        if (itemsToTranslate.length > 0) {
+          try {
+            console.log(
+              `[Groq] Romanisation en batch de ${itemsToTranslate.length} morceaux non-ASCII...`,
+            );
+            const results = await transliterateGroq(itemsToTranslate);
+            for (const r of results) {
+              groqTranslations.set(Number(r.id), {
+                internationalArtist: r.internationalArtist,
+                internationalTitle: r.internationalTitle,
+              });
+            }
+          } catch (e) {
+            console.warn(
+              "[selectTracks] Fallback sur translitération locale suite à erreur Groq :",
+              e,
+            );
+          }
+        }
+
+        // 3. Formater et normaliser les noms de toutes les pistes
+        const formattedTracks: Track[] = await Promise.all(
+          playlistTracks.map(async (t, index) => {
+            const name = t.name || "";
+            const artist = t.artist || "";
+            const groqResult = groqTranslations.get(index);
+
+            const internationalName = (
+              groqResult?.internationalTitle
+                ? groqResult.internationalTitle
+                : await getInternationalName(name)
+            ).trim();
+
+            const internationalArtist = (
+              groqResult?.internationalArtist
+                ? groqResult.internationalArtist
+                : await getInternationalName(artist)
+            ).trim();
+
+            return {
+              name,
+              artist,
+              internationalName,
+              internationalArtist,
+              previewUrl: t.previewUrl || "",
+              imageUrl: t.imageUrl || "",
+              url: t.url || "",
+              submittedBy: player.name,
+            };
+          }),
+        );
+
+        // Ne garder que les morceaux qui ont un extrait audio (previewUrl) disponible
+        tracks = formattedTracks.filter((t) => t.previewUrl);
+
+        // Mettre en cache la playlist pour les futures parties
+        if (tracks.length > 0) {
+          playlistCache.set(resolvedUrl, {
+            tracks,
+            timestamp: Date.now(),
+          });
+        }
+      }
     }
   }
 
@@ -203,17 +291,28 @@ export default async function selectTracks(
 
   // Récupérer les vraies images de couverture pour les pistes sélectionnées via Deezer Lookup (avec OEmbed Spotify en Fallback)
   let selectedTracksWithImages = [...selectedTracks];
-  if (platform === "spotify") {
-    console.log(
-      `[Spotify] Fetching high-quality cover images for ${selectedTracks.length} tracks (Deezer search with Spotify OEmbed fallback)...`,
-    );
+  const isSpotify =
+    resolvedUrl.includes("spotify.com") || resolvedUrl.includes("spotify.link");
+  if (isSpotify) {
     selectedTracksWithImages = await Promise.all(
       selectedTracks.map(async (track) => {
+        const coverKey = `${track.internationalArtist || track.artist} ${track.internationalName || track.name}`
+          .toLowerCase()
+          .trim();
+
+        // Vérifier dans le cache de couverture
+        if (coverCache.has(coverKey)) {
+          return {
+            ...track,
+            imageUrl: coverCache.get(coverKey) || track.imageUrl,
+          };
+        }
+
         let realImg: string | null = null;
 
         // 1. Essayer de récupérer l'image sur Deezer (qualité supérieure)
         try {
-          const query = `${track.internationalArtist} ${track.internationalName}`;
+          const query = `${track.internationalArtist || track.artist} ${track.internationalName || track.name}`;
           const response = await fetch(
             `https://api.deezer.com/search?q=${encodeURIComponent(query)}&limit=1`,
           );
@@ -238,6 +337,10 @@ export default async function selectTracks(
             track.url,
             track.imageUrl || "",
           );
+        }
+
+        if (realImg) {
+          coverCache.set(coverKey, realImg);
         }
 
         return {

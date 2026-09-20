@@ -84,9 +84,16 @@ async function getSpotifyTracksAnonymously(
 }
 
 //----------------------------------
-// Obtention du token d'accès Spotify (fallback)
+// Obtention du token d'accès Spotify avec cache mémoire
 //----------------------------------
+let cachedSpotifyToken: string | null = null;
+let tokenExpiresAt = 0;
+
 async function getSpotifyAccessToken(): Promise<string | null> {
+  if (cachedSpotifyToken && Date.now() < tokenExpiresAt - 60000) {
+    return cachedSpotifyToken;
+  }
+
   const clientId = process.env.SPOTIFY_CLIENT_ID?.trim();
   const clientSecret = process.env.SPOTIFY_CLIENT_SECRET?.trim();
   if (!clientId || !clientSecret) {
@@ -115,8 +122,13 @@ async function getSpotifyAccessToken(): Promise<string | null> {
       );
       return null;
     }
-    const data = (await response.json()) as { access_token: string };
-    return data.access_token;
+    const data = (await response.json()) as {
+      access_token: string;
+      expires_in?: number;
+    };
+    cachedSpotifyToken = data.access_token;
+    tokenExpiresAt = Date.now() + (data.expires_in || 3600) * 1000;
+    return cachedSpotifyToken;
   } catch (e) {
     console.error("Error getting Spotify token:", e);
     return null;

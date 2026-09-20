@@ -53,10 +53,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       if (replace) {
         let result = current;
         for (const [key, value] of Object.entries(replace)) {
-          result = result.replace(
-            new RegExp(`{{\\s*${key}\\s*}}`, "g"),
-            value,
-          );
+          result = result.replace(new RegExp(`{{\\s*${key}\\s*}}`, "g"), value);
         }
         return result;
       }

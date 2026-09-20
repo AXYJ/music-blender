@@ -129,47 +129,55 @@ export async function fetchAppleTracks({
     `[Apple Music] Scraped ${scrapedTracks.length} tracks. Fetching details from iTunes API...`,
   );
 
-  const promises = scrapedTracks.map(async (track) => {
-    try {
-      const searchTerm = `${track.artist} - ${track.title}`;
-      const response = await fetch(
-        `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&entity=song&limit=1`,
-      );
+  // Traitement par lots de 10 requêtes simultanées pour éviter les blocages de débit (HTTP 429)
+  const CONCURRENCY_LIMIT = 10;
+  const formatedTracks: AppleTrackResult[] = [];
 
-      if (!response.ok) return null;
-      const data = (await response.json()) as {
-        results?: {
-          trackName?: string;
-          artistName?: string;
-          previewUrl?: string;
-          artworkUrl100?: string;
-          trackViewUrl?: string;
-        }[];
-      };
+  for (let i = 0; i < scrapedTracks.length; i += CONCURRENCY_LIMIT) {
+    const chunk = scrapedTracks.slice(i, i + CONCURRENCY_LIMIT);
+    const chunkResults = await Promise.all(
+      chunk.map(async (track) => {
+        try {
+          const searchTerm = `${track.artist} - ${track.title}`;
+          const response = await fetch(
+            `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&entity=song&limit=1`,
+          );
 
-      if (data.results && data.results.length > 0) {
-        const iTunesTrack = data.results[0];
-        return {
-          name: iTunesTrack.trackName || track.title,
-          artist: iTunesTrack.artistName || track.artist,
-          previewUrl: iTunesTrack.previewUrl || "",
-          imageUrl: iTunesTrack.artworkUrl100 || "",
-          url: iTunesTrack.trackViewUrl || "",
-        };
-      }
-    } catch (error) {
-      console.error(
-        `[iTunes API] Error fetching track: ${track.artist} - ${track.title}`,
-        error,
-      );
+          if (!response.ok) return null;
+          const data = (await response.json()) as {
+            results?: {
+              trackName?: string;
+              artistName?: string;
+              previewUrl?: string;
+              artworkUrl100?: string;
+              trackViewUrl?: string;
+            }[];
+          };
+
+          if (data.results && data.results.length > 0) {
+            const iTunesTrack = data.results[0];
+            return {
+              name: iTunesTrack.trackName || track.title,
+              artist: iTunesTrack.artistName || track.artist,
+              previewUrl: iTunesTrack.previewUrl || "",
+              imageUrl: iTunesTrack.artworkUrl100 || "",
+              url: iTunesTrack.trackViewUrl || "",
+            };
+          }
+        } catch (error) {
+          console.error(
+            `[iTunes API] Error fetching track: ${track.artist} - ${track.title}`,
+            error,
+          );
+        }
+        return null;
+      }),
+    );
+
+    for (const t of chunkResults) {
+      if (t) formatedTracks.push(t);
     }
-    return null;
-  });
-
-  const results = await Promise.all(promises);
-  const formatedTracks: AppleTrackResult[] = results.filter(
-    (t): t is AppleTrackResult => t !== null,
-  );
+  }
 
   console.log(
     `[Apple Music/iTunes] Successfully resolved ${formatedTracks.length}/${scrapedTracks.length} tracks with previews.`,

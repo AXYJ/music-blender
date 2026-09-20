@@ -55,7 +55,9 @@ export default function Results() {
               <TrackCover
                 imageUrl={track.imageUrl}
                 artist={track.artist}
+                internationalArtist={track.internationalArtist}
                 name={track.name}
+                internationalName={track.internationalName}
                 url={track.url}
                 counterText={`${index + 1}/${toPlay.length}`}
                 className="carousel-item-top aspect-square w-3/5 max-w-xs"

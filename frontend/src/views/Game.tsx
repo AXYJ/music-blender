@@ -340,6 +340,7 @@ export default function Game() {
         <TrackCover
           imageUrl={trackImage}
           artist={currentTrack.artist}
+          internationalArtist={currentTrack.internationalArtist}
           name={currentTrack.name}
           internationalName={currentTrack.internationalName}
           counterText={`${turn}/${toPlay.length}`}
@@ -380,7 +381,7 @@ export default function Game() {
                 <path d="M19.364 18.364a9 9 0 0 0 0-12.728" />
               </svg>
               {isChangingVolume && (
-                <div className="top-[-300%] absolute left-1/2 z-10 -translate-x-1/2  -rotate-90">
+                <div className="absolute top-[-300%] left-1/2 z-10 -translate-x-1/2 -rotate-90">
                   <input
                     type="range"
                     min="0"

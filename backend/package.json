@@ -7,7 +7,7 @@
   "type": "module",
   "main": "servor.ts",
   "scripts": {
-    "dev": "tsx watch servor.ts",
+    "dev": "nodemon",
     "build": "tsc",
     "start": "node dist/servor.js",
     "type-check": "tsc --noEmit"

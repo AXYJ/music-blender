@@ -1,5 +1,6 @@
 {
-  "ignore": [
-    "room_*_db.json"
-  ]
+  "watch": ["servor.ts", "scripts", "types"],
+  "ext": "ts",
+  "ignore": ["room_*_db.json", "dist", "node_modules"],
+  "exec": "tsx servor.ts"
 }

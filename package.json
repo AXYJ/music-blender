@@ -7,7 +7,7 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\""
+    "dev": "concurrently -n \"backend,frontend\" -c \"blue,magenta\" \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\""
   },
   "devDependencies": {
     "concurrently": "^9.2.1"

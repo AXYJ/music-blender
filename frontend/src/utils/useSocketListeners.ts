@@ -68,16 +68,26 @@ export const useSocketListeners = (props: SocketListenersProps) => {
   useEffect(() => {
     if (!socket) return;
 
-    // Keep-alive pour éviter que le serveur (ex: Render) ne mette le socket en veille
+    // Keep-alive pour éviter que le serveur (ex: Render) ne mette le socket en veille (uniquement en production)
     const socketUrl = getSocketUrl();
-    const keepAliveInterval = setInterval(
-      () => {
-        fetch(socketUrl).catch((err) =>
-          console.error("Erreur keep-alive", err),
-        );
-      },
-      5 * 60 * 1000,
-    );
+    const isLocal =
+      socketUrl.includes("localhost") ||
+      socketUrl.includes("127.0.0.1") ||
+      socketUrl.includes("192.168.") ||
+      socketUrl.includes("10.") ||
+      socketUrl.includes(".local");
+
+    let keepAliveInterval: NodeJS.Timeout | null = null;
+    if (!isLocal) {
+      keepAliveInterval = setInterval(
+        () => {
+          fetch(socketUrl, { mode: "no-cors" }).catch(() => {
+            // Ignorer silencieusement les échecs de ping keep-alive
+          });
+        },
+        5 * 60 * 1000,
+      );
+    }
 
     // ----------------
     // Connexion & Cycle de vie
@@ -85,6 +95,10 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     const handleConnect = () => {
       setIsConnected(true);
     };
+
+    if (socket.connected) {
+      setIsConnected(true);
+    }
 
     const handleConnectError = (err: Error) => {
       setError(t("errors.connection_error"));
@@ -200,33 +214,37 @@ export const useSocketListeners = (props: SocketListenersProps) => {
         [],
       );
 
-      const seenArtistNames = new Set(
-        cachedArtists
-          .map((a) => (a?.artist || "").toLowerCase().trim())
-          .filter(Boolean),
-      );
-      const mergedArtists = [...cachedArtists];
+      const artistMap = new Map<string, DatabaseArtist>();
+      for (const a of cachedArtists) {
+        const key = (a?.artist || "").toLowerCase().trim();
+        if (key) artistMap.set(key, a);
+      }
       for (const a of database_artists) {
-        const artistKey = (a?.artist || "").toLowerCase().trim();
-        if (artistKey && !seenArtistNames.has(artistKey)) {
-          seenArtistNames.add(artistKey);
-          mergedArtists.push(a);
+        const key = (a?.artist || "").toLowerCase().trim();
+        if (key) {
+          const existing = artistMap.get(key);
+          if (!existing || a.internationalArtist) {
+            artistMap.set(key, a);
+          }
         }
       }
+      const mergedArtists = Array.from(artistMap.values());
 
-      const seenTrackNames = new Set(
-        cachedTracks
-          .map((t) => (t?.name || "").toLowerCase().trim())
-          .filter(Boolean),
-      );
-      const mergedTracks = [...cachedTracks];
+      const trackMap = new Map<string, DatabaseTrack>();
+      for (const t of cachedTracks) {
+        const key = (t?.name || "").toLowerCase().trim();
+        if (key) trackMap.set(key, t);
+      }
       for (const t of database_tracks) {
-        const trackKey = (t?.name || "").toLowerCase().trim();
-        if (trackKey && !seenTrackNames.has(trackKey)) {
-          seenTrackNames.add(trackKey);
-          mergedTracks.push(t);
+        const key = (t?.name || "").toLowerCase().trim();
+        if (key) {
+          const existing = trackMap.get(key);
+          if (!existing || t.internationalName) {
+            trackMap.set(key, t);
+          }
         }
       }
+      const mergedTracks = Array.from(trackMap.values());
 
       setSessionItem("database_artists", mergedArtists);
       setSessionItem("database_tracks", mergedTracks);
@@ -338,7 +356,9 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     socket.on("game_reconnected", handleGameReconnected);
 
     return () => {
-      clearInterval(keepAliveInterval);
+      if (keepAliveInterval) {
+        clearInterval(keepAliveInterval);
+      }
       socket.off("connect", handleConnect);
       socket.off("connect_error", handleConnectError);
       socket.off("disconnect", handleDisconnect);

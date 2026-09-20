@@ -14,6 +14,7 @@ import cors from "cors";
 import selectTracks, {
   getInternationalName,
 } from "./scripts/get-artists-tracks.js";
+import { transliterateArtists } from "./scripts/transliterate.js";
 import {
   Track,
   Room,
@@ -41,12 +42,19 @@ const io = new Server<
   SocketData
 >(server, {
   cors: {
-    origin: [
-      "http://localhost:3000",
-      "http://127.0.0.1:3000",
-      "https://music-blender.xiao-web.com",
-      "https://museek.xiao-web.com",
-    ].filter(Boolean),
+    origin: (origin, callback) => {
+      if (
+        !origin ||
+        /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+)(:\d+)?$/.test(
+          origin,
+        ) ||
+        origin === "https://music-blender.xiao-web.com" ||
+        origin === "https://museek.xiao-web.com"
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -71,71 +79,120 @@ server.listen(PORT, "0.0.0.0", () => {
 // Stockage des parties
 const rooms: Record<string, Room> = {};
 
-io.on("connection", (socket: Socket<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>) => {
-  console.log(`[${new Date().toISOString()}] User connected: ${socket.id}`);
-
-  // --------------------------------------------------------
-  // Création d'une partie
-  // --------------------------------------------------------
-  socket.on("create_game", (id: string, name: string) => {
-    const roomCode = crypto.randomUUID().slice(0, 6).toUpperCase();
-    rooms[roomCode] = {
-      players: [
-        {
-          name: name,
-          id: id,
-          socketId: socket.id,
-          isHost: true,
-          leavedPlayer: false,
-          inLobby: true,
-          score: 0,
-          isReady: true,
-        },
-      ],
-      musicAmount: 3,
-      time: 30,
-      toPlay: [],
-      database_artists: [],
-      database_tracks: [],
-      leavedPlayers: [],
-    };
-    socket.join(roomCode);
-    socket.emit("room_created", roomCode, rooms[roomCode].players);
-  });
-
-  // --------------------------------------------------------
-  // Rejoindre une partie
-  // --------------------------------------------------------
-  socket.on("join_game", (roomCode: string, id: string, name: string) => {
-    if (!rooms[roomCode]) {
-      socket.emit("error", "room_not_found");
-      return;
-    }
-
-    const room = rooms[roomCode];
-
-    // Vérifier que la partie n'est pas pleine
-    if (room.players.length >= 12) {
-      socket.emit("error", "room_full");
-      return;
-    }
-    // Vérifier si le joueur existe déjà
-    const existingPlayer = room.players.find((p) => p.id === id);
-    if (existingPlayer) {
-      existingPlayer.socketId = socket.id;
-      existingPlayer.leavedPlayer = false;
-      if (existingPlayer.disconnectTimeout) {
-        clearTimeout(existingPlayer.disconnectTimeout);
-        delete existingPlayer.disconnectTimeout;
-      }
-      if (room.cleanupTimeout) {
-        clearTimeout(room.cleanupTimeout);
-        delete room.cleanupTimeout;
-      }
-      socket.join(roomCode);
-      console.log(
-        `[${new Date().toISOString()}] User ${socket.id} (${existingPlayer.name}) reconnected to room ${roomCode}`,
+function getSocketContext(
+  socket: Socket<
+    ClientToServerEvents,
+    ServerToClientEvents,
+    InterServerEvents,
+    SocketData
+  >,
+): { roomCode?: string; room?: Room; player?: Player } {
+  let roomCode = socket.data.roomCode;
+  if (!roomCode || !rooms[roomCode]) {
+    roomCode = Array.from(socket.rooms).find((r) => r !== socket.id);
+  }
+  if (!roomCode || !rooms[roomCode]) {
+    for (const code in rooms) {
+      const p = rooms[code].players.find(
+        (x) =>
+          x.socketId === socket.id ||
+          (socket.data.playerId && x.id === socket.data.playerId),
       );
+      if (p) {
+        roomCode = code;
+        socket.data.roomCode = code;
+        socket.data.playerId = p.id;
+        return { roomCode, room: rooms[code], player: p };
+      }
+    }
+    return {};
+  }
+  const room = rooms[roomCode];
+  const playerId = socket.data.playerId;
+  const player = room.players.find(
+    (p) => (playerId && p.id === playerId) || p.socketId === socket.id,
+  );
+  return { roomCode, room, player };
+}
+
+io.on(
+  "connection",
+  (
+    socket: Socket<
+      ClientToServerEvents,
+      ServerToClientEvents,
+      InterServerEvents,
+      SocketData
+    >,
+  ) => {
+    console.log(`[${new Date().toISOString()}] User connected: ${socket.id}`);
+
+    // --------------------------------------------------------
+    // Création d'une partie
+    // --------------------------------------------------------
+    socket.on("create_game", (id: string, name: string) => {
+      const roomCode = crypto.randomUUID().slice(0, 6).toUpperCase();
+      socket.data.roomCode = roomCode;
+      socket.data.playerId = id;
+      rooms[roomCode] = {
+        players: [
+          {
+            name: name,
+            id: id,
+            socketId: socket.id,
+            isHost: true,
+            leavedPlayer: false,
+            inLobby: true,
+            score: 0,
+            isReady: true,
+          },
+        ],
+        musicAmount: 3,
+        time: 30,
+        toPlay: [],
+        database_artists: [],
+        database_tracks: [],
+        leavedPlayers: [],
+      };
+      socket.join(roomCode);
+      socket.emit("room_created", roomCode, rooms[roomCode].players);
+    });
+
+    // --------------------------------------------------------
+    // Rejoindre une partie
+    // --------------------------------------------------------
+    socket.on("join_game", (roomCode: string, id: string, name: string) => {
+      if (!rooms[roomCode]) {
+        socket.emit("error", "room_not_found");
+        return;
+      }
+
+      socket.data.roomCode = roomCode;
+      socket.data.playerId = id;
+      const room = rooms[roomCode];
+
+      // Vérifier que la partie n'est pas pleine
+      if (room.players.length >= 12) {
+        socket.emit("error", "room_full");
+        return;
+      }
+      // Vérifier si le joueur existe déjà
+      const existingPlayer = room.players.find((p) => p.id === id);
+      if (existingPlayer) {
+        existingPlayer.socketId = socket.id;
+        existingPlayer.leavedPlayer = false;
+        if (existingPlayer.disconnectTimeout) {
+          clearTimeout(existingPlayer.disconnectTimeout);
+          delete existingPlayer.disconnectTimeout;
+        }
+        if (room.cleanupTimeout) {
+          clearTimeout(room.cleanupTimeout);
+          delete room.cleanupTimeout;
+        }
+        socket.join(roomCode);
+        console.log(
+          `[${new Date().toISOString()}] User ${socket.id} (${existingPlayer.name}) reconnected to room ${roomCode}`,
+        );
       io.to(roomCode).emit("room_updated", roomCode, room.players);
 
       // Sync settings to the reconnecting player
@@ -276,120 +333,84 @@ io.on("connection", (socket: Socket<ClientToServerEvents, ServerToClientEvents, 
 
   // Quitter une partie
   socket.on("leave_game", () => {
-    let foundRoomCode: string | null = null;
-    let foundRoom: Room | null = null;
-    let foundPlayer: Player | null = null;
+    const { roomCode, room, player } = getSocketContext(socket);
+    if (!roomCode || !room || !player) return;
 
-    for (const code in rooms) {
-      const room = rooms[code];
-      const player = room.players.find((p) => p.socketId === socket.id);
-      if (player) {
-        foundRoomCode = code;
-        foundRoom = room;
-        foundPlayer = player;
-        break;
+    delete socket.data.roomCode;
+    if (player.disconnectTimeout) {
+      clearTimeout(player.disconnectTimeout);
+    }
+    player.leavedPlayer = true;
+    room.leavedPlayers = room.leavedPlayers || [];
+    room.leavedPlayers.push(player);
+    room.players = room.players.filter((p) => p.id !== player.id);
+    console.log(
+      `[${new Date().toISOString()}] User ${player.name} left room ${roomCode}`,
+    );
+    socket.leave(roomCode);
+
+    // Si l'hôte est parti dans le lobby ou si la partie est finie, on attribue l'hôte à un autre joueur actif
+    if (player.isHost && (!room.gameStartTime || room.isGameOver)) {
+      const newHost =
+        room.players.find((p) => !p.leavedPlayer) || room.players[0];
+      if (newHost) {
+        newHost.isHost = true;
+        newHost.isReady = true;
       }
     }
 
-    if (foundRoom && foundPlayer && foundRoomCode) {
-      if (foundPlayer.disconnectTimeout) {
-        clearTimeout(foundPlayer.disconnectTimeout);
+    // Si plus aucun joueur dans la room, on supprime la room
+    if (room.players.length === 0) {
+      if (room.cleanupTimeout) {
+        clearTimeout(room.cleanupTimeout);
       }
-      foundPlayer.leavedPlayer = true;
-      foundRoom.leavedPlayers = foundRoom.leavedPlayers || [];
-      foundRoom.leavedPlayers.push(foundPlayer);
-      foundRoom.players = foundRoom.players.filter(
-        (p) => p.id !== foundPlayer!.id,
-      );
+      delete rooms[roomCode];
       console.log(
-        `[${new Date().toISOString()}] User ${foundPlayer.name} left room ${foundRoomCode}`,
+        `[${new Date().toISOString()}] Room ${roomCode} deleted because it is empty`,
       );
-      socket.leave(foundRoomCode);
-
-      // Si l'hôte est parti dans le lobby ou si la partie est finie, on attribue l'hôte à un autre joueur actif
-      if (
-        foundPlayer.isHost &&
-        (!foundRoom.gameStartTime || foundRoom.isGameOver)
-      ) {
-        const newHost =
-          foundRoom.players.find((p) => !p.leavedPlayer) ||
-          foundRoom.players[0];
-        if (newHost) {
-          newHost.isHost = true;
-          newHost.isReady = true;
-        }
-      }
-
-      // Si plus aucun joueur dans la room, on supprime la room
-      if (foundRoom.players.length === 0) {
-        if (foundRoom.cleanupTimeout) {
-          clearTimeout(foundRoom.cleanupTimeout);
-        }
-        delete rooms[foundRoomCode];
-        console.log(
-          `[${new Date().toISOString()}] Room ${foundRoomCode} deleted because it is empty`,
-        );
-      } else {
-        io.to(foundRoomCode).emit(
-          "room_updated",
-          foundRoomCode,
-          foundRoom.players,
-        );
-        checkAndResetGame(foundRoomCode, rooms, io);
-      }
+    } else {
+      io.to(roomCode).emit("room_updated", roomCode, room.players);
+      checkAndResetGame(roomCode, rooms, io);
     }
   });
 
   // Prêt
   socket.on("ready", (isReady: boolean) => {
-    const roomCode = Array.from(socket.rooms).find((r) => r !== socket.id);
-    if (!roomCode) return;
-    const room = rooms[roomCode];
-    if (room) {
-      const player = room.players.find((p) => p.socketId === socket.id);
-      if (player) {
-        player.isReady = isReady;
-        io.to(roomCode).emit("room_updated", roomCode, rooms[roomCode].players);
-      }
-    }
+    const { roomCode, room, player } = getSocketContext(socket);
+    if (!roomCode || !room || !player) return;
+    player.isReady = isReady;
+    io.to(roomCode).emit("room_updated", roomCode, room.players);
   });
 
   // Lancement de la partie
   socket.on("start_game", () => {
-    const roomCode = Array.from(socket.rooms).find((r) => r !== socket.id);
-    if (!roomCode) return;
-    const room = rooms[roomCode];
-    if (room) {
-      // Réinitialiser la propriété playlistUrl de tous les joueurs à undefined pour pouvoir suivre les retours
-      room.players.forEach((p) => {
-        p.playlistUrl = undefined;
-        p.inLobby = false;
-        p.isReady = p.isHost;
-        p.score = 0;
-        p.artists_final_board = {};
-        p.tracks_final_board = {};
-        p.artists_scores_board = {};
-        p.tracks_scores_board = {};
-        p.leavedPlayer = false;
-      });
-      room.isGameOver = false;
-      room.answers = {};
-      room.gameStartTime = null;
-      room.isLoadingTracks = false;
-      io.to(roomCode).emit("game_started", room.players);
-    }
+    const { roomCode, room } = getSocketContext(socket);
+    if (!roomCode || !room) return;
+
+    // Réinitialiser la propriété playlistUrl de tous les joueurs à undefined pour pouvoir suivre les retours
+    room.players.forEach((p) => {
+      p.playlistUrl = undefined;
+      p.inLobby = false;
+      p.isReady = p.isHost;
+      p.score = 0;
+      p.artists_final_board = {};
+      p.tracks_final_board = {};
+      p.artists_scores_board = {};
+      p.tracks_scores_board = {};
+      p.leavedPlayer = false;
+    });
+    room.isGameOver = false;
+    room.answers = {};
+    room.gameStartTime = null;
+    room.isLoadingTracks = false;
+    io.to(roomCode).emit("game_started", room.players);
   });
 
   // Ajout des autres playlist
   socket.on("send_playlist_url", async (playlistUrl: string) => {
-    const roomCode = Array.from(socket.rooms).find((r) => r !== socket.id);
-    if (!roomCode) return;
-    const room = rooms[roomCode];
-    if (room) {
-      const player = room.players.find((p) => p.socketId === socket.id);
-      if (player) {
-        player.playlistUrl = playlistUrl || "";
-      }
+    const { roomCode, room, player } = getSocketContext(socket);
+    if (!roomCode || !room || !player) return;
+    player.playlistUrl = playlistUrl || "";
 
       // Vérifier si tous les joueurs ont répondu (url ou chaîne vide) et qu'on ne charge pas déjà
       const allSubmitted = room.players.every(
@@ -402,7 +423,7 @@ io.on("connection", (socket: Socket<ClientToServerEvents, ServerToClientEvents, 
 
         try {
           let hasError = false;
-          for (const p of room.players) {
+          const playerLoadPromises = room.players.map(async (p) => {
             if (p.playlistUrl && p.playlistUrl.trim() !== "") {
               try {
                 const result = await selectTracks(
@@ -421,10 +442,10 @@ io.on("connection", (socket: Socket<ClientToServerEvents, ServerToClientEvents, 
                     `playlist_load_error:${p.name}`,
                   );
                   hasError = true;
+                  return { tracks: [], selectedTracks: [] };
                 } else {
                   p.tracks = result.selectedTracks;
-                  allPlaylistTracks.push(...result.tracks);
-                  room.toPlay.push(...result.selectedTracks);
+                  return result;
                 }
               } catch (err) {
                 console.error(
@@ -437,9 +458,22 @@ io.on("connection", (socket: Socket<ClientToServerEvents, ServerToClientEvents, 
                   `playlist_load_error:${p.name}`,
                 );
                 hasError = true;
+                return { tracks: [], selectedTracks: [] };
               }
             } else {
               p.tracks = [];
+              return { tracks: [], selectedTracks: [] };
+            }
+          });
+
+          const results = await Promise.all(playerLoadPromises);
+
+          for (const res of results) {
+            if (res.tracks && res.tracks.length > 0) {
+              allPlaylistTracks.push(...res.tracks);
+            }
+            if (res.selectedTracks && res.selectedTracks.length > 0) {
+              room.toPlay.push(...res.selectedTracks);
             }
           }
 
@@ -454,6 +488,7 @@ io.on("connection", (socket: Socket<ClientToServerEvents, ServerToClientEvents, 
           // Créer des databases uniques pour les artistes (séparés par feat) et les musiques
           const seenArtists = new Set<string>();
           const seenTracks = new Set<string>();
+          const rawArtistsList: string[] = [];
           room.database_artists = [];
           room.database_tracks = [];
           for (const t of allPlaylistTracks) {
@@ -472,37 +507,82 @@ io.on("connection", (socket: Socket<ClientToServerEvents, ServerToClientEvents, 
                 });
               }
 
-              // 2. Gérer les artistes individuellement (séparation des feats)
+              // 2. Extraire les artistes individuellement
               const individualArtists = splitArtists(t.artist);
               for (const artistName of individualArtists) {
                 const artistKey = artistName.toLowerCase();
                 if (!seenArtists.has(artistKey)) {
                   seenArtists.add(artistKey);
-                  room.database_artists.push({
-                    artist: artistName,
-                    internationalArtist:
-                      await getInternationalName(artistName),
-                  });
+                  rawArtistsList.push(artistName);
                 }
               }
             }
           }
 
-          // Randomiser l'ordre global des musiques sélectionnées (toPlay)
+          // Translitérer en batch les artistes non-ASCII via Groq (avec fallback local)
+          const nonAsciiArtists = rawArtistsList.filter((a) =>
+            /[^\x00-\x7F]/.test(a),
+          );
+          let groqArtistMap = new Map<string, string>();
+          if (nonAsciiArtists.length > 0) {
+            try {
+              groqArtistMap = await transliterateArtists(nonAsciiArtists);
+            } catch (err) {
+              console.warn("[servor] Erreur transliterateArtists Groq :", err);
+            }
+          }
+
+          for (const artistName of rawArtistsList) {
+            const groqTrans = groqArtistMap.get(artistName);
+            const internationalArtist = groqTrans
+              ? groqTrans
+              : await getInternationalName(artistName);
+
+            room.database_artists.push({
+              artist: artistName,
+              internationalArtist,
+            });
+          }
+
+          // Randomiser l'ordre global des musiques sélectionnées (toPlay) et précalculer les normalisations
           const shuffledTracks = shuffle(room.toPlay);
-          room.toPlay = shuffledTracks.map((track, index) => ({
-            order: index + 1,
-            name: track.name || "",
-            artist: track.artist || "",
-            internationalName:
-              track.internationalName || track.name || "",
-            internationalArtist:
-              track.internationalArtist || track.artist || "",
-            previewUrl: track.previewUrl || "",
-            imageUrl: track.imageUrl || "",
-            submittedBy: track.submittedBy || "",
-            url: track.url || "",
-          }));
+          room.toPlay = shuffledTracks.map((track, index) => {
+            const originalArtistsList = splitArtists(track.artist)
+              .map((a) => normalizeString(a))
+              .filter(Boolean);
+            const internationalArtistsList = splitArtists(
+              track.internationalArtist || "",
+            )
+              .map((a) => normalizeString(a))
+              .filter(Boolean);
+
+            const requiredArtists = originalArtistsList.map((orig, idx) => {
+              const names = [orig];
+              if (internationalArtistsList[idx]) {
+                names.push(internationalArtistsList[idx]);
+              }
+              return names;
+            });
+
+            return {
+              order: index + 1,
+              name: track.name || "",
+              artist: track.artist || "",
+              internationalName:
+                track.internationalName || track.name || "",
+              internationalArtist:
+                track.internationalArtist || track.artist || "",
+              previewUrl: track.previewUrl || "",
+              imageUrl: track.imageUrl || "",
+              submittedBy: track.submittedBy || "",
+              url: track.url || "",
+              _normalizedName: normalizeString(track.name || ""),
+              _normalizedIntName: normalizeString(track.internationalName || ""),
+              _requiredArtists: requiredArtists,
+              _rawArtist: normalizeString(track.artist || ""),
+              _rawIntArtist: normalizeString(track.internationalArtist || ""),
+            };
+          });
           room.gameStartTime = Date.now();
           room.isLoadingTracks = false;
           // Envoyer au front
@@ -517,8 +597,7 @@ io.on("connection", (socket: Socket<ClientToServerEvents, ServerToClientEvents, 
           socket.emit("error", "internal_error");
         }
       }
-    }
-  });
+    });
 
   // --------------------------------------------------------
   // Paramètres de partie
@@ -526,147 +605,113 @@ io.on("connection", (socket: Socket<ClientToServerEvents, ServerToClientEvents, 
 
   // Musique par playlist
   socket.on("music_amount", (amount: number) => {
-    const roomCode = Array.from(socket.rooms).find((r) => r !== socket.id);
-    if (!roomCode) return;
-    const room = rooms[roomCode];
-    if (room) {
-      room.musicAmount = amount;
-      io.to(roomCode).emit("game-setting", "music_amount", amount);
-    }
+    const { roomCode, room } = getSocketContext(socket);
+    if (!roomCode || !room) return;
+    room.musicAmount = amount;
+    io.to(roomCode).emit("game-setting", "music_amount", amount);
   });
 
   // Temps
   socket.on("time", (time: number) => {
-    const roomCode = Array.from(socket.rooms).find((r) => r !== socket.id);
-    if (!roomCode) return;
-    const room = rooms[roomCode];
-    if (room) {
-      room.time = time;
-      io.to(roomCode).emit("game-setting", "time", time);
-    }
+    const { roomCode, room } = getSocketContext(socket);
+    if (!roomCode || !room) return;
+    room.time = time;
+    io.to(roomCode).emit("game-setting", "time", time);
   });
 
   // --------------------------------------------------------
   // Actions en partie
   // --------------------------------------------------------
 
-  // Envoi de la réponse
+  // Envoi de la réponse (optimisé avec précalculs)
   socket.on("submit_answer", (artist: string, track: string, turn: number) => {
-    const roomCode = Array.from(socket.rooms).find((r) => r !== socket.id);
-    if (!roomCode) return;
-    const room = rooms[roomCode];
-    if (room) {
-      const player = room.players.find((p) => p.socketId === socket.id);
-      if (player) {
-        const currentTrack = room.toPlay[turn - 1];
-        if (currentTrack) {
-          const trackGuess = normalizeString(track);
+    const { roomCode, room, player } = getSocketContext(socket);
+    if (!roomCode || !room || !player) return;
 
-          const correctTrack = normalizeString(currentTrack.name);
-          const correctIntTrack = normalizeString(
-            currentTrack.internationalName || "",
+    const currentTrack = room.toPlay[turn - 1];
+    if (currentTrack) {
+      const trackGuess = normalizeString(track);
+      const correctTrack =
+        currentTrack._normalizedName ?? normalizeString(currentTrack.name);
+      const correctIntTrack =
+        currentTrack._normalizedIntName ??
+        normalizeString(currentTrack.internationalName || "");
+
+      // Découper et normaliser les réponses de l'artiste saisies par le joueur
+      const playerGuesses = (artist || "")
+        .split(",")
+        .map((a) => normalizeString(a))
+        .filter(Boolean);
+
+      const requiredArtists = currentTrack._requiredArtists ?? [];
+
+      let artist_score = 0;
+      if (requiredArtists.length > 0) {
+        let matchedCount = 0;
+        for (const acceptableNames of requiredArtists) {
+          const isGuessed = playerGuesses.some((guess) =>
+            acceptableNames.includes(guess),
           );
-
-          // Split the player's artist guesses by comma
-          const playerGuesses = (artist || "")
-            .split(",")
-            .map((a) => normalizeString(a))
-            .filter(Boolean);
-
-          // Extract the required individual artists for this track (both original and international names)
-          const originalArtistsList = splitArtists(currentTrack.artist)
-            .map((a) => normalizeString(a))
-            .filter(Boolean);
-          const internationalArtistsList = splitArtists(
-            currentTrack.internationalArtist || "",
+          if (isGuessed) {
+            matchedCount++;
+          }
+        }
+        if (matchedCount === requiredArtists.length) {
+          artist_score = 1;
+        } else if (matchedCount > 0) {
+          artist_score = 0.5;
+        }
+      } else {
+        const rawArtist =
+          currentTrack._rawArtist ?? normalizeString(currentTrack.artist);
+        const rawIntArtist =
+          currentTrack._rawIntArtist ??
+          normalizeString(currentTrack.internationalArtist || "");
+        if (
+          playerGuesses.some(
+            (guess) => guess === rawArtist || guess === rawIntArtist,
           )
-            .map((a) => normalizeString(a))
-            .filter(Boolean);
-
-          // Build lists of acceptable names for each individual artist
-          const requiredArtists = originalArtistsList.map((orig, idx) => {
-            const names = [orig];
-            if (internationalArtistsList[idx]) {
-              names.push(internationalArtistsList[idx]);
-            }
-            return names;
-          });
-
-          // Count how many required artists are matched by the player's guesses
-          let matchedCount = 0;
-          for (const acceptableNames of requiredArtists) {
-            const isGuessed = playerGuesses.some((guess) =>
-              acceptableNames.includes(guess),
-            );
-            if (isGuessed) {
-              matchedCount++;
-            }
-          }
-
-          // Score calculation:
-          // 1 point if all required artists are guessed.
-          // 0.5 points if at least one but not all required artists are guessed.
-          // 0 points otherwise.
-          let artist_score = 0;
-          if (requiredArtists.length > 0) {
-            if (matchedCount === requiredArtists.length) {
-              artist_score = 1;
-            } else if (matchedCount > 0) {
-              artist_score = 0.5;
-            }
-          } else {
-            // Fallback in case requiredArtists is empty
-            const rawArtist = normalizeString(currentTrack.artist);
-            const rawIntArtist = normalizeString(
-              currentTrack.internationalArtist || "",
-            );
-            if (
-              playerGuesses.some(
-                (guess) => guess === rawArtist || guess === rawIntArtist,
-              )
-            ) {
-              artist_score = 1;
-            }
-          }
-
-          const track_answer =
-            trackGuess === correctTrack || trackGuess === correctIntTrack;
-
-          player.artists_final_board = player.artists_final_board || {};
-          player.tracks_final_board = player.tracks_final_board || {};
-          const cleanArtist = (artist || "").trim().replace(/,$/, "").trim();
-          player.artists_final_board[turn - 1] = cleanArtist;
-          player.tracks_final_board[turn - 1] = track || "";
-
-          player.artists_scores_board = player.artists_scores_board || {};
-          player.tracks_scores_board = player.tracks_scores_board || {};
-          player.artists_scores_board[turn - 1] = artist_score;
-          player.tracks_scores_board[turn - 1] = track_answer;
-
-          room.answers = room.answers || {};
-          room.answers[player.id] = {
-            artist: artist,
-            track: track,
-            artist_correct: artist_score > 0,
-            artist_score: artist_score,
-            track_correct: track_answer,
-          };
-
-          // Calcul et mise à jour du score sur le serveur
-          let additionalScore = artist_score;
-          if (track_answer) {
-            additionalScore += 1;
-          }
-          player.score = (player.score || 0) + additionalScore;
-
-          io.to(roomCode).emit(
-            "answer",
-            player.name,
-            artist_score,
-            track_answer,
-          );
+        ) {
+          artist_score = 1;
         }
       }
+
+      const track_answer =
+        trackGuess === correctTrack || trackGuess === correctIntTrack;
+
+      player.artists_final_board = player.artists_final_board || {};
+      player.tracks_final_board = player.tracks_final_board || {};
+      const cleanArtist = (artist || "").trim().replace(/,$/, "").trim();
+      player.artists_final_board[turn - 1] = cleanArtist;
+      player.tracks_final_board[turn - 1] = track || "";
+
+      player.artists_scores_board = player.artists_scores_board || {};
+      player.tracks_scores_board = player.tracks_scores_board || {};
+      player.artists_scores_board[turn - 1] = artist_score;
+      player.tracks_scores_board[turn - 1] = track_answer;
+
+      room.answers = room.answers || {};
+      room.answers[player.id] = {
+        artist: artist,
+        track: track,
+        artist_correct: artist_score > 0,
+        artist_score: artist_score,
+        track_correct: track_answer,
+      };
+
+      // Calcul et mise à jour du score sur le serveur
+      let additionalScore = artist_score;
+      if (track_answer) {
+        additionalScore += 1;
+      }
+      player.score = (player.score || 0) + additionalScore;
+
+      io.to(roomCode).emit(
+        "answer",
+        player.name,
+        artist_score,
+        track_answer,
+      );
     }
   });
 
@@ -676,9 +721,7 @@ io.on("connection", (socket: Socket<ClientToServerEvents, ServerToClientEvents, 
 
   // Demande des scores finaux
   socket.on("get_final_scores", () => {
-    const roomCode = Array.from(socket.rooms).find((r) => r !== socket.id);
-    if (!roomCode) return;
-    const room = rooms[roomCode];
+    const { room } = getSocketContext(socket);
     if (room) {
       socket.emit("final_scores", room.players);
     }
@@ -686,17 +729,13 @@ io.on("connection", (socket: Socket<ClientToServerEvents, ServerToClientEvents, 
 
   // Retour au lobby
   socket.on("restart_game", () => {
-    for (const code in rooms) {
-      const room = rooms[code];
-      const player = room.players.find((p) => p.socketId === socket.id);
-      if (player) {
-        player.inLobby = true;
-        player.isReady = player.isHost;
-        room.isGameOver = true;
-        io.to(code).emit("room_updated", code, room.players);
-        checkAndResetGame(code, rooms, io);
-        break;
-      }
+    const { roomCode, room, player } = getSocketContext(socket);
+    if (roomCode && room && player) {
+      player.inLobby = true;
+      player.isReady = player.isHost;
+      room.isGameOver = true;
+      io.to(roomCode).emit("room_updated", roomCode, room.players);
+      checkAndResetGame(roomCode, rooms, io);
     }
   });
 
@@ -704,103 +743,99 @@ io.on("connection", (socket: Socket<ClientToServerEvents, ServerToClientEvents, 
 
   socket.on("disconnect", () => {
     console.log(`[${new Date().toISOString()}] User disconnected: ${socket.id}`);
-    for (const code in rooms) {
-      const room = rooms[code];
-      const player = room.players.find((p) => p.socketId === socket.id);
-      if (player) {
-        // Marquer le joueur comme temporairement déconnecté
-        player.leavedPlayer = true;
+    const { roomCode, room, player } = getSocketContext(socket);
+    if (!roomCode || !room || !player) return;
 
-        const activePlayers = room.players.filter((p) => !p.leavedPlayer);
+    // Marquer le joueur comme temporairement déconnecté
+    player.leavedPlayer = true;
 
-        if (activePlayers.length === 0) {
-          // Tous les joueurs sont déconnectés : on démarre le timer de suppression de la room
-          console.log(
-            `[${new Date().toISOString()}] All players in room ${code} disconnected. Starting 5min cleanup timer.`,
-          );
-          if (!room.cleanupTimeout) {
-            room.cleanupTimeout = setTimeout(() => {
-              const currentRoom = rooms[code];
-              if (
-                currentRoom &&
-                currentRoom.players.every((p) => p.leavedPlayer)
-              ) {
-                delete rooms[code];
-                console.log(
-                  `[${new Date().toISOString()}] Room ${code} deleted after 5min grace period expiration`,
-                );
-              }
-            }, GRACE_PERIOD);
+    const activePlayers = room.players.filter((p) => !p.leavedPlayer);
+
+    if (activePlayers.length === 0) {
+      // Tous les joueurs sont déconnectés : on démarre le timer de suppression de la room
+      console.log(
+        `[${new Date().toISOString()}] All players in room ${roomCode} disconnected. Starting 5min cleanup timer.`,
+      );
+      if (!room.cleanupTimeout) {
+        room.cleanupTimeout = setTimeout(() => {
+          const currentRoom = rooms[roomCode];
+          if (
+            currentRoom &&
+            currentRoom.players.every((p) => p.leavedPlayer)
+          ) {
+            delete rooms[roomCode];
+            console.log(
+              `[${new Date().toISOString()}] Room ${roomCode} deleted after 5min grace period expiration`,
+            );
           }
-        } else {
-          // D'autres joueurs sont encore connectés
-          if (player.isHost) {
-            // L'hôte s'est déconnecté : donner 5 minutes avant de transférer l'hôte
-            if (player.disconnectTimeout) {
-              clearTimeout(player.disconnectTimeout);
-            }
-            player.disconnectTimeout = setTimeout(() => {
-              const currentRoom = rooms[code];
-              if (currentRoom) {
-                const currentHost = currentRoom.players.find(
-                  (p) => p.id === player.id,
-                );
-                if (
-                  currentHost &&
-                  currentHost.leavedPlayer &&
-                  currentHost.isHost
-                ) {
-                  const nextHost = currentRoom.players.find(
-                    (p) => !p.leavedPlayer,
-                  );
-                  if (nextHost) {
-                    currentHost.isHost = false;
-                    nextHost.isHost = true;
-                    nextHost.isReady = true;
-                    console.log(
-                      `[${new Date().toISOString()}] Host transferred to ${nextHost.name} in room ${code} after 5min timeout`,
-                    );
-                    io.to(code).emit(
-                      "room_updated",
-                      code,
-                      currentRoom.players,
-                    );
-                  }
-                }
-              }
-            }, GRACE_PERIOD);
-          } else if (!room.gameStartTime || room.isGameOver) {
-            // Joueur non-hôte dans le lobby : le retirer s'il ne revient pas après 5 minutes
-            if (player.disconnectTimeout) {
-              clearTimeout(player.disconnectTimeout);
-            }
-            player.disconnectTimeout = setTimeout(() => {
-              const currentRoom = rooms[code];
-              if (currentRoom) {
-                const p = currentRoom.players.find((x) => x.id === player.id);
-                if (p && p.leavedPlayer) {
-                  currentRoom.players = currentRoom.players.filter(
-                    (x) => x.id !== player.id,
-                  );
-                  console.log(
-                    `[${new Date().toISOString()}] Disconnected player ${p.name} removed from room ${code} after 5min timeout`,
-                  );
-                  io.to(code).emit(
-                    "room_updated",
-                    code,
-                    currentRoom.players,
-                  );
-                  checkAndResetGame(code, rooms, io);
-                }
-              }
-            }, GRACE_PERIOD);
-          }
+        }, GRACE_PERIOD);
+      }
+    } else {
+      // D'autres joueurs sont encore connectés
+      if (player.isHost) {
+        // L'hôte s'est déconnecté : donner 5 minutes avant de transférer l'hôte
+        if (player.disconnectTimeout) {
+          clearTimeout(player.disconnectTimeout);
         }
-
-        io.to(code).emit("room_updated", code, room.players);
-        break;
+        player.disconnectTimeout = setTimeout(() => {
+          const currentRoom = rooms[roomCode];
+          if (currentRoom) {
+            const currentHost = currentRoom.players.find(
+              (p) => p.id === player.id,
+            );
+            if (
+              currentHost &&
+              currentHost.leavedPlayer &&
+              currentHost.isHost
+            ) {
+              const nextHost = currentRoom.players.find(
+                (p) => !p.leavedPlayer,
+              );
+              if (nextHost) {
+                currentHost.isHost = false;
+                nextHost.isHost = true;
+                nextHost.isReady = true;
+                console.log(
+                  `[${new Date().toISOString()}] Host transferred to ${nextHost.name} in room ${roomCode} after 5min timeout`,
+                );
+                io.to(roomCode).emit(
+                  "room_updated",
+                  roomCode,
+                  currentRoom.players,
+                );
+              }
+            }
+          }
+        }, GRACE_PERIOD);
+      } else if (!room.gameStartTime || room.isGameOver) {
+        // Joueur non-hôte dans le lobby : le retirer s'il ne revient pas après 5 minutes
+        if (player.disconnectTimeout) {
+          clearTimeout(player.disconnectTimeout);
+        }
+        player.disconnectTimeout = setTimeout(() => {
+          const currentRoom = rooms[roomCode];
+          if (currentRoom) {
+            const p = currentRoom.players.find((x) => x.id === player.id);
+            if (p && p.leavedPlayer) {
+              currentRoom.players = currentRoom.players.filter(
+                (x) => x.id !== player.id,
+              );
+              console.log(
+                `[${new Date().toISOString()}] Disconnected player ${p.name} removed from room ${roomCode} after 5min timeout`,
+              );
+              io.to(roomCode).emit(
+                "room_updated",
+                roomCode,
+                currentRoom.players,
+              );
+              checkAndResetGame(roomCode, rooms, io);
+            }
+          }
+        }, GRACE_PERIOD);
       }
     }
+
+    io.to(roomCode).emit("room_updated", roomCode, room.players);
   });
 });
 
