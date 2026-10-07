@@ -28,6 +28,7 @@ import {
   SocketData,
   GameTiming,
   PublicPlayer,
+  PublicTrack,
   DatabaseArtist,
   DatabaseTrack,
 } from "./types/game.js";
@@ -83,6 +84,20 @@ function toPublicPlayers(players: Player[]): PublicPlayer[] {
   return players.map(
     ({ id, publicId, playlistUrl, tracks, inLobby, ...rest }) =>
       ({ ...rest, id: publicId }) as PublicPlayer,
+  );
+}
+
+// Ce que les clients reçoivent des morceaux : sans les champs internes de correction
+function toPublicTracks(tracks: Track[]): PublicTrack[] {
+  return tracks.map(
+    ({
+      _normalizedName,
+      _normalizedIntName,
+      _requiredArtists,
+      _rawArtist,
+      _rawIntArtist,
+      ...rest
+    }) => rest as PublicTrack,
   );
 }
 
@@ -235,7 +250,7 @@ io.on(
       // Partie en cours (ou résultats affichés) : renvoyer l'état pour rejoindre l'écran de jeu
       if (gameActive && room.gameStartTime) {
         socket.emit("game_reconnected", {
-          toPlay: room.toPlay,
+          toPlay: toPublicTracks(room.toPlay),
           database_artists: room.database_artists,
           database_tracks: room.database_tracks,
           ...getTurnInfo(room.time, room.gameStartTime, room.toPlay.length),
@@ -355,7 +370,7 @@ io.on(
       room.isLoadingTracks = false;
       io.to(roomCode).emit(
         "data_loaded",
-        room.toPlay,
+        toPublicTracks(room.toPlay),
         room.database_artists,
         room.database_tracks,
         getGameTiming(room.time, room.gameStartTime),

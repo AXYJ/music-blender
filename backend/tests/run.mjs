@@ -15,7 +15,7 @@ const PORT = process.env.TEST_PORT ?? "4100";
 const URL = `http://localhost:${PORT}`;
 
 // Ces tests jouent une vraie partie avec une playlist Deezer : internet requis
-const NEEDS_NETWORK = ["answers", "reconnection"];
+const NEEDS_NETWORK = ["answers", "reconnection", "track-payload"];
 
 const filters = process.argv.slice(2);
 const files = readdirSync(here)

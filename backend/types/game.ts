@@ -15,6 +15,22 @@ export interface Track {
   _rawIntArtist?: string;
 }
 
+// Marque de type uniquement : sans elle, un Track complet serait accepté partout où l'on
+// attend un PublicTrack (il en a tous les champs).
+declare const publicTrackBrand: unique symbol;
+
+// Morceau tel que vu par les clients : sans les champs internes de correction des
+// réponses (_normalizedName, _requiredArtists…), qui restent sur le serveur. Seule
+// toPublicTracks (servor.ts) en fabrique.
+export type PublicTrack = Omit<
+  Track,
+  | "_normalizedName"
+  | "_normalizedIntName"
+  | "_requiredArtists"
+  | "_rawArtist"
+  | "_rawIntArtist"
+> & { readonly [publicTrackBrand]: true };
+
 // Morceau tel que renvoyé par une plateforme (Spotify, Deezer, Apple Music)
 export interface PlatformTrack {
   name: string;
@@ -108,7 +124,7 @@ export interface ServerToClientEvents {
   room_updated: (roomCode: string, players: PublicPlayer[]) => void;
   game_started: (players: PublicPlayer[]) => void;
   data_loaded: (
-    toPlay: Track[],
+    toPlay: PublicTrack[],
     database_artists: DatabaseArtist[],
     database_tracks: DatabaseTrack[],
     timing: GameTiming,
@@ -126,7 +142,7 @@ export interface ServerToClientEvents {
     players: PublicPlayer[],
   ) => void;
   game_reconnected: (data: {
-    toPlay: Track[];
+    toPlay: PublicTrack[];
     database_artists: DatabaseArtist[];
     database_tracks: DatabaseTrack[];
     turn: number;
