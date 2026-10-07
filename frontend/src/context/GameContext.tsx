@@ -342,8 +342,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       window.history.pushState({ view: "mentions" }, "");
     } else if (view === "lobby") {
       if (prevView === "result") {
-        isPopStateRef.current = true;
-        window.history.back();
+        // Pas de history.back() : après un rechargement l'entrée précédente peut
+        // être "home", ce qui ferait repasser par l'accueil
+        window.history.replaceState({ view: "lobby" }, "");
       } else {
         window.history.pushState({ view: "lobby" }, "");
       }
