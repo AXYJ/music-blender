@@ -162,6 +162,7 @@
         "internal_error": "Une erreur interne est survenue lors de la préparation de la partie.",
         "connection_error": "Erreur de connexion serveur.",
         "disconnected": "Vous avez été déconnecté du serveur.",
-        "no_playlist_tracks": "Aucune musique trouvée dans les playlists."
+        "no_playlist_tracks": "Aucune musique trouvée dans les playlists.",
+        "rate_limited": "Trop de requêtes, réessaie dans une minute."
     }
 }

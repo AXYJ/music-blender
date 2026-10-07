@@ -10,6 +10,7 @@ import { fetchDeezerTracks } from "./get-from-deezer.js";
 import { fetchAppleTracks } from "./get-from-apple.js";
 import { PlatformTrack, Track } from "../types/game.js";
 import { resolveAllowedUrl } from "./allowed-url.js";
+import { setBounded } from "./rate-limit.js";
 import {
   transliterate as transliterateGroq,
   TransliterateItem,
@@ -102,6 +103,9 @@ export async function getInternationalName(text: string): Promise<string> {
 const PLAYLIST_CACHE_TTL = 60 * 60 * 1000; // 1 heure
 const playlistCache = new Map<string, { tracks: Track[]; timestamp: number }>();
 const coverCache = new Map<string, string>();
+// Plafonds : sans eux, la mémoire grandirait avec chaque playlist ou pochette distincte
+const MAX_CACHED_PLAYLISTS = 200;
+const MAX_CACHED_COVERS = 5000;
 
 //----------------------------------
 // Sélection aléatoire de musiques
@@ -231,10 +235,12 @@ export default async function selectTracks(
 
         // Mettre en cache la playlist pour les futures parties
         if (tracks.length > 0) {
-          playlistCache.set(resolvedUrl, {
-            tracks,
-            timestamp: Date.now(),
-          });
+          setBounded(
+            playlistCache,
+            resolvedUrl,
+            { tracks, timestamp: Date.now() },
+            MAX_CACHED_PLAYLISTS,
+          );
         }
       }
     }
@@ -300,7 +306,7 @@ export default async function selectTracks(
         }
 
         if (realImg) {
-          coverCache.set(coverKey, realImg);
+          setBounded(coverCache, coverKey, realImg, MAX_CACHED_COVERS);
         }
 
         return {

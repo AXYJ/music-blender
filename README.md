@@ -95,7 +95,10 @@ SPOTIFY_CLIENT_ID=votre_spotify_client_id        # optionnel (albums Spotify)
 SPOTIFY_CLIENT_SECRET=votre_spotify_client_secret # optionnel (albums Spotify)
 GROQ_API_KEY=votre_cle_groq                       # optionnel (romanisation)
 GROQ_MODEL=qwen/qwen3.8-27b                       # optionnel, modèle Groq utilisé
+TRUST_PROXY=1                                     # optionnel, à activer derrière un reverse proxy
 ```
+
+**Limites par adresse IP** (par minute, réglables, valeurs par défaut) : `RATE_LIMIT_ROOMS=20` créations de salon, `RATE_LIMIT_PLAYLISTS=60` chargements de playlist, `RATE_LIMIT_BAD_JOINS=30` codes de salon inexistants essayés, `MAX_SOCKETS_PER_IP=50` connexions simultanées. Derrière un reverse proxy (hébergeur type Render, Hostinger…), mettez `TRUST_PROXY=1` : le serveur lit alors l'adresse du client dans `X-Forwarded-For`. Sans cela, tous les joueurs partagent l'adresse du proxy et donc les mêmes limites.
 
 *Note : pour obtenir vos identifiants Spotify, créez une application sur le [Spotify Developer Dashboard](https://developer.spotify.com/dashboard).*
 
@@ -131,7 +134,7 @@ npm test --prefix backend -- reset answers # seulement les fichiers dont le nom 
 SKIP_NETWORK=1 npm test --prefix backend   # sans les parties qui chargent une vraie playlist Deezer
 ```
 
-Ils couvrent les réponses et les scores, les droits de l'hôte et les limites des paramètres, les déconnexions et reconnexions (dont le retour d'une autre appli sur mobile), la remise à zéro d'une partie et les fonctions de l'horloge de partie. Le serveur de test réduit le délai de grâce de 5 minutes à 3 secondes (`GRACE_PERIOD_MS`). Lint du frontend : `npm run lint --prefix frontend`.
+Ils couvrent les réponses et les scores, les droits de l'hôte et les limites des paramètres, l'identité des joueurs (aucune fuite de l'identifiant de reconnexion), les déconnexions et reconnexions (dont le retour d'une autre appli sur mobile), la remise à zéro d'une partie, les fonctions de l'horloge de partie, les liens de playlist autorisés (protection contre les appels du serveur vers des adresses arbitraires) et les limites par adresse IP. Le serveur de test réduit le délai de grâce de 5 minutes à 3 secondes (`GRACE_PERIOD_MS`). Lint du frontend : `npm run lint --prefix frontend`.
 
 ---
 

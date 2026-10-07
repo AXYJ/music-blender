@@ -18,6 +18,7 @@ import selectTracks, {
   getInternationalName,
 } from "./scripts/get-artists-tracks.js";
 import { transliterateArtists } from "./scripts/transliterate.js";
+import { SlidingWindowLimiter, getClientIp } from "./scripts/rate-limit.js";
 import {
   Track,
   Room,
@@ -55,6 +56,33 @@ const io = new Server<
   transports: ["polling", "websocket"],
   pingInterval: 25000,
   pingTimeout: 60000,
+});
+
+// ----------------
+// Limites par adresse IP (par minute), réglables par variables d'environnement
+// ----------------
+// Derrière un reverse proxy, TRUST_PROXY=1 lit l'adresse du client dans X-Forwarded-For ;
+// sans cela, tous les joueurs partagent l'adresse du proxy et donc les mêmes limites.
+const TRUST_PROXY = ["1", "true"].includes(process.env.TRUST_PROXY ?? "");
+const MAX_SOCKETS_PER_IP = Number(process.env.MAX_SOCKETS_PER_IP) || 50;
+const roomCreations = new SlidingWindowLimiter(
+  Number(process.env.RATE_LIMIT_ROOMS) || 20,
+);
+const playlistLoads = new SlidingWindowLimiter(
+  Number(process.env.RATE_LIMIT_PLAYLISTS) || 60,
+);
+// Tentatives de rejoindre un code inexistant : freine la recherche de codes de room
+const failedJoins = new SlidingWindowLimiter(
+  Number(process.env.RATE_LIMIT_BAD_JOINS) || 30,
+);
+const socketsPerIp = new Map<string, number>();
+
+io.use((socket, next) => {
+  const ip = getClientIp(socket.handshake, TRUST_PROXY);
+  if ((socketsPerIp.get(ip) ?? 0) >= MAX_SOCKETS_PER_IP) {
+    return next(new Error("too_many_connections"));
+  }
+  next();
 });
 
 // ----------------
@@ -158,10 +186,22 @@ io.on(
   ) => {
     console.log(`[${new Date().toISOString()}] User connected: ${socket.id}`);
 
+    const ip = getClientIp(socket.handshake, TRUST_PROXY);
+    socketsPerIp.set(ip, (socketsPerIp.get(ip) ?? 0) + 1);
+    socket.on("disconnect", () => {
+      const left = (socketsPerIp.get(ip) ?? 1) - 1;
+      if (left > 0) socketsPerIp.set(ip, left);
+      else socketsPerIp.delete(ip);
+    });
+
     // --------------------------------------------------------
     // Création d'une partie
     // --------------------------------------------------------
     socket.on("create_game", (id: string, name: string) => {
+      if (!roomCreations.tryHit(ip)) {
+        socket.emit("error", "rate_limited");
+        return;
+      }
       let roomCode: string;
       do {
         roomCode = crypto.randomUUID().slice(0, 6).toUpperCase();
@@ -196,8 +236,14 @@ io.on(
     // Rejoindre une partie
     // --------------------------------------------------------
     socket.on("join_game", (roomCode: string, id: string, name: string) => {
+      // Trop de codes inexistants essayés : même un code valide est refusé pour l'instant
+      if (failedJoins.isBlocked(ip)) {
+        socket.emit("error", "rate_limited");
+        return;
+      }
       const room = rooms[roomCode];
       if (!room) {
+        failedJoins.record(ip);
         socket.emit("error", "room_not_found");
         return;
       }
@@ -335,6 +381,13 @@ io.on(
   socket.on("send_playlist_url", async (playlistUrl: string) => {
     const { roomCode, room, player } = getSocketContext(socket);
     if (!roomCode || !room || !player) return;
+
+    // Chargement trop fréquent depuis cette adresse : le joueur joue sans playlist plutôt
+    // que de bloquer le lancement de la partie pour les autres
+    if (playlistUrl && !playlistLoads.tryHit(ip)) {
+      playlistUrl = "";
+      socket.emit("error", "rate_limited");
+    }
     player.playlistUrl = playlistUrl || "";
 
     // On attend que tous les joueurs aient répondu (url ou chaîne vide),
