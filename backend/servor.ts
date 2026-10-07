@@ -17,7 +17,7 @@ import cors from "cors";
 import selectTracks, {
   getInternationalName,
 } from "./scripts/get-artists-tracks.js";
-import { transliterateArtists } from "./scripts/transliterate.js";
+import { needsLlm, transliterateArtists } from "./scripts/transliterate.js";
 import { SlidingWindowLimiter, getClientIp } from "./scripts/rate-limit.js";
 import { prepareTrack, scoreAnswer, splitArtists } from "./scripts/answers.js";
 import {
@@ -722,11 +722,11 @@ function collectDatabases(tracks: Track[]): {
 async function buildArtistDatabase(
   artistNames: string[],
 ): Promise<DatabaseArtist[]> {
-  const nonAscii = artistNames.filter((a) => /[^\x00-\x7F]/.test(a));
+  const forLlm = artistNames.filter((a) => needsLlm(a));
   let groqArtistMap = new Map<string, string>();
-  if (nonAscii.length > 0) {
+  if (forLlm.length > 0) {
     try {
-      groqArtistMap = await transliterateArtists(nonAscii);
+      groqArtistMap = await transliterateArtists(forLlm);
     } catch (err) {
       console.warn("[servor] Erreur transliterateArtists Groq :", err);
     }
