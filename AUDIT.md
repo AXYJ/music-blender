@@ -46,5 +46,6 @@ Règle : une modification et un commit par thème, avec un test par thème (scri
 - [x] D7. `checkAndResetGame` reçoit `rooms` / `io` qui sont des variables de module.
 
 ### Thème E : Hygiène
-- [ ] E1. `loadEnvFile` appelé deux fois avec un cast `as unknown as`.
-- [ ] E2. `import` au milieu de `get-artists-tracks.ts`.
+- [x] E1. `loadEnvFile` : un seul appel, dans `servor.ts` (sans cast). `transliterate.ts` le chargeait lui-même parce que `GROQ_MODEL` était lu au chargement du module, avant `servor.ts` (les imports ES passent en premier) : le modèle est maintenant lu à l'appel (`getModel()`). README : Node 20.12+ (au lieu de 18+) car `process.loadEnvFile` n'existe pas avant.
+- [x] E2. `import` de `get-artists-tracks.ts` remonté en tête de fichier.
+- Testé : serveur lancé depuis 3 dossiers (`.env` avec modèle inexistant : utilisé ; `.env` sans `GROQ_MODEL` : modèle par défaut, 米津玄師 devient Kenshi Yonezu ; pas de `.env` : démarre, clé signalée absente) ; les 6 scénarios serveur passent toujours.

@@ -1,10 +1,13 @@
 import process from "process";
 import crypto from "crypto";
 
+// Charge backend/.env (Node 20.12+). Les modules importés ne doivent donc pas lire
+// process.env à leur chargement. Optionnel en production si les variables sont
+// définies dans le système.
 try {
-  (process as unknown as { loadEnvFile: () => void }).loadEnvFile?.();
-} catch (e) {
-  // Optionnel en production si les variables sont définies dans le système
+  process.loadEnvFile?.();
+} catch {
+  // pas de fichier .env
 }
 
 import express, { Request, Response } from "express";

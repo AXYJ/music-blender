@@ -59,7 +59,7 @@ music-blender/
 ## 🚀 Installation et Démarrage
 
 ### 1. Prérequis
-- [Node.js](https://nodejs.org/) (version 18+ recommandée)
+- [Node.js](https://nodejs.org/) (version 20.12+ : le backend charge `backend/.env` avec `process.loadEnvFile`)
 - Un compte [Spotify Developer](https://developer.spotify.com/) (pour générer les clés API nécessaires à l'extraction des playlists Spotify)
 
 ### 2. Cloner le projet et installer les dépendances

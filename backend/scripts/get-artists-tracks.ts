@@ -9,6 +9,10 @@ import {
 import { fetchDeezerTracks } from "./get-from-deezer.js";
 import { fetchAppleTracks } from "./get-from-apple.js";
 import { PlatformTrack, Track } from "../types/game.js";
+import {
+  transliterate as transliterateGroq,
+  TransliterateItem,
+} from "./transliterate.js";
 
 const kuroshiro = new (Kuroshiro.default || Kuroshiro)();
 let kuroshiroReady = false;
@@ -54,10 +58,6 @@ export async function transliterateText(text: string): Promise<string> {
 
   return text;
 }
-import {
-  transliterate as transliterateGroq,
-  TransliterateItem,
-} from "./transliterate.js";
 
 //----------------------------------
 // Convertir les noms en version internationale
