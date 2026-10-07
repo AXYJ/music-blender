@@ -54,8 +54,6 @@ music-blender/
 │   │   └── utils/      # Socket partagée, horloge de partie (gameClock), stockage local
 │   └── package.json
 ├── package.json        # Fichier de scripts global
-├── AUDIT.md            # Suivi de l'audit de code (corrections faites)
-├── PISTES.md           # Défauts repérés restant à corriger (correction des réponses, romanisation)
 └── README.md           # Ce fichier
 ```
 
@@ -134,7 +132,7 @@ npm test --prefix backend -- reset answers # seulement les fichiers dont le nom 
 SKIP_NETWORK=1 npm test --prefix backend   # sans les parties qui chargent une vraie playlist Deezer
 ```
 
-Ils couvrent les réponses et les scores, les droits de l'hôte et les limites des paramètres, l'identité des joueurs (aucune fuite de l'identifiant de reconnexion), les déconnexions et reconnexions (dont le retour d'une autre appli sur mobile), la remise à zéro d'une partie, les fonctions de l'horloge de partie, les playlists mélangeant plusieurs écritures (japonais, chinois, coréen, cyrillique… : version internationale des noms et correction des réponses, avec une vraie playlist Spotify en test de bout en bout), les playlists mélangeant plusieurs écritures (japonais, chinois, coréen, cyrillique… : version internationale des noms et correction des réponses, avec une vraie playlist Spotify en test de bout en bout), les liens de playlist autorisés (protection contre les appels du serveur vers des adresses arbitraires) et les limites par adresse IP. Le serveur de test réduit le délai de grâce de 5 minutes à 3 secondes (`GRACE_PERIOD_MS`). Lint du frontend : `npm run lint --prefix frontend`.
+Ils couvrent les réponses et les scores, les droits de l'hôte et les limites des paramètres, l'identité des joueurs (aucune fuite de l'identifiant de reconnexion), les déconnexions et reconnexions (dont le retour d'une autre appli sur mobile), la remise à zéro d'une partie, les fonctions de l'horloge de partie, les playlists mélangeant plusieurs écritures (japonais, chinois, coréen, cyrillique… : version internationale des noms et correction des réponses, avec une vraie playlist Spotify en test de bout en bout), les liens de playlist autorisés (protection contre les appels du serveur vers des adresses arbitraires) et les limites par adresse IP. Le serveur de test réduit le délai de grâce de 5 minutes à 3 secondes (`GRACE_PERIOD_MS`). Lint du frontend : `npm run lint --prefix frontend`.
 
 ---
 
