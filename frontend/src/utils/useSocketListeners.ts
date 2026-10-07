@@ -11,7 +11,7 @@ import {
   GameTiming,
 } from "../types/game";
 import { toGameClock } from "./gameClock";
-import { getSocketUrl } from "./config";
+import { getSocketUrl, isLocalHost } from "./config";
 import { getSessionItem, setSessionItem } from "./storageUtils";
 
 interface SocketListenersProps {
@@ -81,15 +81,8 @@ export const useSocketListeners = (props: SocketListenersProps) => {
 
     // Keep-alive pour éviter que le serveur (ex: Render) ne mette le socket en veille (uniquement en production)
     const socketUrl = getSocketUrl();
-    const isLocal =
-      socketUrl.includes("localhost") ||
-      socketUrl.includes("127.0.0.1") ||
-      socketUrl.includes("192.168.") ||
-      socketUrl.includes("10.") ||
-      socketUrl.includes(".local");
-
     let keepAliveInterval: NodeJS.Timeout | null = null;
-    if (!isLocal) {
+    if (!isLocalHost(new URL(socketUrl).hostname)) {
       keepAliveInterval = setInterval(
         () => {
           fetch(socketUrl, { mode: "no-cors" }).catch(() => {
@@ -327,9 +320,6 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     const handleNoPlaylist = () => {
       setError(latestRef.current.t("errors.no_playlist_tracks"));
       setView("lobby");
-      setTimeout(() => {
-        setError(null);
-      }, 2000);
     };
 
     socket.on("no_playlist", handleNoPlaylist);

@@ -90,32 +90,6 @@ export default function Lobby() {
     setMessage(t("lobby.code-copied"));
   };
 
-  // Reset du message après 2 secondes
-  useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
-    if (message) {
-      timer = setTimeout(() => {
-        setMessage("");
-      }, 2000);
-    }
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
-  }, [message]);
-
-  // Reset de l'erreur après 2 secondes
-  useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
-    if (error) {
-      timer = setTimeout(() => {
-        setError(null);
-      }, 2000);
-    }
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
-  }, [error]);
-
   // Reset de l'état isLoading en cas d'erreur
   useEffect(() => {
     if (error) {

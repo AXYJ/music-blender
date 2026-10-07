@@ -41,8 +41,8 @@ Règle : une modification et un commit par thème, avec un test par thème (scri
 - [ ] D2. Types dupliqués front/back (déjà divergents).
 - [x] D3. Types de résultats Spotify / Apple / Deezer identiques, plus le type littéral recopié.
 - [x] D4. `transliterate.ts` : prompt et appel Groq copiés dans deux fonctions.
-- [ ] D5. Reset message/erreur après 2 s copié dans `Game` et `Lobby`.
-- [ ] D6. Détection « localhost » copiée deux fois (et `.includes("10.")` trop large).
+- [x] D5. Reset message/erreur après 2 s copié dans `Game` et `Lobby`.
+- [x] D6. Détection « localhost » copiée deux fois (et `.includes("10.")` trop large).
 - [x] D7. `checkAndResetGame` reçoit `rooms` / `io` qui sont des variables de module.
 
 ### Thème E : Hygiène

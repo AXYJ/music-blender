@@ -96,19 +96,6 @@ export default function Game() {
     return parts[parts.length - 1].trim();
   };
 
-  // Reset de l'erreur après 2 secondes
-  useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
-    if (error) {
-      timer = setTimeout(() => {
-        setError(null);
-      }, 2000);
-    }
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
-  }, [error]);
-
   const artistQuery = getArtistQuery(artistGuess);
 
   // Filter database artists (max 5 results)

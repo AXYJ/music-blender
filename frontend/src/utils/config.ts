@@ -1,16 +1,16 @@
+// Machine locale ou réseau privé : développement, pas de serveur public
+export const isLocalHost = (hostname: string): boolean =>
+  /^(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|.+\.local)$/.test(
+    hostname,
+  );
+
 export const getSocketUrl = (): string => {
   const envUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
 
   // Si on est sur un environnement local dans le navigateur, on priorise le serveur local pour le développement
   if (typeof window !== "undefined") {
     const hostname = window.location.hostname;
-    const isLocalhost =
-      hostname === "localhost" ||
-      hostname === "127.0.0.1" ||
-      hostname.startsWith("192.168.") ||
-      hostname.startsWith("10.") ||
-      hostname.endsWith(".local");
-    if (isLocalhost) {
+    if (isLocalHost(hostname)) {
       return `http://${hostname}:4000`;
     }
   }
