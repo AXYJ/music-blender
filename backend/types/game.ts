@@ -50,7 +50,6 @@ export interface Player {
   tracks_final_board?: Record<number, string>;
   artists_scores_board?: Record<number, number>;
   tracks_scores_board?: Record<number, boolean>;
-  disconnectTimeout?: NodeJS.Timeout;
 }
 
 export interface Room {

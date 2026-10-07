@@ -79,6 +79,15 @@ server.listen(PORT, "0.0.0.0", () => {
 // Stockage des parties
 const rooms: Record<string, Room> = {};
 
+// Minuteurs de déconnexion, gardés hors de Player : un Timeout est circulaire
+// et ferait planter socket.io quand room.players est envoyé aux clients.
+const disconnectTimeouts = new Map<string, NodeJS.Timeout>();
+
+function clearDisconnectTimeout(playerId: string): void {
+  clearTimeout(disconnectTimeouts.get(playerId));
+  disconnectTimeouts.delete(playerId);
+}
+
 function getSocketContext(
   socket: Socket<
     ClientToServerEvents,
@@ -180,10 +189,7 @@ io.on(
       if (existingPlayer) {
         existingPlayer.socketId = socket.id;
         existingPlayer.leavedPlayer = false;
-        if (existingPlayer.disconnectTimeout) {
-          clearTimeout(existingPlayer.disconnectTimeout);
-          delete existingPlayer.disconnectTimeout;
-        }
+        clearDisconnectTimeout(existingPlayer.id);
         if (room.cleanupTimeout) {
           clearTimeout(room.cleanupTimeout);
           delete room.cleanupTimeout;
@@ -336,9 +342,7 @@ io.on(
     if (!roomCode || !room || !player) return;
 
     delete socket.data.roomCode;
-    if (player.disconnectTimeout) {
-      clearTimeout(player.disconnectTimeout);
-    }
+    clearDisconnectTimeout(player.id);
     player.leavedPlayer = true;
     room.players = room.players.filter((p) => p.id !== player.id);
     console.log(
@@ -777,10 +781,9 @@ io.on(
       // D'autres joueurs sont encore connectés
       if (player.isHost) {
         // L'hôte s'est déconnecté : donner 5 minutes avant de transférer l'hôte
-        if (player.disconnectTimeout) {
-          clearTimeout(player.disconnectTimeout);
-        }
-        player.disconnectTimeout = setTimeout(() => {
+        clearDisconnectTimeout(player.id);
+        disconnectTimeouts.set(player.id, setTimeout(() => {
+          disconnectTimeouts.delete(player.id);
           const currentRoom = rooms[roomCode];
           if (currentRoom) {
             const currentHost = currentRoom.players.find(
@@ -809,13 +812,12 @@ io.on(
               }
             }
           }
-        }, GRACE_PERIOD);
+        }, GRACE_PERIOD));
       } else if (!room.gameStartTime || room.isGameOver) {
         // Joueur non-hôte dans le lobby : le retirer s'il ne revient pas après 5 minutes
-        if (player.disconnectTimeout) {
-          clearTimeout(player.disconnectTimeout);
-        }
-        player.disconnectTimeout = setTimeout(() => {
+        clearDisconnectTimeout(player.id);
+        disconnectTimeouts.set(player.id, setTimeout(() => {
+          disconnectTimeouts.delete(player.id);
           const currentRoom = rooms[roomCode];
           if (currentRoom) {
             const p = currentRoom.players.find((x) => x.id === player.id);
@@ -834,7 +836,7 @@ io.on(
               checkAndResetGame(roomCode, rooms, io);
             }
           }
-        }, GRACE_PERIOD);
+        }, GRACE_PERIOD));
       }
     }
 
