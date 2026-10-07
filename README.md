@@ -64,7 +64,7 @@ music-blender/
 ### 1. Prérequis
 - [Node.js](https://nodejs.org/) (version 20.12+ : le backend charge `backend/.env` avec `process.loadEnvFile`)
 - Optionnel : un compte [Spotify Developer](https://developer.spotify.com/) pour les **albums** Spotify (les playlists sont lues sans clé ; sans clés, les albums passent par le même scraping anonyme)
-- Optionnel : une clé [Groq](https://console.groq.com/) pour romaniser les noms non latins (japonais, chinois, coréen) ; sans clé, la translittération locale est utilisée
+- Optionnel : une clé [Groq](https://console.groq.com/) pour romaniser les noms non latins sans kana (chinois, coréen, kanji seuls…) ; le latin reste tel quel, tout texte contenant un kana passe par Kuroshiro, et sans clé la translittération locale est utilisée
 
 ### 2. Cloner le projet et installer les dépendances
 

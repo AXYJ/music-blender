@@ -12,6 +12,7 @@ import { PlatformTrack, Track } from "../types/game.js";
 import { resolveAllowedUrl } from "./allowed-url.js";
 import { setBounded } from "./rate-limit.js";
 import {
+  needsLlm,
   transliterate as transliterateGroq,
   TransliterateItem,
 } from "./transliterate.js";
@@ -179,9 +180,7 @@ export default async function selectTracks(
         // 1. Détecter les morceaux ayant des caractères non-ASCII à translitérer avec Groq
         const itemsToTranslate: TransliterateItem[] = [];
         playlistTracks.forEach((t, index) => {
-          const hasNonAscii =
-            /[^\x00-\x7F]/.test(t.name) || /[^\x00-\x7F]/.test(t.artist);
-          if (hasNonAscii) {
+          if (needsLlm(t.name, t.artist)) {
             itemsToTranslate.push({
               id: index,
               artist: t.artist,
