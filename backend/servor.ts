@@ -100,7 +100,8 @@ server.listen(PORT, "0.0.0.0", () => {
 // ----------------
 
 // Stockage des parties
-const rooms: Record<string, Room> = {};
+// Sans prototype : un code "__proto__" ou "constructor" ne doit pas trouver de room
+const rooms: Record<string, Room> = Object.create(null);
 
 // Minuteurs de déconnexion, gardés hors de Player : un Timeout est circulaire
 // et ferait planter socket.io quand room.players est envoyé aux clients.
@@ -199,6 +200,8 @@ io.on(
     // Création d'une partie
     // --------------------------------------------------------
     socket.on("create_game", (id: string, name: string) => {
+      if (typeof id !== "string" || typeof name !== "string") return;
+      name = name.slice(0, 30);
       if (!roomCreations.tryHit(ip)) {
         socket.emit("error", "rate_limited");
         return;
@@ -237,6 +240,13 @@ io.on(
     // Rejoindre une partie
     // --------------------------------------------------------
     socket.on("join_game", (roomCode: string, id: string, name: string) => {
+      if (
+        typeof roomCode !== "string" ||
+        typeof id !== "string" ||
+        typeof name !== "string"
+      )
+        return;
+      name = name.slice(0, 30);
       // Trop de codes inexistants essayés : même un code valide est refusé pour l'instant
       if (failedJoins.isBlocked(ip)) {
         socket.emit("error", "rate_limited");
@@ -382,6 +392,7 @@ io.on(
   socket.on("send_playlist_url", async (playlistUrl: string) => {
     const { roomCode, room, player } = getSocketContext(socket);
     if (!roomCode || !room || !player) return;
+    if (typeof playlistUrl !== "string") return;
 
     // Chargement trop fréquent depuis cette adresse : le joueur joue sans playlist plutôt
     // que de bloquer le lancement de la partie pour les autres
@@ -465,10 +476,16 @@ io.on(
   socket.on("submit_answer", (artist: string, track: string, turn: number) => {
     const { roomCode, room, player } = getSocketContext(socket);
     if (!roomCode || !room || !player) return;
+    if (typeof artist !== "string" || typeof track !== "string") return;
+    artist = artist.slice(0, 200);
+    track = track.slice(0, 200);
 
     // Le tour est calculé côté serveur : le `turn` du client n'est pas fiable
     if (!room.gameStartTime || turn !== getTurnInfo(room.time, room.gameStartTime, room.toPlay.length).turn)
       return;
+    // Pas de réponse une fois la solution révélée (2 s de marge pour la latence)
+    const turnElapsed = ((Date.now() - room.gameStartTime) / 1000) % (room.time + 7);
+    if (turnElapsed > room.time + 2) return;
     // Une seule réponse par joueur et par tour
     if (player.tracks_scores_board?.[turn - 1] !== undefined) return;
 
