@@ -24,13 +24,13 @@ Règle : une modification et un commit par thème, avec un test par thème (scri
 - [x] A4. CORS : option 1 retenue, serveur assumé ouvert (`origin: true`), liste inutile et `credentials` supprimés. Testé : handshake depuis une origine quelconque accepté. Piste si abus : rate limit, pas un filtre d origine.
 
 ### Thème B : Robustesse de la reconnexion et de l état de partie
-- [x] B0. **Crash serveur à la déconnexion** (trouvé en test, bug existant) : le `Timeout` stocké dans `Player` était envoyé aux clients (circulaire, `RangeError` socket.io). Minuteurs déplacés dans une `Map` côté serveur (`disconnectTimeouts`). Testé : déconnexion hôte / non-hôte, reconnexion dans le délai de grâce, `leave_game`. Non testé : l expiration des 5 minutes.
-- [ ] B1. Timer client local qui dérive de l horloge du serveur (renforcé par A1 : un client en retard de plus de 7 s verrait sa réponse rejetée).
-- [ ] B2. `isGameOver` jamais posé par le serveur en fin de partie (transfert d hôte et retrait des absents ratés pendant l écran de résultats).
-- [ ] B3. `join_game` : logique de reconnexion copiée deux fois, indentation cassée à partir de la ligne ~196.
-- [ ] B4. Frontend : effet de reconnexion auto (`GameContext`) qui émet `join_game` trop souvent.
-- [ ] B5. Frontend : dépendances d effet incomplètes dans `useSocketListeners` (`t`, `playerId`).
-
+- [x] B0. **Crash serveur à la déconnexion** : le `Timeout` stocké dans `Player` était envoyé aux clients (circulaire, `RangeError` socket.io). Minuteurs déplacés dans une `Map` côté serveur (`disconnectTimeouts`).
+- [x] B2. **Hôte perdu / room supprimée au retour d'une autre appli (mobile)**, cause : socket périmée. Le client se reconnecte avec une nouvelle socket, puis le serveur détecte enfin la mort de l'ancienne, et `disconnect` marquait le joueur comme parti (hôte transféré après 5 min, room supprimée si hôte seul). Corrigé : `disconnect` ignore une socket qui n'est plus celle du joueur (`player.socketId !== socket.id`). Aussi : `leave_game` transfère l'hôte dans tous les cas (avant : seulement lobby / fin), et la fin de partie est dérivée du temps (`isGameRunning`) pour le retrait des absents pendant les résultats. Reproduit puis corrigé (test avec délai de grâce de 3 s).
+- [x] B1. **Timer client qui dérivait** : le serveur envoie une horloge (`timing` : `gameStartTime`, `serverNow`, `time`) dans `data_loaded` et `game_reconnected` ; le client recalcule tour, phase et temps restant depuis cette horloge (`utils/gameClock.ts`, tick de 250 ms dans `Game.tsx`). Plus de décompte local, retour de veille resynchronisé. Réponse envoyée une seule fois par tour (`answeredTurn`).
+- [x] B3. `join_game` : reconnexion dédupliquée (`getTurnInfo`, `hasActiveGame`), indentation corrigée. Au passage : un joueur existant peut se reconnecter à une room pleine (avant : refusé `room_full`).
+- [x] B4. `GameContext` : `join_game` automatique émis une seule fois par connexion (`joinedSocketRef`), plus à chaque changement de pseudo.
+- [x] B5. `useSocketListeners` : `t` et `playerId` lus via un ref, les erreurs suivent la langue.
+- Testé : serveur (scénario mobile avec socket périmée, hôte qui quitte en pleine partie, état de reconnexion, room pleine, horloge) ; fonction d'horloge client (décalage d'horloge, retour de veille) ; vraie partie dans le navigateur intégré (lobby, 3 tours au rythme exact du serveur, réponse saisie notée 2 points, coupure de connexion en plein tour 2 : reconnexion automatique, même tour, toujours hôte, résultats). Non testé : l'expiration réelle de 5 minutes et la vraie mise en arrière-plan d'un téléphone (simulées).
 ### Thème C : Protocole socket incohérent
 - [ ] C1. `socket.emit("volume")` dans `Game.tsx` : événement que le serveur n écoute pas et qui n est pas dans `ClientToServerEvents`.
 - [ ] C2. `room.answers` écrit mais jamais lu (code mort probable, avec le type `PlayerAnswer`).

@@ -52,6 +52,13 @@ export interface Player {
   tracks_scores_board?: Record<number, boolean>;
 }
 
+// Horloge de partie : gameStartTime et serverNow sont des heures serveur (ms epoch)
+export interface GameTiming {
+  gameStartTime: number;
+  serverNow: number;
+  time: number;
+}
+
 export interface Room {
   players: Player[];
   musicAmount: number;
@@ -88,6 +95,7 @@ export interface ServerToClientEvents {
     toPlay: Track[],
     database_artists: DatabaseArtist[],
     database_tracks: DatabaseTrack[],
+    timing: GameTiming,
   ) => void;
   "game-setting": (key: string, value: number) => void;
   answer: (
@@ -109,6 +117,7 @@ export interface ServerToClientEvents {
     phase: "guessing" | "answer" | "transition";
     timeLeft: number;
     time: number;
+    timing: GameTiming;
   }) => void;
   error: (error: string) => void;
 }

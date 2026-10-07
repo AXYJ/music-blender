@@ -3,6 +3,21 @@ import { Socket } from "socket.io-client";
 
 // Définition des vues et phases
 export type View = "home" | "lobby" | "game" | "result" | "mentions";
+export type GamePhase = "guessing" | "answer" | "transition";
+
+// Horloge de partie reçue du serveur (heures serveur en ms epoch)
+export interface GameTiming {
+  gameStartTime: number;
+  serverNow: number;
+  time: number;
+}
+
+// Horloge côté client : offset = heure serveur - heure du navigateur
+export interface GameClock {
+  startTime: number;
+  offset: number;
+  time: number;
+}
 
 // Définition des structures de données
 export interface Track {
@@ -77,12 +92,12 @@ export interface GameContextType {
   restart: () => void;
   turn: number;
   setTurn: React.Dispatch<React.SetStateAction<number>>;
-  phase: "guessing" | "answer" | "transition";
-  setPhase: React.Dispatch<
-    React.SetStateAction<"guessing" | "answer" | "transition">
-  >;
+  phase: GamePhase;
+  setPhase: React.Dispatch<React.SetStateAction<GamePhase>>;
   timeLeft: number;
   setTimeLeft: React.Dispatch<React.SetStateAction<number>>;
+  gameClock: GameClock | null;
+  setGameClock: (clock: GameClock | null) => void;
 }
 
 // Types pour les joueurs

@@ -20,6 +20,8 @@ const VOLUME_KEY = "game_volume";
 // Import des types
 import {
   View,
+  GamePhase,
+  GameClock,
   GameContextType,
   Player,
   Track,
@@ -68,9 +70,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [message, setMessage] = useState<string>("");
 
   const [turn, setTurn] = useState<number>(1);
-  const [phase, setPhase] = useState<"guessing" | "answer" | "transition">(
-    "guessing",
-  );
+  const [phase, setPhase] = useState<GamePhase>("guessing");
+  const [gameClock, setGameClock] = useState<GameClock | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(30);
 
   // Pseudo et identifiant du joueur
@@ -104,6 +105,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setTurn,
     setPhase,
     setTimeLeft,
+    setGameClock,
     time,
     t,
     playerId,
@@ -172,8 +174,18 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   // ----------------------------------------------------------------
   // Reconnexion automatique au serveur
   // ----------------------------------------------------------------
+  // Une seule fois par connexion (nouvelle socket.id) : modifier le pseudo ou le code
+  // ne doit pas renvoyer join_game, createGame/joinGame émettent déjà le leur.
+  const joinedSocketRef = useRef<string | undefined>(undefined);
   useEffect(() => {
-    if (socket && isConnected && roomCode && name) {
+    if (
+      socket &&
+      isConnected &&
+      roomCode &&
+      name &&
+      joinedSocketRef.current !== socket.id
+    ) {
+      joinedSocketRef.current = socket.id;
       const id = localStorage.getItem("id");
       socket.emit("join_game", roomCode, id, name);
     }
@@ -386,6 +398,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       setPhase,
       timeLeft,
       setTimeLeft,
+      gameClock,
+      setGameClock,
       quitGame,
     }),
     [
@@ -421,6 +435,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       turn,
       phase,
       timeLeft,
+      gameClock,
       quitGame,
     ],
   );

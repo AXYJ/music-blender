@@ -16,6 +16,7 @@ import { useTranslation } from "@/context/LanguageContext";
 
 // Import des utilitaires
 import { normalizeString } from "@/utils/stringUtils";
+import { getClockState } from "@/utils/gameClock";
 
 export default function Game() {
   const {
@@ -42,6 +43,7 @@ export default function Game() {
     setMessage,
     quitGame,
     playerId,
+    gameClock,
   } = useGame();
 
   const { t } = useTranslation();
@@ -188,41 +190,26 @@ export default function Game() {
     return () => document.removeEventListener("click", handleInteraction);
   }, []);
 
-  // Countdown timer ticks down every second
+  // Dernières saisies, lues par l'horloge sans la relancer à chaque frappe
+  const guessesRef = useRef({ artist: "", track: "" });
   useEffect(() => {
-    if (timeLeft <= 0) return;
+    guessesRef.current = { artist: artistGuess, track: trackGuess };
+  }, [artistGuess, trackGuess]);
+
+  // Horloge de partie : tour, phase et temps restant sont recalculés depuis l'heure
+  // du serveur. Pas de décompte local qui dérive, et un retour de veille (mobile)
+  // se resynchronise tout seul au tick suivant.
+  const clockRef = useRef({ turn, phase, answeredTurn: 0 });
+  useEffect(() => {
+    if (!gameClock) return;
 
     const interval = setInterval(() => {
-      setTimeLeft((prev) => Math.max(0, prev - 1));
-    }, 1000);
+      const next = getClockState(gameClock, toPlay.length);
+      const cur = clockRef.current;
 
-    return () => clearInterval(interval);
-  }, [timeLeft]);
-
-  // State machine transitions when timer hits 0
-  useEffect(() => {
-    if (timeLeft <= 0) {
-      if (phase === "guessing") {
-        // Transition to show answer phase (5 seconds) - music keeps playing!
-        setPhase("answer");
-        setTimeLeft(5);
-        setGuessingArtist(false);
-        setGuessingSong(false);
-        sendAnswer(artistGuess, trackGuess, turn);
-      } else if (phase === "answer") {
-        if (turn === toPlay.length) {
-          // Si c'est le dernier morceau, on passe directement aux résultats sans transition
-          setTurn((prev) => prev + 1);
-        } else {
-          // Transition to inter-turn pause phase (2 seconds) - music fades out!
-          setPhase("transition");
-          setTimeLeft(2);
-        }
-      } else if (phase === "transition") {
-        // Transition to next turn, restart guessing (time seconds)
-        setTurn((prev) => prev + 1);
-        setPhase("guessing");
-        setTimeLeft(time);
+      if (next.turn !== cur.turn) {
+        guessesRef.current = { artist: "", track: "" };
+        setTurn(next.turn);
         setArtistGuess("");
         setTrackGuess("");
         setPlayers((prev) =>
@@ -234,15 +221,32 @@ export default function Game() {
           })),
         );
       }
-    }
+      if (next.phase !== cur.phase) {
+        setPhase(next.phase);
+        if (next.phase !== "guessing") {
+          setGuessingArtist(false);
+          setGuessingSong(false);
+        }
+      }
+      setTimeLeft(next.timeLeft);
+
+      // Une seule réponse par tour, envoyée dès la fin de la phase de devinette
+      let answeredTurn = cur.answeredTurn;
+      if (
+        next.phase !== "guessing" &&
+        next.turn <= toPlay.length &&
+        answeredTurn < next.turn
+      ) {
+        sendAnswer(guessesRef.current.artist, guessesRef.current.track, next.turn);
+        answeredTurn = next.turn;
+      }
+      clockRef.current = { turn: next.turn, phase: next.phase, answeredTurn };
+    }, 250);
+
+    return () => clearInterval(interval);
   }, [
-    timeLeft,
-    phase,
-    time,
-    turn,
-    toPlay,
-    artistGuess,
-    trackGuess,
+    gameClock,
+    toPlay.length,
     sendAnswer,
     setPlayers,
     setTurn,

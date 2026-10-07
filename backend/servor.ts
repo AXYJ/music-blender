@@ -23,6 +23,7 @@ import {
   ServerToClientEvents,
   InterServerEvents,
   SocketData,
+  GameTiming,
 } from "./types/game.js";
 
 // Initialisation
@@ -159,171 +160,68 @@ io.on(
     // Rejoindre une partie
     // --------------------------------------------------------
     socket.on("join_game", (roomCode: string, id: string, name: string) => {
-      if (!rooms[roomCode]) {
+      const room = rooms[roomCode];
+      if (!room) {
         socket.emit("error", "room_not_found");
         return;
       }
 
-      socket.data.roomCode = roomCode;
-      socket.data.playerId = id;
-      const room = rooms[roomCode];
-
-      // Vérifier que la partie n'est pas pleine
-      if (room.players.length >= 12) {
+      // Un joueur qui revient reprend sa place même si la room est pleine
+      let player = room.players.find((p) => p.id === id);
+      if (!player && room.players.length >= 12) {
         socket.emit("error", "room_full");
         return;
       }
-      // Vérifier si le joueur existe déjà
-      const existingPlayer = room.players.find((p) => p.id === id);
-      if (existingPlayer) {
-        existingPlayer.socketId = socket.id;
-        existingPlayer.leavedPlayer = false;
-        clearDisconnectTimeout(existingPlayer.id);
+      socket.data.roomCode = roomCode;
+      socket.data.playerId = id;
+
+      const gameActive = hasActiveGame(room);
+      if (player) {
+        player.socketId = socket.id;
+        player.leavedPlayer = false;
+        player.inLobby = !gameActive;
+        clearDisconnectTimeout(player.id);
         if (room.cleanupTimeout) {
           clearTimeout(room.cleanupTimeout);
           delete room.cleanupTimeout;
         }
-        socket.join(roomCode);
         console.log(
-          `[${new Date().toISOString()}] User ${socket.id} (${existingPlayer.name}) reconnected to room ${roomCode}`,
+          `[${new Date().toISOString()}] User ${socket.id} (${player.name}) reconnected to room ${roomCode}`,
         );
+      } else {
+        room.players.push({
+          name: name,
+          id: id,
+          socketId: socket.id,
+          isHost: false,
+          leavedPlayer: false,
+          inLobby: !gameActive,
+          score: 0,
+          isReady: false,
+        });
+        console.log(
+          `[${new Date().toISOString()}] User ${socket.id} joined room ${roomCode}`,
+        );
+      }
+      socket.join(roomCode);
       io.to(roomCode).emit("room_updated", roomCode, room.players);
 
-      // Sync settings to the reconnecting player
-      if (room.musicAmount !== undefined) {
-        socket.emit("game-setting", "music_amount", room.musicAmount);
+      // Synchroniser les paramètres de la partie
+      socket.emit("game-setting", "music_amount", room.musicAmount);
+      socket.emit("game-setting", "time", room.time);
+
+      // Partie en cours (ou résultats affichés) : renvoyer l'état pour rejoindre l'écran de jeu
+      if (gameActive && room.gameStartTime) {
+        socket.emit("game_reconnected", {
+          toPlay: room.toPlay,
+          database_artists: room.database_artists,
+          database_tracks: room.database_tracks,
+          ...getTurnInfo(room.time, room.gameStartTime, room.toPlay.length),
+          time: room.time,
+          timing: getGameTiming(room.time, room.gameStartTime),
+        });
       }
-      if (room.time !== undefined) {
-        socket.emit("game-setting", "time", room.time);
-      }
-
-      // Si la partie est déjà en cours
-      if (
-        room.gameStartTime &&
-        room.toPlay &&
-        room.toPlay.length > 0 &&
-        !room.isGameOver
-      ) {
-        existingPlayer.inLobby = false;
-
-        const turnDuration = room.time + 5 + 2;
-        const elapsedSeconds = (Date.now() - room.gameStartTime) / 1000;
-        const currentTurn = Math.floor(elapsedSeconds / turnDuration) + 1;
-
-        if (currentTurn <= room.toPlay.length) {
-          const elapsedInTurn = elapsedSeconds % turnDuration;
-          let phase: "guessing" | "answer" | "transition" = "guessing";
-          let timeLeft = Math.ceil(room.time - elapsedInTurn);
-
-          if (elapsedInTurn >= room.time && elapsedInTurn < room.time + 5) {
-            phase = "answer";
-            timeLeft = Math.ceil(room.time + 5 - elapsedInTurn);
-          } else if (elapsedInTurn >= room.time + 5) {
-            phase = "transition";
-            timeLeft = Math.ceil(turnDuration - elapsedInTurn);
-          }
-
-          socket.emit("game_reconnected", {
-            toPlay: room.toPlay,
-            database_artists: room.database_artists || [],
-            database_tracks: room.database_tracks || [],
-            turn: currentTurn,
-            phase: phase,
-            timeLeft: timeLeft,
-            time: room.time,
-          });
-        } else {
-          // La partie est finie
-          socket.emit("game_reconnected", {
-            toPlay: room.toPlay,
-            database_artists: room.database_artists || [],
-            database_tracks: room.database_tracks || [],
-            turn: room.toPlay.length + 1,
-            phase: "transition",
-            timeLeft: 0,
-            time: room.time,
-          });
-        }
-      } else {
-        existingPlayer.inLobby = true;
-      }
-      return;
-    } else {
-      // Si non, on l'ajoute à la partie
-      const isGameInProgress = !!(
-        room.gameStartTime &&
-        room.toPlay &&
-        room.toPlay.length > 0 &&
-        !room.isGameOver
-      );
-
-      rooms[roomCode].players.push({
-        name: name,
-        id: id,
-        socketId: socket.id,
-        isHost: false,
-        leavedPlayer: false,
-        inLobby: !isGameInProgress,
-        score: 0,
-        isReady: false,
-      });
-      socket.join(roomCode);
-      console.log(
-        `[${new Date().toISOString()}] User ${socket.id} joined room ${roomCode}`,
-      );
-      io.to(roomCode).emit("room_updated", roomCode, rooms[roomCode].players);
-
-      // Sync settings to the newly joined player
-      if (room.musicAmount !== undefined) {
-        socket.emit("game-setting", "music_amount", room.musicAmount);
-      }
-      if (room.time !== undefined) {
-        socket.emit("game-setting", "time", room.time);
-      }
-
-      // Si la partie est déjà en cours, on lui envoie les infos de reconnexion pour qu'il rejoigne l'écran de jeu
-      if (isGameInProgress && room.gameStartTime) {
-        const turnDuration = room.time + 5 + 2;
-        const elapsedSeconds = (Date.now() - room.gameStartTime) / 1000;
-        const currentTurn = Math.floor(elapsedSeconds / turnDuration) + 1;
-
-        if (currentTurn <= room.toPlay.length) {
-          const elapsedInTurn = elapsedSeconds % turnDuration;
-          let phase: "guessing" | "answer" | "transition" = "guessing";
-          let timeLeft = Math.ceil(room.time - elapsedInTurn);
-
-          if (elapsedInTurn >= room.time && elapsedInTurn < room.time + 5) {
-            phase = "answer";
-            timeLeft = Math.ceil(room.time + 5 - elapsedInTurn);
-          } else if (elapsedInTurn >= room.time + 5) {
-            phase = "transition";
-            timeLeft = Math.ceil(turnDuration - elapsedInTurn);
-          }
-
-          socket.emit("game_reconnected", {
-            toPlay: room.toPlay,
-            database_artists: room.database_artists || [],
-            database_tracks: room.database_tracks || [],
-            turn: currentTurn,
-            phase: phase,
-            timeLeft: timeLeft,
-            time: room.time,
-          });
-        } else {
-          // La partie est finie
-          socket.emit("game_reconnected", {
-            toPlay: room.toPlay,
-            database_artists: room.database_artists || [],
-            database_tracks: room.database_tracks || [],
-            turn: room.toPlay.length + 1,
-            phase: "transition",
-            timeLeft: 0,
-            time: room.time,
-          });
-        }
-      }
-    }
-  });
+    });
 
   // Quitter une partie
   socket.on("leave_game", () => {
@@ -339,8 +237,9 @@ io.on(
     );
     socket.leave(roomCode);
 
-    // Si l'hôte est parti dans le lobby ou si la partie est finie, on attribue l'hôte à un autre joueur actif
-    if (player.isHost && (!room.gameStartTime || room.isGameOver)) {
+    // Si l'hôte part (lobby, partie ou résultats), un autre joueur devient hôte :
+    // sans hôte, personne ne pourrait relancer une partie
+    if (player.isHost) {
       const newHost =
         room.players.find((p) => !p.leavedPlayer) || room.players[0];
       if (newHost) {
@@ -581,6 +480,7 @@ io.on(
             room.toPlay,
             room.database_artists,
             room.database_tracks,
+            getGameTiming(room.time, room.gameStartTime),
           );
         } catch (processingErr) {
           room.isLoadingTracks = false;
@@ -621,7 +521,7 @@ io.on(
     if (!roomCode || !room || !player) return;
 
     // Le tour est calculé côté serveur : le `turn` du client n'est pas fiable
-    if (!room.gameStartTime || turn !== getCurrentTurn(room.time, room.gameStartTime))
+    if (!room.gameStartTime || turn !== getTurnInfo(room.time, room.gameStartTime, room.toPlay.length).turn)
       return;
     // Une seule réponse par joueur et par tour
     if (player.tracks_scores_board?.[turn - 1] !== undefined) return;
@@ -744,6 +644,10 @@ io.on(
     const { roomCode, room, player } = getSocketContext(socket);
     if (!roomCode || !room || !player) return;
 
+    // Socket périmée : le joueur s'est déjà reconnecté avec une autre socket (retour
+    // d'une autre appli sur mobile). Cette déconnexion tardive ne doit pas compter.
+    if (player.socketId !== socket.id) return;
+
     // Marquer le joueur comme temporairement déconnecté
     player.leavedPlayer = true;
 
@@ -804,7 +708,7 @@ io.on(
             }
           }
         }, GRACE_PERIOD));
-      } else if (!room.gameStartTime || room.isGameOver) {
+      } else if (!isGameRunning(room)) {
         // Joueur non-hôte dans le lobby : le retirer s'il ne revient pas après 5 minutes
         clearDisconnectTimeout(player.id);
         disconnectTimeouts.set(player.id, setTimeout(() => {
@@ -845,9 +749,46 @@ function shuffle<T>(array: T[]): T[] {
 }
 
 // Durée d'un tour : temps de réponse + 5 s de révélation + 2 s de transition
-function getCurrentTurn(time: number, gameStartTime: number): number {
+function getTurnInfo(
+  time: number,
+  gameStartTime: number,
+  trackCount: number,
+): { turn: number; phase: "guessing" | "answer" | "transition"; timeLeft: number } {
   const turnDuration = time + 5 + 2;
-  return Math.floor((Date.now() - gameStartTime) / 1000 / turnDuration) + 1;
+  const elapsed = (Date.now() - gameStartTime) / 1000;
+  const turn = Math.floor(elapsed / turnDuration) + 1;
+  if (turn > trackCount) {
+    return { turn: trackCount + 1, phase: "transition", timeLeft: 0 };
+  }
+  const inTurn = elapsed % turnDuration;
+  if (inTurn < time) {
+    return { turn, phase: "guessing", timeLeft: Math.ceil(time - inTurn) };
+  }
+  if (inTurn < time + 5) {
+    return { turn, phase: "answer", timeLeft: Math.ceil(time + 5 - inTurn) };
+  }
+  return { turn, phase: "transition", timeLeft: Math.ceil(turnDuration - inTurn) };
+}
+
+// Horloge de partie envoyée au client : il recalcule tour, phase et temps restant
+// à partir de ces valeurs au lieu de décompter localement (serverNow sert à
+// estimer l'écart entre les deux horloges).
+function getGameTiming(time: number, gameStartTime: number): GameTiming {
+  return { gameStartTime, serverNow: Date.now(), time };
+}
+
+// Une partie a été lancée et pas encore remise au lobby (les résultats comptent)
+function hasActiveGame(room: Room): boolean {
+  return !!(room.gameStartTime && room.toPlay.length > 0 && !room.isGameOver);
+}
+
+// La partie se joue réellement : on s'arrête à la fin de la phase de réponse du
+// dernier morceau, comme le client (qui passe alors aux résultats)
+function isGameRunning(room: Room): boolean {
+  if (!hasActiveGame(room) || !room.gameStartTime) return false;
+  const lastAnswerEnd =
+    (room.toPlay.length - 1) * (room.time + 7) + room.time + 5;
+  return Date.now() < room.gameStartTime + lastAnswerEnd * 1000;
 }
 
 function normalizeString(str: string): string {

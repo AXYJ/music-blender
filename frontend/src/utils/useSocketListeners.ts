@@ -6,7 +6,11 @@ import {
   Track,
   DatabaseArtist,
   DatabaseTrack,
+  GameClock,
+  GamePhase,
+  GameTiming,
 } from "../types/game";
+import { toGameClock } from "./gameClock";
 import { getSocketUrl } from "./config";
 import { getSessionItem, setSessionItem } from "./storageUtils";
 
@@ -26,10 +30,9 @@ interface SocketListenersProps {
   setDatabaseArtists: (database_artists: DatabaseArtist[]) => void;
   setDatabaseTracks: (database_tracks: DatabaseTrack[]) => void;
   setTurn: React.Dispatch<React.SetStateAction<number>>;
-  setPhase: React.Dispatch<
-    React.SetStateAction<"guessing" | "answer" | "transition">
-  >;
+  setPhase: React.Dispatch<React.SetStateAction<GamePhase>>;
   setTimeLeft: React.Dispatch<React.SetStateAction<number>>;
+  setGameClock: (clock: GameClock | null) => void;
   time: number;
   t: (key: string, replace?: Record<string, string>) => string;
   playerId?: string;
@@ -54,6 +57,7 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     setTurn,
     setPhase,
     setTimeLeft,
+    setGameClock,
     time,
     t,
     playerId,
@@ -64,6 +68,13 @@ export const useSocketListeners = (props: SocketListenersProps) => {
 
   const viewRef = useRef<View>(view);
   viewRef.current = view;
+
+  // Dernières valeurs de t et playerId, lues par les handlers sans réenregistrer
+  // les écouteurs (sinon les erreurs restent dans l'ancienne langue)
+  const latestRef = useRef({ t, playerId });
+  useEffect(() => {
+    latestRef.current = { t, playerId };
+  });
 
   useEffect(() => {
     if (!socket) return;
@@ -101,7 +112,7 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     }
 
     const handleConnectError = (err: Error) => {
-      setError(t("errors.connection_error"));
+      setError(latestRef.current.t("errors.connection_error"));
       setIsConnected(false);
       setView("home");
     };
@@ -114,7 +125,7 @@ export const useSocketListeners = (props: SocketListenersProps) => {
         reason === "io client disconnect"
       ) {
         setView("home");
-        setError(t("errors.disconnected"));
+        setError(latestRef.current.t("errors.disconnected"));
       }
     };
 
@@ -124,9 +135,9 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     const handleError = (error: string) => {
       if (error.startsWith("playlist_load_error:")) {
         const name = error.substring("playlist_load_error:".length);
-        setError(t("errors.playlist_load_error", { name }));
+        setError(latestRef.current.t("errors.playlist_load_error", { name }));
       } else {
-        const translated = t(`errors.${error}`);
+        const translated = latestRef.current.t(`errors.${error}`);
         if (translated !== `errors.${error}`) {
           setError(translated);
         } else {
@@ -157,7 +168,8 @@ export const useSocketListeners = (props: SocketListenersProps) => {
       setView("lobby");
       const me = players.find(
         (p: Player) =>
-          (playerId && p.id === playerId) || p.socketId === socket.id,
+          (latestRef.current.playerId && p.id === latestRef.current.playerId) ||
+          p.socketId === socket.id,
       );
       if (me) {
         setName(me.name);
@@ -198,9 +210,11 @@ export const useSocketListeners = (props: SocketListenersProps) => {
       toPlay: Track[],
       database_artists: DatabaseArtist[],
       database_tracks: DatabaseTrack[],
+      timing: GameTiming,
     ) => {
       setView("game");
       setToPlay(toPlay);
+      setGameClock(toGameClock(timing));
       setTurn(1);
       setPhase("guessing");
       setTimeLeft(time);
@@ -311,7 +325,7 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     socket.on("final_scores", handleFinalScores);
 
     const handleNoPlaylist = () => {
-      setError(t("errors.no_playlist_tracks"));
+      setError(latestRef.current.t("errors.no_playlist_tracks"));
       setView("lobby");
       setTimeout(() => {
         setError(null);
@@ -339,10 +353,12 @@ export const useSocketListeners = (props: SocketListenersProps) => {
       database_artists: DatabaseArtist[];
       database_tracks: DatabaseTrack[];
       turn: number;
-      phase: "guessing" | "answer" | "transition";
+      phase: GamePhase;
       timeLeft: number;
       time: number;
+      timing: GameTiming;
     }) => {
+      setGameClock(toGameClock(data.timing));
       setToPlay(data.toPlay);
       setDatabaseArtists(data.database_artists);
       setDatabaseTracks(data.database_tracks);
@@ -390,6 +406,7 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     setTurn,
     setPhase,
     setTimeLeft,
+    setGameClock,
     time,
   ]);
 };
