@@ -6,14 +6,12 @@ import { useTranslation } from "@/context/LanguageContext";
 
 import ChangeLanguage from "@/components/button/ChangeLanguage";
 import Logo from "@/components/Logo";
+import EmailLink from "@/components/EmailLink";
 import InstallPrompt from "@/components/pwa/InstallPrompt";
 
 export default function Mentions() {
   const { setView } = useGame();
   const { t } = useTranslation();
-  const emailUser = "contact";
-  const emailDomain = "xiao-web.com";
-
   return (
     <div className="my-16 flex flex-col items-center gap-4 md:gap-8">
       <div className="right-4 -my-8 flex w-full items-center justify-end gap-4 lg:absolute lg:top-0 lg:-mt-8">
@@ -40,14 +38,7 @@ export default function Mentions() {
                 </span>{" "}
                 Alex Xiao
               </p>
-              <a
-                className="text-(--white) underline transition-all duration-300 hover:text-(--accent) active:text-(--accent)"
-                href={`mailto:${emailUser}@${emailDomain}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {emailUser} [at] {emailDomain}
-              </a>
+              <EmailLink className="text-(--white) underline transition-all duration-300 hover:text-(--accent) active:text-(--accent)" />
             </div>
             <div className="mt-4 flex w-full flex-col items-center justify-center md:mt-0">
               <p>
@@ -269,12 +260,7 @@ export default function Mentions() {
 
             <p className="leading-relaxed">{t("mentions.section5-text3")}</p>
             <div className="mt-2 text-center">
-              <a
-                className="font-semibold text-(--white) underline transition-all duration-300 hover:text-(--accent) active:text-(--accent)"
-                href={`mailto:${emailUser}@${emailDomain}`}
-              >
-                {emailUser} [at] {emailDomain}
-              </a>
+              <EmailLink className="font-semibold text-(--white) underline transition-all duration-300 hover:text-(--accent) active:text-(--accent)" />
             </div>
           </div>
         </div>
