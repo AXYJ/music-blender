@@ -3,7 +3,7 @@
 Sujets repérés pendant l'audit qui demandent une décision, pas une simple correction. Aucun n'est traité.
 
 ## Sécurité et triche
-1. **Usurpation de joueur par son `id`.** Le serveur envoie `room.players` à tous les clients, `id` compris. N'importe quel joueur d'une room peut émettre `join_game(code, idDuVoisin, nom)` et prendre sa place, y compris celle de l'hôte. L'`id` sert à la fois d'identifiant public et de secret de reconnexion. Piste : un jeton secret par joueur, distinct de l'`id` affiché.
+1. ~~Usurpation de joueur par son `id`.~~ **Fait** (variante complète) : l'`id` secret de reconnexion ne sort plus du serveur ; les clients reçoivent un `publicId` aléatoire par joueur et par room, et rien d'autre d'interne (ni `playlistUrl` ni `tracks`). Les types des événements n'acceptent que `PublicPlayer` (type marqué : un envoi oublié ne compile pas) et `backend/tests/identity.test.mjs` vérifie l'absence de fuite et l'échec d'une usurpation. Reste vrai : l'`id` secret est conservé à vie dans le `localStorage` du joueur (lui seul le connaît).
 2. **La bonne réponse est côté client.** Le serveur envoie `toPlay` en entier (titres et artistes) dès le début, et le texte « La réponse est » est dans le DOM pendant la devinette. Un joueur peut tricher avec les outils de développement. Pour corriger, il faudrait envoyer la réponse seulement au moment de la révélation (le serveur notant déjà les réponses, c'est faisable), au prix d'un changement de protocole et d'une latence à la révélation.
 3. **Abus du serveur ouvert** (suite de A4). Rien ne limite le nombre de sockets, de rooms ou d'appels `send_playlist_url` (Deezer, iTunes, Spotify, Groq). Piste : limite de débit par IP.
 

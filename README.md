@@ -141,6 +141,7 @@ Le projet fonctionne selon le principe du respect de la vie privée par défaut 
 - Pas de base de données persistante.
 - Les données de jeu, pseudonymes, et liens de playlists sont conservés uniquement en mémoire volatile sur le serveur backend.
 - Dès que tous les joueurs quittent un salon, la mémoire associée est entièrement purgée.
+- Les autres joueurs ne reçoivent jamais votre identifiant de reconnexion ni votre lien de playlist : ils ne voient qu'un identifiant public tiré au hasard à votre arrivée dans le salon, ce qui empêche de prendre la place d'un autre joueur.
 
 ---
 

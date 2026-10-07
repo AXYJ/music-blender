@@ -109,8 +109,6 @@ export interface Player {
   isReady: boolean;
   score: number;
   leavedPlayer: boolean;
-  playlistUrl?: string;
-  tracks?: Track[];
   artist_answer: boolean;
   artist_score?: number;
   track_answer: boolean;

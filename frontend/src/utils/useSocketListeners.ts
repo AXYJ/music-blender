@@ -35,7 +35,7 @@ interface SocketListenersProps {
   setGameClock: (clock: GameClock | null) => void;
   time: number;
   t: (key: string, replace?: Record<string, string>) => string;
-  playerId?: string;
+  setPlayerId: (id: string) => void;
 }
 
 export const useSocketListeners = (props: SocketListenersProps) => {
@@ -60,14 +60,14 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     setGameClock,
     time,
     t,
-    playerId,
+    setPlayerId,
   } = props;
 
   // Dernières valeurs des props, lues par les handlers sans réenregistrer les
   // écouteurs (sinon les erreurs resteraient dans l'ancienne langue)
-  const latestRef = useRef({ t, playerId, view, playlistUrl });
+  const latestRef = useRef({ t, view, playlistUrl });
   useEffect(() => {
-    latestRef.current = { t, playerId, view, playlistUrl };
+    latestRef.current = { t, view, playlistUrl };
   });
 
   useEffect(() => {
@@ -149,21 +149,27 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     // ----------------
     // Gestion des parties
     // ----------------
+    // Le serveur ne donne aux joueurs que des identifiants publics. On retrouve le sien
+    // grâce à sa socket et on le garde : il reste valable après une reconnexion,
+    // quand socketId n'a pas encore été mis à jour dans la liste reçue.
+    const rememberMe = (players: Player[]) => {
+      const me = players.find((p) => p.socketId === socket.id);
+      if (me) setPlayerId(me.id);
+      return me;
+    };
+
     const handleRoomCreated = (roomCode: string, players: Player[]) => {
       setRoomCode(roomCode);
       setPlayers(players);
       setView("lobby");
-      const me = players.find(
-        (p: Player) =>
-          (latestRef.current.playerId && p.id === latestRef.current.playerId) ||
-          p.socketId === socket.id,
-      );
+      const me = rememberMe(players);
       if (me) {
         setName(me.name);
       }
     };
 
     const handleRoomUpdated = (roomCode: string, players: Player[]) => {
+      rememberMe(players);
       if (
         latestRef.current.view !== "game" &&
         latestRef.current.view !== "result"
@@ -191,6 +197,7 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     socket.on("room_updated", handleRoomUpdated);
 
     const handleGameStarted = (players: Player[]) => {
+      rememberMe(players);
       setPlayers(players);
       socket.emit("send_playlist_url", latestRef.current.playlistUrl);
     };
@@ -308,6 +315,7 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     };
 
     const handleFinalScores = (players: Player[]) => {
+      rememberMe(players);
       setPlayers(players);
     };
 
@@ -329,6 +337,7 @@ export const useSocketListeners = (props: SocketListenersProps) => {
         if (rules.musicAmount !== undefined) setMusicAmount(rules.musicAmount);
         if (rules.time !== undefined) setTime(rules.time);
       }
+      rememberMe(players);
       setPlayers(players);
       setView("lobby");
     };
@@ -400,6 +409,7 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     setPhase,
     setTimeLeft,
     setGameClock,
+    setPlayerId,
     time,
   ]);
 };

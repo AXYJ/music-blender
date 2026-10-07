@@ -37,7 +37,11 @@ export interface DatabaseTrack {
 }
 
 export interface Player {
+  // Secret : sert à reprendre sa place après une reconnexion. Ne JAMAIS l'envoyer aux
+  // autres joueurs (voir toPublicPlayers dans servor.ts).
   id: string;
+  // Identifiant montré aux autres joueurs, tiré au hasard à l'arrivée dans la room
+  publicId: string;
   socketId?: string;
   name: string;
   isHost: boolean;
@@ -52,6 +56,18 @@ export interface Player {
   artists_scores_board?: Record<number, number>;
   tracks_scores_board?: Record<number, boolean>;
 }
+
+// Marque de type uniquement (aucune trace à l'exécution) : sans elle, un Player complet
+// serait accepté partout où l'on attend un PublicPlayer, puisqu'il en a tous les champs.
+declare const publicBrand: unique symbol;
+
+// Joueur tel que vu par les clients : `id` est le publicId, et ce qui est interne au
+// serveur (lien de playlist, morceaux, état du lobby) n'est pas envoyé. Seule
+// toPublicPlayers (servor.ts) en fabrique.
+export type PublicPlayer = Omit<
+  Player,
+  "id" | "publicId" | "playlistUrl" | "tracks" | "inLobby"
+> & { id: string; readonly [publicBrand]: true };
 
 // Horloge de partie : gameStartTime et serverNow sont des heures serveur (ms epoch)
 export interface GameTiming {
@@ -88,9 +104,9 @@ export interface ClientToServerEvents {
 }
 
 export interface ServerToClientEvents {
-  room_created: (roomCode: string, players: Player[]) => void;
-  room_updated: (roomCode: string, players: Player[]) => void;
-  game_started: (players: Player[]) => void;
+  room_created: (roomCode: string, players: PublicPlayer[]) => void;
+  room_updated: (roomCode: string, players: PublicPlayer[]) => void;
+  game_started: (players: PublicPlayer[]) => void;
   data_loaded: (
     toPlay: Track[],
     database_artists: DatabaseArtist[],
@@ -103,11 +119,11 @@ export interface ServerToClientEvents {
     artist_answer: boolean | number,
     track_answer: boolean,
   ) => void;
-  final_scores: (players: Player[]) => void;
+  final_scores: (players: PublicPlayer[]) => void;
   no_playlist: (reason?: string) => void;
   game_reset: (
     rules: { musicAmount: number; time: number },
-    players: Player[],
+    players: PublicPlayer[],
   ) => void;
   game_reconnected: (data: {
     toPlay: Track[];

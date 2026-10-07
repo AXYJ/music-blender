@@ -27,6 +27,7 @@ import {
   InterServerEvents,
   SocketData,
   GameTiming,
+  PublicPlayer,
   DatabaseArtist,
   DatabaseTrack,
 } from "./types/game.js";
@@ -74,6 +75,20 @@ const rooms: Record<string, Room> = {};
 // Minuteurs de déconnexion, gardés hors de Player : un Timeout est circulaire
 // et ferait planter socket.io quand room.players est envoyé aux clients.
 const disconnectTimeouts = new Map<string, NodeJS.Timeout>();
+
+// Ce que les clients reçoivent d'un joueur : l'id secret (qui permet de reprendre sa
+// place) ne sort jamais du serveur, ni le lien de playlist ni les morceaux de chacun.
+// Les types des événements n'acceptent que des PublicPlayer : un envoi oublié ne compile pas.
+function toPublicPlayers(players: Player[]): PublicPlayer[] {
+  return players.map(
+    ({ id, publicId, playlistUrl, tracks, inLobby, ...rest }) =>
+      ({ ...rest, id: publicId }) as PublicPlayer,
+  );
+}
+
+function emitRoomUpdated(roomCode: string, room: Room): void {
+  io.to(roomCode).emit("room_updated", roomCode, toPublicPlayers(room.players));
+}
 
 function clearDisconnectTimeout(playerId: string): void {
   clearTimeout(disconnectTimeouts.get(playerId));
@@ -143,6 +158,7 @@ io.on(
           {
             name: name,
             id: id,
+            publicId: crypto.randomUUID(),
             socketId: socket.id,
             isHost: true,
             leavedPlayer: false,
@@ -158,7 +174,7 @@ io.on(
         database_tracks: [],
       };
       socket.join(roomCode);
-      socket.emit("room_created", roomCode, rooms[roomCode].players);
+      socket.emit("room_created", roomCode, toPublicPlayers(rooms[roomCode].players));
     });
 
     // --------------------------------------------------------
@@ -197,6 +213,7 @@ io.on(
         room.players.push({
           name: name,
           id: id,
+          publicId: crypto.randomUUID(),
           socketId: socket.id,
           isHost: false,
           leavedPlayer: false,
@@ -209,7 +226,7 @@ io.on(
         );
       }
       socket.join(roomCode);
-      io.to(roomCode).emit("room_updated", roomCode, room.players);
+      emitRoomUpdated(roomCode, room);
 
       // Synchroniser les paramètres de la partie
       socket.emit("game-setting", "music_amount", room.musicAmount);
@@ -263,7 +280,7 @@ io.on(
         `[${new Date().toISOString()}] Room ${roomCode} deleted because it is empty`,
       );
     } else {
-      io.to(roomCode).emit("room_updated", roomCode, room.players);
+      emitRoomUpdated(roomCode, room);
       checkAndResetGame(roomCode);
     }
   });
@@ -273,7 +290,7 @@ io.on(
     const { roomCode, room, player } = getSocketContext(socket);
     if (!roomCode || !room || !player) return;
     player.isReady = isReady;
-    io.to(roomCode).emit("room_updated", roomCode, room.players);
+    emitRoomUpdated(roomCode, room);
   });
 
   // Lancement de la partie
@@ -296,7 +313,7 @@ io.on(
     room.isGameOver = false;
     room.gameStartTime = null;
     room.isLoadingTracks = false;
-    io.to(roomCode).emit("game_started", room.players);
+    io.to(roomCode).emit("game_started", toPublicPlayers(room.players));
   });
 
   // Ajout des autres playlist
@@ -472,7 +489,7 @@ io.on(
   socket.on("get_final_scores", () => {
     const { room } = getSocketContext(socket);
     if (room) {
-      socket.emit("final_scores", room.players);
+      socket.emit("final_scores", toPublicPlayers(room.players));
     }
   });
 
@@ -483,7 +500,7 @@ io.on(
       player.inLobby = true;
       player.isReady = player.isHost;
       room.isGameOver = true;
-      io.to(roomCode).emit("room_updated", roomCode, room.players);
+      emitRoomUpdated(roomCode, room);
       checkAndResetGame(roomCode);
     }
   });
@@ -551,11 +568,7 @@ io.on(
                 console.log(
                   `[${new Date().toISOString()}] Host transferred to ${nextHost.name} in room ${roomCode} after 5min timeout`,
                 );
-                io.to(roomCode).emit(
-                  "room_updated",
-                  roomCode,
-                  currentRoom.players,
-                );
+                emitRoomUpdated(roomCode, currentRoom);
               }
             }
           }
@@ -575,11 +588,7 @@ io.on(
               console.log(
                 `[${new Date().toISOString()}] Disconnected player ${p.name} removed from room ${roomCode} after 5min timeout`,
               );
-              io.to(roomCode).emit(
-                "room_updated",
-                roomCode,
-                currentRoom.players,
-              );
+              emitRoomUpdated(roomCode, currentRoom);
               checkAndResetGame(roomCode);
             }
           }
@@ -587,7 +596,7 @@ io.on(
       }
     }
 
-    io.to(roomCode).emit("room_updated", roomCode, room.players);
+    emitRoomUpdated(roomCode, room);
   });
 });
 
@@ -830,6 +839,6 @@ const checkAndResetGame = (roomCode: string): void => {
       time: room.time,
     };
 
-    io.to(roomCode).emit("game_reset", rulesObj, activePlayers);
+    io.to(roomCode).emit("game_reset", rulesObj, toPublicPlayers(activePlayers));
   }
 };

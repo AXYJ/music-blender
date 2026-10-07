@@ -40,7 +40,7 @@ for (const withGuest of [true, false]) {
   // Le serveur détecte enfin la mort de l'ancienne socket
   old.disconnect();
   await sleep(500);
-  const host = () => view?.find((p) => p.id === "id-h");
+  const host = () => view?.find((p) => p.name === "Hote");
   check("hôte toujours marqué connecté juste après la mort de l'ancienne socket", host()?.leavedPlayer === false, `(leavedPlayer=${host()?.leavedPlayer})`);
 
   // Après le délai de grâce (3 s dans ce serveur de test) l'hôte doit rester hôte

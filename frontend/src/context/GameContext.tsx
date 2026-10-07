@@ -93,8 +93,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const savedName = useLocalValue(PLAYER_NAME_KEY);
   const [typedName, setName] = useState<string | null>(null);
   const name = typedName ?? savedName;
-  // Identifiant du joueur (créé à la première connexion, il sert à se reconnecter)
-  const playerId = useLocalValue("id");
+  // Mon identifiant public dans la room, appris du serveur (voir rememberMe). L'id secret
+  // de reconnexion reste dans localStorage et n'est lu que pour create_game / join_game.
+  const [playerId, setPlayerId] = useState<string>("");
 
   const isPopStateRef = useRef<boolean>(false);
   const currentViewRef = useRef<View>("home");
@@ -121,7 +122,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setGameClock,
     time,
     t,
-    playerId,
+    setPlayerId,
   });
 
   // ----------------------------------------------------------------
