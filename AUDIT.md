@@ -12,7 +12,7 @@ Relecture du code et des dépendances. État de départ : `tsc --noEmit` OK des 
 
 ### Reste à faire
 - [ ] **Racine** : `shell-quote` via `concurrently` (critique, outil de développement seulement) : `npm audit fix` à la racine.
-- [ ] **Mises à jour mineures backend** : `kuroshiro` 1.2.1, `@types/node`, `tsx`. `groq-sdk` 0.30 vers 1.6 est une version majeure : à tester avant.
+- [ ] **Versions majeures volontairement non montées (frontend)** : `eslint` 10 (les plugins de `eslint-config-next` ne le déclarent pas compatible), `typescript` 7 (casse `typescript-eslint`, build OK mais lint KO), `@types/node` 26 (Node 20 ciblé côté frontend). À revoir quand `eslint-config-next` / `typescript-eslint` les supportent.
 - [ ] **`dangerouslySetInnerHTML`** (`Toggle.tsx`, `Mentions.tsx`) : sans risque tant que le contenu vient des fichiers de traduction ; ne jamais y faire passer une saisie de joueur.
 - [ ] **`backend/servor.ts`** : 809 lignes, non relu en entier lors de cet audit.
 - [ ] Les trois défauts de `PISTES.md` (groupes dont le nom contient « & » / « and », japonais romanisé sans espaces, kanji seuls lus en chinois).
