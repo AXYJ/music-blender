@@ -1,10 +1,4 @@
-export interface DeezerTrackResult {
-  name: string;
-  artist: string;
-  previewUrl: string;
-  imageUrl: string;
-  url: string;
-}
+import { PlatformTrack } from "../types/game.js";
 
 /**
  * Fonction générique pour récupérer les morceaux d'une entité Deezer (playlist ou album)
@@ -15,7 +9,7 @@ export async function fetchDeezerTracks({
 }: {
   type: string;
   id: string;
-}): Promise<DeezerTrackResult[] | null> {
+}): Promise<PlatformTrack[] | null> {
   try {
     const response = await fetch(`https://api.deezer.com/${type}/${id}`);
     if (!response.ok) {
@@ -88,7 +82,7 @@ export async function fetchDeezerTracks({
       fallbackImageUrl = data.cover_big || "";
     }
 
-    const tracks: DeezerTrackResult[] = tracksData.map((t) => {
+    const tracks: PlatformTrack[] = tracksData.map((t) => {
       const artistName = t.artist?.name || data.artist?.name || "";
       return {
         name: t.title || "",

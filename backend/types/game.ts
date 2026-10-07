@@ -15,6 +15,15 @@ export interface Track {
   _rawIntArtist?: string;
 }
 
+// Morceau tel que renvoyé par une plateforme (Spotify, Deezer, Apple Music)
+export interface PlatformTrack {
+  name: string;
+  artist: string;
+  previewUrl: string;
+  imageUrl: string;
+  url: string;
+}
+
 export interface DatabaseArtist {
   id?: string;
   artist: string;

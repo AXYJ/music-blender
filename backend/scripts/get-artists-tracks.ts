@@ -8,7 +8,7 @@ import {
 } from "./get-from-spotify.js";
 import { fetchDeezerTracks } from "./get-from-deezer.js";
 import { fetchAppleTracks } from "./get-from-apple.js";
-import { Track } from "../types/game.js";
+import { PlatformTrack, Track } from "../types/game.js";
 
 const kuroshiro = new (Kuroshiro.default || Kuroshiro)();
 let kuroshiroReady = false;
@@ -174,15 +174,7 @@ export default async function selectTracks(
     }
 
     if (id && type) {
-      let playlistTracks:
-        | {
-            name: string;
-            artist: string;
-            previewUrl: string;
-            imageUrl: string;
-            url: string;
-          }[]
-        | null = null;
+      let playlistTracks: PlatformTrack[] | null = null;
 
       if (platform === "spotify") {
         playlistTracks = await fetchSpotifyTracks({ type, id });

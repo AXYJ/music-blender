@@ -1,12 +1,5 @@
 import * as cheerio from "cheerio";
-
-export interface AppleTrackResult {
-  name: string;
-  artist: string;
-  previewUrl: string;
-  imageUrl: string;
-  url: string;
-}
+import { PlatformTrack } from "../types/game.js";
 
 async function getAppleMusicTracks(
   playlistUrl: string,
@@ -116,7 +109,7 @@ export async function fetchAppleTracks({
   type?: string;
   id: string;
   url?: string;
-}): Promise<AppleTrackResult[]> {
+}): Promise<PlatformTrack[]> {
   const playlistUrl =
     url ||
     (id.startsWith("http") ? id : `https://music.apple.com/fr/playlist/${id}`);
@@ -131,7 +124,7 @@ export async function fetchAppleTracks({
 
   // Traitement par lots de 10 requêtes simultanées pour éviter les blocages de débit (HTTP 429)
   const CONCURRENCY_LIMIT = 10;
-  const formatedTracks: AppleTrackResult[] = [];
+  const formatedTracks: PlatformTrack[] = [];
 
   for (let i = 0; i < scrapedTracks.length; i += CONCURRENCY_LIMIT) {
     const chunk = scrapedTracks.slice(i, i + CONCURRENCY_LIMIT);

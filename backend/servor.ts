@@ -259,7 +259,7 @@ io.on(
       );
     } else {
       io.to(roomCode).emit("room_updated", roomCode, room.players);
-      checkAndResetGame(roomCode, rooms, io);
+      checkAndResetGame(roomCode);
     }
   });
 
@@ -623,7 +623,7 @@ io.on(
       player.isReady = player.isHost;
       room.isGameOver = true;
       io.to(roomCode).emit("room_updated", roomCode, room.players);
-      checkAndResetGame(roomCode, rooms, io);
+      checkAndResetGame(roomCode);
     }
   });
 
@@ -718,7 +718,7 @@ io.on(
                 roomCode,
                 currentRoom.players,
               );
-              checkAndResetGame(roomCode, rooms, io);
+              checkAndResetGame(roomCode);
             }
           }
         }, GRACE_PERIOD));
@@ -804,17 +804,8 @@ function splitArtists(artistStr: string): string[] {
     );
 }
 
-const checkAndResetGame = (
-  roomCode: string,
-  allRooms: Record<string, Room>,
-  socketIo: Server<
-    ClientToServerEvents,
-    ServerToClientEvents,
-    InterServerEvents,
-    SocketData
-  >,
-): void => {
-  const room = allRooms[roomCode];
+const checkAndResetGame = (roomCode: string): void => {
+  const room = rooms[roomCode];
   if (!room) return;
 
   const activePlayers = room.players.filter((p) => !p.leavedPlayer);
@@ -841,6 +832,6 @@ const checkAndResetGame = (
       time: room.time,
     };
 
-    socketIo.to(roomCode).emit("game_reset", rulesObj, activePlayers);
+    io.to(roomCode).emit("game_reset", rulesObj, activePlayers);
   }
 };

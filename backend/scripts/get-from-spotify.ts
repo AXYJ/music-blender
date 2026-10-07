@@ -1,12 +1,5 @@
 import { Buffer } from "buffer";
-
-export interface SpotifyTrackResult {
-  name: string;
-  artist: string;
-  previewUrl: string;
-  imageUrl: string;
-  url: string;
-}
+import { PlatformTrack } from "../types/game.js";
 
 //----------------------------------
 // Scraping des morceaux via la page publique (Scraper anonyme)
@@ -14,7 +7,7 @@ export interface SpotifyTrackResult {
 async function getSpotifyTracksAnonymously(
   type: string,
   id: string,
-): Promise<SpotifyTrackResult[] | null> {
+): Promise<PlatformTrack[] | null> {
   try {
     console.log(
       `[Spotify Scraper] Fetching public embed page for ${type}: ${id}`,
@@ -57,7 +50,7 @@ async function getSpotifyTracksAnonymously(
     console.log(
       `[Spotify Scraper] Successfully extracted ${entity.trackList.length} tracks via public embed page!`,
     );
-    const tracks: SpotifyTrackResult[] = entity.trackList.map(
+    const tracks: PlatformTrack[] = entity.trackList.map(
       (item: {
         title: string;
         subtitle: string;
@@ -141,7 +134,7 @@ async function getSpotifyAccessToken(): Promise<string | null> {
 async function getSpotifyAlbumTracks(
   albumId: string,
   accessToken: string,
-): Promise<SpotifyTrackResult[] | null> {
+): Promise<PlatformTrack[] | null> {
   try {
     const response = await fetch(
       `https://api.spotify.com/v1/albums/${albumId}`,
@@ -173,7 +166,7 @@ async function getSpotifyAlbumTracks(
     };
     if (!data.tracks || !data.tracks.items) return null;
     const imageUrl = data.images?.[0]?.url || "";
-    const tracks: SpotifyTrackResult[] = data.tracks.items.map((t) => {
+    const tracks: PlatformTrack[] = data.tracks.items.map((t) => {
       const artistsStr = t.artists.map((a) => a.name).join(", ");
       return {
         name: t.name,
@@ -223,13 +216,13 @@ export async function fetchSpotifyTracks({
 }: {
   type: string;
   id: string;
-}): Promise<SpotifyTrackResult[] | null> {
+}): Promise<PlatformTrack[] | null> {
   if (type === "playlist") {
     return getSpotifyTracksAnonymously(type, id);
   } else if (type === "album") {
     console.log(`[Spotify API] Fetching album ${id} via official Spotify API...`);
     const token = await getSpotifyAccessToken();
-    let playlistTracks: SpotifyTrackResult[] | null = null;
+    let playlistTracks: PlatformTrack[] | null = null;
     if (token) {
       playlistTracks = await getSpotifyAlbumTracks(id, token);
     }
