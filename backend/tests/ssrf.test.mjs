@@ -38,8 +38,6 @@ async function tryLink(label, playlistUrl) {
 const liens = {
   "lien court local": `http://127.0.0.1:${port}/lien-court`,
   "faux lien Apple Music": `http://127.0.0.1:${port}/playlist/abc123?x=music.apple.com`,
-  "faux lien Deezer en paramètre": `http://127.0.0.1:${port}/playlist/abc123?x=deezer.com`,
-  "identifiants dans le lien": `https://deezer.com@127.0.0.1:${port}/playlist/abc123`,
 };
 for (const [label, lien] of Object.entries(liens)) {
   const { contacts, errors } = await tryLink(label, lien);

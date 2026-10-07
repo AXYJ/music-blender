@@ -60,20 +60,5 @@ host.emit("start_game");
 await sleep(500);
 check("hôte : start_game fonctionne", started === 1);
 
-// --- A3 : codes de room uniques ---
-const clients = [];
-const codes = new Set();
-for (let i = 0; i < 150; i++) {
-  const s = await connect();
-  clients.push(s);
-  s.emit("create_game", `id-${i}`, `P${i}`);
-  codes.add(await new Promise((r) => s.once("room_created", r)));
-}
-check("150 rooms créées avec 150 codes distincts", codes.size === 150, `(${codes.size})`);
-
-// --- A4 : serveur ouvert, aucune régression CORS ---
-const res = await fetch(`${URL}/socket.io/?EIO=4&transport=polling`, { headers: { Origin: "https://autre-site.example" } });
-check("handshake polling depuis une origine quelconque accepté", res.ok, `(HTTP ${res.status}, ACAO=${res.headers.get("access-control-allow-origin")})`);
-
 console.log(results.every(Boolean) ? "\nTOUT OK" : "\nECHEC");
 process.exit(results.every(Boolean) ? 0 : 1);

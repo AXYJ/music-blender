@@ -48,6 +48,14 @@ check(
   state ? `(turn=${state.turn} phase=${state.phase} timeLeft=${state.timeLeft})` : "(rien reçu)",
 );
 
+// Les champs internes de correction (_normalizedName, _requiredArtists…) restent sur le serveur
+const internalKeys = (tracks) => [...new Set(tracks.flatMap((t) => Object.keys(t)).filter((k) => k.startsWith("_")))];
+check(
+  "data_loaded et game_reconnected : aucun champ interne de correction (_*)",
+  internalKeys(toPlay).length === 0 && internalKeys(state?.toPlay ?? []).length === 0,
+  JSON.stringify([...internalKeys(toPlay), ...internalKeys(state?.toPlay ?? [])]),
+);
+
 // --- Un nouveau joueur qui arrive en cours de partie reçoit aussi l'état ---
 const c = await connect();
 const recoC = new Promise((r) => c.once("game_reconnected", r));

@@ -14,7 +14,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.TEST_PORT ?? "4100";
 
 // Ces tests jouent une vraie partie avec une playlist Deezer : internet requis
-const NEEDS_NETWORK = ["answers", "reconnection", "track-payload"];
+const NEEDS_NETWORK = ["answers", "reconnection"];
 // Fonctions pures : pas besoin de serveur. Les tests "rate-limit" lancent le leur.
 const NO_SERVER = ["front-utils", "allowed-url", "limiter", "rate-limit"];
 
