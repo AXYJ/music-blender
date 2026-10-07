@@ -38,19 +38,24 @@ Le projet est structuré en **monorepo** :
 ```text
 music-blender/
 ├── backend/            # Serveur Node.js / Socket.io
-│   ├── scripts/        # Scripts d'extraction des morceaux (Spotify, Deezer, Apple)
-│   ├── servor.js       # Point d'entrée principal du serveur backend
+│   ├── scripts/        # Extraction des morceaux (Spotify, Deezer, Apple) et translittération
+│   ├── types/          # Types du jeu et des événements socket
+│   ├── tests/          # Tests (voir « Tests » plus bas)
+│   ├── servor.ts       # Point d'entrée principal du serveur backend
 │   └── package.json
 ├── frontend/           # Application Next.js
 │   ├── src/
 │   │   ├── app/        # Configuration Next.js (App Router)
-│   │   ├── components/ # Composants d'interface (stepper, autocomplete, etc.)
-│   │   ├── context/    # Gestion du contexte de jeu (GameContext)
+│   │   ├── components/ # Composants d'interface (stepper, autocomplete, PWA, etc.)
+│   │   ├── context/    # Contextes : jeu (GameContext) et langue (LanguageContext)
 │   │   ├── locales/    # Fichiers de traduction (FR/EN)
+│   │   ├── types/      # Types du jeu côté client
 │   │   ├── views/      # Vues de l'application (Home, Lobby, Game, Results)
-│   │   └── utils/      # Utilitaires et configuration socket
+│   │   └── utils/      # Socket partagée, horloge de partie (gameClock), stockage local
 │   └── package.json
 ├── package.json        # Fichier de scripts global
+├── AUDIT.md            # Suivi de l'audit de code (corrections faites)
+├── DISCUSSION.md       # Points restant à trancher (sécurité, architecture)
 └── README.md           # Ce fichier
 ```
 
@@ -60,7 +65,8 @@ music-blender/
 
 ### 1. Prérequis
 - [Node.js](https://nodejs.org/) (version 20.12+ : le backend charge `backend/.env` avec `process.loadEnvFile`)
-- Un compte [Spotify Developer](https://developer.spotify.com/) (pour générer les clés API nécessaires à l'extraction des playlists Spotify)
+- Optionnel : un compte [Spotify Developer](https://developer.spotify.com/) pour les **albums** Spotify (les playlists sont lues sans clé ; sans clés, les albums passent par le même scraping anonyme)
+- Optionnel : une clé [Groq](https://console.groq.com/) pour romaniser les noms non latins (japonais, chinois, coréen) ; sans clé, la translittération locale est utilisée
 
 ### 2. Cloner le projet et installer les dépendances
 
@@ -84,12 +90,14 @@ Créez un fichier `.env` dans le dossier `backend/` :
 
 ```env
 # backend/.env
-SPOTIFY_CLIENT_ID=votre_spotify_client_id
-SPOTIFY_CLIENT_SECRET=votre_spotify_client_secret
 PORT=4000
+SPOTIFY_CLIENT_ID=votre_spotify_client_id        # optionnel (albums Spotify)
+SPOTIFY_CLIENT_SECRET=votre_spotify_client_secret # optionnel (albums Spotify)
+GROQ_API_KEY=votre_cle_groq                       # optionnel (romanisation)
+GROQ_MODEL=qwen/qwen3.8-27b                       # optionnel, modèle Groq utilisé
 ```
 
-*Note : Pour obtenir vos identifiants Spotify, créez une application sur le [Spotify Developer Dashboard](https://developer.spotify.com/dashboard).*
+*Note : pour obtenir vos identifiants Spotify, créez une application sur le [Spotify Developer Dashboard](https://developer.spotify.com/dashboard).*
 
 #### Frontend (Optionnel en local)
 Le frontend est configuré par défaut pour se connecter sur `http://localhost:4000` en mode développement. Pour la production, vous pouvez créer un fichier `.env.local` dans le dossier `frontend/` :
@@ -112,6 +120,18 @@ Cette commande démarre simultanément :
 - L'application Next.js sur [http://localhost:3000](http://localhost:3000)
 
 Ouvrez ensuite votre navigateur sur **[http://localhost:3000](http://localhost:3000)** pour jouer !
+
+### 5. Lancer les tests
+
+Les tests (backend) démarrent eux-mêmes un serveur sur le port 4100, jouent des parties avec de vrais clients Socket.IO, puis l'arrêtent :
+
+```bash
+npm test --prefix backend                  # tous les tests
+npm test --prefix backend -- reset answers # seulement les fichiers dont le nom contient ces mots
+SKIP_NETWORK=1 npm test --prefix backend   # sans les parties qui chargent une vraie playlist Deezer
+```
+
+Ils couvrent les réponses et les scores, les droits de l'hôte et les limites des paramètres, les déconnexions et reconnexions (dont le retour d'une autre appli sur mobile), la remise à zéro d'une partie et les fonctions de l'horloge de partie. Le serveur de test réduit le délai de grâce de 5 minutes à 3 secondes (`GRACE_PERIOD_MS`). Lint du frontend : `npm run lint --prefix frontend`.
 
 ---
 

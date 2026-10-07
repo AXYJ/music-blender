@@ -488,7 +488,8 @@ io.on(
     }
   });
 
-  const GRACE_PERIOD = 5 * 60 * 1000; // 5 minutes de délai de grâce
+  // Délai de grâce avant de retirer un joueur déconnecté (5 min, réglable pour les tests)
+  const GRACE_PERIOD = Number(process.env.GRACE_PERIOD_MS) || 5 * 60 * 1000;
 
   socket.on("disconnect", () => {
     console.log(`[${new Date().toISOString()}] User disconnected: ${socket.id}`);
