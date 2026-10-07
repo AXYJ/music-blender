@@ -24,6 +24,8 @@ import {
   InterServerEvents,
   SocketData,
   GameTiming,
+  DatabaseArtist,
+  DatabaseTrack,
 } from "./types/game.js";
 
 // Initialisation
@@ -300,193 +302,49 @@ io.on(
     if (!roomCode || !room || !player) return;
     player.playlistUrl = playlistUrl || "";
 
-      // Vérifier si tous les joueurs ont répondu (url ou chaîne vide) et qu'on ne charge pas déjà
-      const allSubmitted = room.players.every(
-        (p) => p.playlistUrl !== undefined,
+    // On attend que tous les joueurs aient répondu (url ou chaîne vide),
+    // et un seul chargement à la fois
+    const allSubmitted = room.players.every((p) => p.playlistUrl !== undefined);
+    if (!allSubmitted || room.isLoadingTracks) return;
+
+    room.isLoadingTracks = true;
+    room.toPlay = [];
+
+    try {
+      const { allTracks, selected, hasError } = await loadPlayersTracks(
+        room,
+        roomCode,
       );
-      if (allSubmitted && !room.isLoadingTracks) {
-        room.isLoadingTracks = true;
-        room.toPlay = [];
-        const allPlaylistTracks: Track[] = [];
+      room.toPlay = selected;
 
-        try {
-          let hasError = false;
-          const playerLoadPromises = room.players.map(async (p) => {
-            if (p.playlistUrl && p.playlistUrl.trim() !== "") {
-              try {
-                const result = await selectTracks(
-                  p.playlistUrl,
-                  room.musicAmount,
-                  p,
-                );
-                if (
-                  !result ||
-                  !result.selectedTracks ||
-                  result.selectedTracks.length === 0
-                ) {
-                  p.tracks = [];
-                  io.to(roomCode).emit(
-                    "error",
-                    `playlist_load_error:${p.name}`,
-                  );
-                  hasError = true;
-                  return { tracks: [], selectedTracks: [] };
-                } else {
-                  p.tracks = result.selectedTracks;
-                  return result;
-                }
-              } catch (err) {
-                console.error(
-                  `Error processing tracks for player ${p.name}:`,
-                  err,
-                );
-                p.tracks = [];
-                io.to(roomCode).emit(
-                  "error",
-                  `playlist_load_error:${p.name}`,
-                );
-                hasError = true;
-                return { tracks: [], selectedTracks: [] };
-              }
-            } else {
-              p.tracks = [];
-              return { tracks: [], selectedTracks: [] };
-            }
-          });
-
-          const results = await Promise.all(playerLoadPromises);
-
-          for (const res of results) {
-            if (res.tracks && res.tracks.length > 0) {
-              allPlaylistTracks.push(...res.tracks);
-            }
-            if (res.selectedTracks && res.selectedTracks.length > 0) {
-              room.toPlay.push(...res.selectedTracks);
-            }
-          }
-
-          if (hasError || allPlaylistTracks.length < 1) {
-            room.isLoadingTracks = false;
-            if (allPlaylistTracks.length < 1 && !hasError) {
-              io.to(roomCode).emit("no_playlist", "no_playlist_tracks");
-            }
-            return;
-          }
-
-          // Créer des databases uniques pour les artistes (séparés par feat) et les musiques
-          const seenArtists = new Set<string>();
-          const seenTracks = new Set<string>();
-          const rawArtistsList: string[] = [];
-          room.database_artists = [];
-          room.database_tracks = [];
-          for (const t of allPlaylistTracks) {
-            if (
-              t &&
-              typeof t.name === "string" &&
-              typeof t.artist === "string"
-            ) {
-              // 1. Gérer le nom de la musique
-              const trackKey = t.name.toLowerCase();
-              if (!seenTracks.has(trackKey)) {
-                seenTracks.add(trackKey);
-                room.database_tracks.push({
-                  name: t.name,
-                  internationalName: t.internationalName || t.name,
-                });
-              }
-
-              // 2. Extraire les artistes individuellement
-              const individualArtists = splitArtists(t.artist);
-              for (const artistName of individualArtists) {
-                const artistKey = artistName.toLowerCase();
-                if (!seenArtists.has(artistKey)) {
-                  seenArtists.add(artistKey);
-                  rawArtistsList.push(artistName);
-                }
-              }
-            }
-          }
-
-          // Translitérer en batch les artistes non-ASCII via Groq (avec fallback local)
-          const nonAsciiArtists = rawArtistsList.filter((a) =>
-            /[^\x00-\x7F]/.test(a),
-          );
-          let groqArtistMap = new Map<string, string>();
-          if (nonAsciiArtists.length > 0) {
-            try {
-              groqArtistMap = await transliterateArtists(nonAsciiArtists);
-            } catch (err) {
-              console.warn("[servor] Erreur transliterateArtists Groq :", err);
-            }
-          }
-
-          for (const artistName of rawArtistsList) {
-            const groqTrans = groqArtistMap.get(artistName);
-            const internationalArtist = groqTrans
-              ? groqTrans
-              : await getInternationalName(artistName);
-
-            room.database_artists.push({
-              artist: artistName,
-              internationalArtist,
-            });
-          }
-
-          // Randomiser l'ordre global des musiques sélectionnées (toPlay) et précalculer les normalisations
-          const shuffledTracks = shuffle(room.toPlay);
-          room.toPlay = shuffledTracks.map((track, index) => {
-            const originalArtistsList = splitArtists(track.artist)
-              .map((a) => normalizeString(a))
-              .filter(Boolean);
-            const internationalArtistsList = splitArtists(
-              track.internationalArtist || "",
-            )
-              .map((a) => normalizeString(a))
-              .filter(Boolean);
-
-            const requiredArtists = originalArtistsList.map((orig, idx) => {
-              const names = [orig];
-              if (internationalArtistsList[idx]) {
-                names.push(internationalArtistsList[idx]);
-              }
-              return names;
-            });
-
-            return {
-              order: index + 1,
-              name: track.name || "",
-              artist: track.artist || "",
-              internationalName:
-                track.internationalName || track.name || "",
-              internationalArtist:
-                track.internationalArtist || track.artist || "",
-              previewUrl: track.previewUrl || "",
-              imageUrl: track.imageUrl || "",
-              submittedBy: track.submittedBy || "",
-              url: track.url || "",
-              _normalizedName: normalizeString(track.name || ""),
-              _normalizedIntName: normalizeString(track.internationalName || ""),
-              _requiredArtists: requiredArtists,
-              _rawArtist: normalizeString(track.artist || ""),
-              _rawIntArtist: normalizeString(track.internationalArtist || ""),
-            };
-          });
-          room.gameStartTime = Date.now();
-          room.isLoadingTracks = false;
-          // Envoyer au front
-          io.to(roomCode).emit(
-            "data_loaded",
-            room.toPlay,
-            room.database_artists,
-            room.database_tracks,
-            getGameTiming(room.time, room.gameStartTime),
-          );
-        } catch (processingErr) {
-          room.isLoadingTracks = false;
-          socket.emit("error", "internal_error");
+      if (hasError || allTracks.length < 1) {
+        room.isLoadingTracks = false;
+        if (allTracks.length < 1 && !hasError) {
+          io.to(roomCode).emit("no_playlist", "no_playlist_tracks");
         }
+        return;
       }
-    });
+
+      const { databaseTracks, artistNames } = collectDatabases(allTracks);
+      room.database_tracks = databaseTracks;
+      room.database_artists = await buildArtistDatabase(artistNames);
+
+      // Ordre aléatoire global, avec les normalisations précalculées
+      room.toPlay = shuffle(room.toPlay).map(prepareTrack);
+      room.gameStartTime = Date.now();
+      room.isLoadingTracks = false;
+      io.to(roomCode).emit(
+        "data_loaded",
+        room.toPlay,
+        room.database_artists,
+        room.database_tracks,
+        getGameTiming(room.time, room.gameStartTime),
+      );
+    } catch (processingErr) {
+      room.isLoadingTracks = false;
+      socket.emit("error", "internal_error");
+    }
+  });
 
   // --------------------------------------------------------
   // Paramètres de partie
@@ -728,6 +586,142 @@ io.on(
     io.to(roomCode).emit("room_updated", roomCode, room.players);
   });
 });
+
+// Charge en parallèle la playlist de chaque joueur. `selected` : morceaux retenus
+// pour la partie ; `allTracks` : tous les morceaux chargés (base d'autocomplétion).
+// Une playlist en échec prévient la room (playlist_load_error) et lève hasError.
+async function loadPlayersTracks(
+  room: Room,
+  roomCode: string,
+): Promise<{ allTracks: Track[]; selected: Track[]; hasError: boolean }> {
+  let hasError = false;
+  const fail = (p: Player, err?: unknown) => {
+    if (err) console.error(`Error processing tracks for player ${p.name}:`, err);
+    p.tracks = [];
+    io.to(roomCode).emit("error", `playlist_load_error:${p.name}`);
+    hasError = true;
+  };
+
+  const results = await Promise.all(
+    room.players.map(async (p) => {
+      if (!p.playlistUrl || p.playlistUrl.trim() === "") {
+        p.tracks = [];
+        return null;
+      }
+      try {
+        const result = await selectTracks(p.playlistUrl, room.musicAmount, p);
+        if (!result?.selectedTracks?.length) {
+          fail(p);
+          return null;
+        }
+        p.tracks = result.selectedTracks;
+        return result;
+      } catch (err) {
+        fail(p, err);
+        return null;
+      }
+    }),
+  );
+
+  return {
+    allTracks: results.flatMap((r) => r?.tracks ?? []),
+    selected: results.flatMap((r) => r?.selectedTracks ?? []),
+    hasError,
+  };
+}
+
+// Bases uniques pour l'autocomplétion : morceaux, et noms d'artistes séparés
+// (un morceau "A feat. B" donne A et B)
+function collectDatabases(tracks: Track[]): {
+  databaseTracks: DatabaseTrack[];
+  artistNames: string[];
+} {
+  const seenArtists = new Set<string>();
+  const seenTracks = new Set<string>();
+  const databaseTracks: DatabaseTrack[] = [];
+  const artistNames: string[] = [];
+
+  for (const t of tracks) {
+    if (!t || typeof t.name !== "string" || typeof t.artist !== "string") {
+      continue;
+    }
+    const trackKey = t.name.toLowerCase();
+    if (!seenTracks.has(trackKey)) {
+      seenTracks.add(trackKey);
+      databaseTracks.push({
+        name: t.name,
+        internationalName: t.internationalName || t.name,
+      });
+    }
+    for (const artistName of splitArtists(t.artist)) {
+      const artistKey = artistName.toLowerCase();
+      if (!seenArtists.has(artistKey)) {
+        seenArtists.add(artistKey);
+        artistNames.push(artistName);
+      }
+    }
+  }
+  return { databaseTracks, artistNames };
+}
+
+// Version internationale de chaque artiste : Groq en batch pour les noms non-ASCII,
+// repli sur la translittération locale
+async function buildArtistDatabase(
+  artistNames: string[],
+): Promise<DatabaseArtist[]> {
+  const nonAscii = artistNames.filter((a) => /[^\x00-\x7F]/.test(a));
+  let groqArtistMap = new Map<string, string>();
+  if (nonAscii.length > 0) {
+    try {
+      groqArtistMap = await transliterateArtists(nonAscii);
+    } catch (err) {
+      console.warn("[servor] Erreur transliterateArtists Groq :", err);
+    }
+  }
+
+  const database: DatabaseArtist[] = [];
+  for (const artist of artistNames) {
+    const internationalArtist =
+      groqArtistMap.get(artist) || (await getInternationalName(artist));
+    database.push({ artist, internationalArtist });
+  }
+  return database;
+}
+
+// Morceau prêt à jouer : champs par défaut et normalisations précalculées pour
+// la correction des réponses (voir submit_answer)
+function prepareTrack(track: Track, index: number): Track {
+  const originalArtists = splitArtists(track.artist)
+    .map((a) => normalizeString(a))
+    .filter(Boolean);
+  const internationalArtists = splitArtists(track.internationalArtist || "")
+    .map((a) => normalizeString(a))
+    .filter(Boolean);
+
+  // Pour chaque artiste, les noms acceptés (original et international)
+  const requiredArtists = originalArtists.map((orig, idx) => {
+    const names = [orig];
+    if (internationalArtists[idx]) names.push(internationalArtists[idx]);
+    return names;
+  });
+
+  return {
+    order: index + 1,
+    name: track.name || "",
+    artist: track.artist || "",
+    internationalName: track.internationalName || track.name || "",
+    internationalArtist: track.internationalArtist || track.artist || "",
+    previewUrl: track.previewUrl || "",
+    imageUrl: track.imageUrl || "",
+    submittedBy: track.submittedBy || "",
+    url: track.url || "",
+    _normalizedName: normalizeString(track.name || ""),
+    _normalizedIntName: normalizeString(track.internationalName || ""),
+    _requiredArtists: requiredArtists,
+    _rawArtist: normalizeString(track.artist || ""),
+    _rawIntArtist: normalizeString(track.internationalArtist || ""),
+  };
+}
 
 function shuffle<T>(array: T[]): T[] {
   const newArray = [...array];
