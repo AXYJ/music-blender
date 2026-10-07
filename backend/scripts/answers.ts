@@ -87,7 +87,12 @@ export function scoreAnswer(
     track._rawIntArtist ?? normalizeString(track.internationalArtist || "");
   let artistScore = 0;
   // Nom de groupe saisi en entier (« Simon & Garfunkel »)
-  if (playerGuesses.some((g) => g === rawArtist || g === rawIntArtist)) {
+  const wholeGuess = normalizeString(artistGuess || "");
+  if (
+    [...playerGuesses, wholeGuess].some(
+      (g) => g && (g === rawArtist || g === rawIntArtist),
+    )
+  ) {
     artistScore = 1;
   } else if (requiredArtists.length > 0) {
     const matchedCount = requiredArtists.filter((acceptableNames) =>
