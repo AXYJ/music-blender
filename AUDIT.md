@@ -38,7 +38,7 @@ Règle : une modification et un commit par thème, avec un test par thème (scri
 
 ### Thème D : Duplications et gros blocs
 - [x] D1. `send_playlist_url` : handler de ~190 lignes à découper.
-- [ ] D2. (reporté : décision d architecture, voir DISCUSSION.md point 6) Types dupliqués front/back (déjà divergents).
+- [ ] D2. (assumé : le Player du front correspond au PublicPlayer du serveur, le Track du front au PublicTrack) Types dupliqués front/back (déjà divergents).
 - [x] D3. Types de résultats Spotify / Apple / Deezer identiques, plus le type littéral recopié.
 - [x] D4. `transliterate.ts` : prompt et appel Groq copiés dans deux fonctions.
 - [x] D5. Reset message/erreur après 2 s copié dans `Game` et `Lobby`.

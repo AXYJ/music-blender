@@ -55,7 +55,7 @@ music-blender/
 │   └── package.json
 ├── package.json        # Fichier de scripts global
 ├── AUDIT.md            # Suivi de l'audit de code (corrections faites)
-├── DISCUSSION.md       # Points restant à trancher (sécurité, architecture)
+├── PISTES.md           # Défauts repérés restant à corriger (correction des réponses, romanisation)
 └── README.md           # Ce fichier
 ```
 
