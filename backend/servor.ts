@@ -625,6 +625,12 @@ io.on(
     const { roomCode, room, player } = getSocketContext(socket);
     if (!roomCode || !room || !player) return;
 
+    // Le tour est calculé côté serveur : le `turn` du client n'est pas fiable
+    if (!room.gameStartTime || turn !== getCurrentTurn(room.time, room.gameStartTime))
+      return;
+    // Une seule réponse par joueur et par tour
+    if (player.tracks_scores_board?.[turn - 1] !== undefined) return;
+
     const currentTrack = room.toPlay[turn - 1];
     if (currentTrack) {
       const trackGuess = normalizeString(track);
@@ -843,6 +849,12 @@ function shuffle<T>(array: T[]): T[] {
     [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
   }
   return newArray;
+}
+
+// Durée d'un tour : temps de réponse + 5 s de révélation + 2 s de transition
+function getCurrentTurn(time: number, gameStartTime: number): number {
+  const turnDuration = time + 5 + 2;
+  return Math.floor((Date.now() - gameStartTime) / 1000 / turnDuration) + 1;
 }
 
 function normalizeString(str: string): string {
