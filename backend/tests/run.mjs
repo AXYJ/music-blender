@@ -25,7 +25,8 @@ const files = readdirSync(here)
   .sort();
 
 // Les tests sans serveur (fonctions pures) n'en ont pas besoin
-const needsServer = files.some((f) => !f.startsWith("front-utils"));
+const NO_SERVER = ["front-utils", "allowed-url"];
+const needsServer = files.some((f) => !NO_SERVER.some((n) => f.startsWith(n)));
 
 let server = null;
 function stopServer() {

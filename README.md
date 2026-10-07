@@ -9,7 +9,7 @@
 ## ✨ Fonctionnalités
 
 - **Blindtest Collaboratif** : Chaque joueur soumet le lien d'une de ses playlists favorites. Les morceaux sont mélangés et diffusés en temps réel.
-- **Support Multi-plateformes** : Importation de playlists publiques depuis **Spotify**, **Deezer** et **Apple Music**.
+- **Support Multi-plateformes** : Importation de playlists publiques depuis **Spotify**, **Deezer** et **Apple Music** (liens https de ces plateformes uniquement, liens courts compris ; tout autre lien est refusé).
 - **Multijoueur en Temps Réel** : Création et gestion de salons de jeu (rooms) grâce aux WebSockets.
 - **Paramètres Personnalisables** : Le créateur de la partie peut ajuster le nombre de morceaux par playlist et le temps imparti pour deviner chaque morceau.
 - **Système de Saisie & Autocomplétion** : Les joueurs saisissent le titre et/ou l'artiste, avec un mécanisme d'autocomplétion et de tolérance aux fautes (translittération, prise en charge des caractères spéciaux/japonais via Kuroshiro, etc.).

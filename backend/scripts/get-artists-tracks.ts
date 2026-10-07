@@ -9,6 +9,7 @@ import {
 import { fetchDeezerTracks } from "./get-from-deezer.js";
 import { fetchAppleTracks } from "./get-from-apple.js";
 import { PlatformTrack, Track } from "../types/game.js";
+import { resolveAllowedUrl } from "./allowed-url.js";
 import {
   transliterate as transliterateGroq,
   TransliterateItem,
@@ -96,28 +97,6 @@ export async function getInternationalName(text: string): Promise<string> {
 }
 
 //----------------------------------
-// Résolution des liens courts en URLs complètes
-//----------------------------------
-async function resolveUrlIfNeeded(url: string): Promise<string> {
-  if (!url || typeof url !== "string") return url;
-
-  // Si l'URL contient déjà le motif classique (playlist/id ou album/id), pas besoin de la résoudre
-  if (url.match(/(playlist|album)\/([a-zA-Z0-9]+)/)) {
-    return url;
-  }
-
-  try {
-    console.log(`[URL Resolver] Short URL detected. Resolving: ${url}`);
-    const response = await fetch(url, { method: "GET", redirect: "follow" });
-    console.log(`[URL Resolver] Resolved to: ${response.url}`);
-    return response.url;
-  } catch (e) {
-    console.error(`[URL Resolver] Failed to resolve URL: ${url}`, e);
-    return url;
-  }
-}
-
-//----------------------------------
 // Caches en mémoire (Playlists & Pochettes)
 //----------------------------------
 const PLAYLIST_CACHE_TTL = 60 * 60 * 1000; // 1 heure
@@ -138,8 +117,14 @@ export default async function selectTracks(
     return { tracks: [], selectedTracks: [] };
   }
 
-  // Résoudre le lien s'il s'agit d'un lien court (ex: link.deezer.com)
-  const resolvedUrl = await resolveUrlIfNeeded(playlistUrl);
+  // Lien refusé (domaine non autorisé) ou court : résolu sans jamais appeler une autre plateforme
+  const resolved = await resolveAllowedUrl(playlistUrl);
+  if (!resolved) {
+    console.warn(`[selectTracks] Lien refusé ou non résolu: ${playlistUrl.slice(0, 80)}`);
+    return { tracks: [], selectedTracks: [] };
+  }
+  const resolvedUrl = resolved.url.href;
+  const platform = resolved.platform;
 
   // 1. Vérifier si les pistes de cette playlist sont déjà en cache
   const cachedPlaylist = playlistCache.get(resolvedUrl);
@@ -158,21 +143,6 @@ export default async function selectTracks(
     const match = resolvedUrl.match(/(playlist|album)\/([a-zA-Z0-9]+)/);
     const type = match ? match[1] : null;
     const id = match ? match[2] : null;
-    let platform: "spotify" | "deezer" | "apple" = "spotify";
-    if (resolvedUrl.includes("deezer.com")) {
-      platform = "deezer";
-    } else if (
-      resolvedUrl.includes("spotify.com") ||
-      resolvedUrl.includes("spotify.link")
-    ) {
-      platform = "spotify";
-    } else if (
-      resolvedUrl.includes("music.apple.com") ||
-      resolvedUrl.includes("itunes.apple.com")
-    ) {
-      platform = "apple";
-    }
-
     if (id && type) {
       let playlistTracks: PlatformTrack[] | null = null;
 
@@ -283,9 +253,7 @@ export default async function selectTracks(
 
   // Récupérer les vraies images de couverture pour les pistes sélectionnées via Deezer Lookup (avec OEmbed Spotify en Fallback)
   let selectedTracksWithImages = [...selectedTracks];
-  const isSpotify =
-    resolvedUrl.includes("spotify.com") || resolvedUrl.includes("spotify.link");
-  if (isSpotify) {
+  if (platform === "spotify") {
     selectedTracksWithImages = await Promise.all(
       selectedTracks.map(async (track) => {
         const coverKey = `${track.internationalArtist || track.artist} ${track.internationalName || track.name}`
