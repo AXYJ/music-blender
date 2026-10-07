@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useTranslation } from "@/context/LanguageContext";
+import { subscribeNever } from "@/utils/useLocalStorage";
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -21,11 +22,38 @@ declare global {
   }
 }
 
+// Le script du layout intercepte beforeinstallprompt avant l'hydratation, le garde dans
+// window.deferredPrompt et émet "pwa-prompt-available"
+const subscribeToPrompt = (callback: () => void) => {
+  window.addEventListener("pwa-prompt-available", callback);
+  return () => window.removeEventListener("pwa-prompt-available", callback);
+};
+const getDeferredPrompt = () => window.deferredPrompt ?? null;
+
+// iOS (iPad récents inclus) hors mode standalone, c'est-à-dire pas encore installée
+const detectInstallableIOS = (): boolean => {
+  const isIPadOrIPhone =
+    /iPad|iPhone|iPod/.test(window.navigator.userAgent) ||
+    (window.navigator.platform === "MacIntel" &&
+      window.navigator.maxTouchPoints > 1);
+  const isStandaloneMode =
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.navigator.standalone === true;
+  return isIPadOrIPhone && !isStandaloneMode;
+};
+
 export default function InstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] =
-    useState<BeforeInstallPromptEvent | null>(null);
-  const [showPrompt, setShowPrompt] = useState<boolean>(false);
-  const [isIOS, setIsIOS] = useState<boolean>(false);
+  const deferredPrompt = useSyncExternalStore(
+    subscribeToPrompt,
+    getDeferredPrompt,
+    () => null,
+  );
+  const isIOS = useSyncExternalStore(
+    subscribeNever,
+    detectInstallableIOS,
+    () => false,
+  );
+  const showPrompt = isIOS || deferredPrompt !== null;
   const [showIOSInstructions, setShowIOSInstructions] =
     useState<boolean>(false);
   const { t } = useTranslation();
@@ -37,59 +65,6 @@ export default function InstallPrompt() {
         .then((reg) => console.log("Service Worker registered!", reg))
         .catch((err) => console.error("SW registration failed:", err));
     }
-
-    // Détecter si l'appareil est sous iOS
-    const checkIOS = () => {
-      const userAgent = window.navigator.userAgent;
-      const isIPadOrIPhone =
-        /iPad|iPhone|iPod/.test(userAgent) ||
-        (window.navigator.platform === "MacIntel" &&
-          window.navigator.maxTouchPoints > 1);
-
-      const isStandaloneMode =
-        window.matchMedia("(display-mode: standalone)").matches ||
-        window.navigator.standalone === true;
-
-      // Si c'est iOS et que ce n'est pas déjà lancé en mode standalone (déjà installé)
-      if (isIPadOrIPhone && !isStandaloneMode) {
-        setIsIOS(true);
-        setShowPrompt(true);
-      }
-    };
-    checkIOS();
-
-    // Si l'événement a déjà été intercepté par le script du layout avant l'hydratation (Android/Desktop)
-    if (typeof window !== "undefined" && window.deferredPrompt) {
-      setDeferredPrompt(window.deferredPrompt);
-      setShowPrompt(true);
-    }
-
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setShowPrompt(true);
-    };
-
-    const handlePwaPromptAvailable = () => {
-      if (typeof window !== "undefined" && window.deferredPrompt) {
-        setDeferredPrompt(window.deferredPrompt);
-        setShowPrompt(true);
-      }
-    };
-
-    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-    window.addEventListener("pwa-prompt-available", handlePwaPromptAvailable);
-
-    return () => {
-      window.removeEventListener(
-        "beforeinstallprompt",
-        handleBeforeInstallPrompt,
-      );
-      window.removeEventListener(
-        "pwa-prompt-available",
-        handlePwaPromptAvailable,
-      );
-    };
   }, []);
 
   const handleInstallClick = async () => {
@@ -101,8 +76,9 @@ export default function InstallPrompt() {
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     console.log(`User response to install prompt: ${outcome}`);
-    setDeferredPrompt(null);
-    setShowPrompt(false);
+    // L'invite ne sert qu'une fois : on l'oublie et on prévient les abonnés
+    window.deferredPrompt = undefined;
+    window.dispatchEvent(new Event("pwa-prompt-available"));
   };
 
   return (

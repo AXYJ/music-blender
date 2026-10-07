@@ -1,8 +1,9 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useSyncExternalStore } from "react";
 import fr from "@/locales/fr.json";
 import en from "@/locales/en.json";
+import { readLocal, subscribeLocal, writeLocal } from "@/utils/useLocalStorage";
 
 type Locale = "fr" | "en";
 const translations = { fr, en };
@@ -13,27 +14,25 @@ interface LanguageContextType {
   t: (key: string, replace?: Record<string, string>) => string;
 }
 
+function getLocale(): Locale {
+  const saved = readLocal("game_lang");
+  if (saved === "fr" || saved === "en") return saved;
+  return navigator.language.startsWith("en") ? "en" : "fr";
+}
+
 const LanguageContext = createContext<LanguageContextType | undefined>(
   undefined,
 );
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>("fr");
+  // Langue sauvegardée, sinon langue du navigateur ("fr" côté serveur)
+  const locale = useSyncExternalStore<Locale>(
+    subscribeLocal,
+    getLocale,
+    () => "fr",
+  );
 
-  useEffect(() => {
-    // Récupérer la langue sauvegardée ou la langue du navigateur
-    const saved = localStorage.getItem("game_lang") as Locale;
-    if (saved && (saved === "fr" || saved === "en")) {
-      setLocaleState(saved);
-    } else if (navigator.language.startsWith("en")) {
-      setLocaleState("en");
-    }
-  }, []);
-
-  const setLocale = (newLocale: Locale) => {
-    setLocaleState(newLocale);
-    localStorage.setItem("game_lang", newLocale);
-  };
+  const setLocale = (newLocale: Locale) => writeLocal("game_lang", newLocale);
 
   // Fonction helper pour accéder aux clés imbriquées (ex: "common.play") et remplacer des placeholders
   const t = (path: string, replace?: Record<string, string>): string => {

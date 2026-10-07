@@ -1,8 +1,7 @@
 "use client";
 
 // Import des modules
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence, Variants } from "framer-motion";
+import { useState } from "react";
 import React from "react";
 import Image from "next/image";
 
@@ -29,10 +28,9 @@ export default function Home() {
     createGame,
     joinGame,
   } = useGame();
-  const { locale, setLocale, t } = useTranslation();
+  const { t } = useTranslation();
 
   const [roomInput, setRoomInput] = useState<string>("");
-  const [savedCode, setSavedCode] = useState<string | null>(null);
   const [currentSlide, setCurrentSlide] = useState<number>(0);
 
   const nextSlide = () => {
@@ -46,12 +44,6 @@ export default function Home() {
       setCurrentSlide(currentSlide - 1);
     }
   };
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setSavedCode(localStorage.getItem("roomCode"));
-    }
-  }, []);
 
   const handleCreateGame = () => {
     if (!isConnected) {
@@ -123,14 +115,8 @@ export default function Home() {
               className="h-8 w-full rounded-lg bg-(--white) px-4 text-base text-(--background)"
               value={roomInput}
               onChange={(e) => setRoomInput(e.target.value)}
-              list={savedCode ? "saved-room-code" : undefined}
               aria-label={t("home.room-placeholder")}
             />
-            {savedCode && (
-              <datalist id="saved-room-code">
-                <option value={savedCode}></option>
-              </datalist>
-            )}
             <button
               className="rounded-lg bg-(--accent) px-4 py-2 text-(--white) transition-all duration-300 hover:bg-(--accent)/60 active:scale-95"
               onClick={handleJoinGame}

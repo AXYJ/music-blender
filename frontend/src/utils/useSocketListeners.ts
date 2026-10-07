@@ -63,17 +63,11 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     playerId,
   } = props;
 
-  const playlistUrlRef = useRef<string>(playlistUrl);
-  playlistUrlRef.current = playlistUrl;
-
-  const viewRef = useRef<View>(view);
-  viewRef.current = view;
-
-  // Dernières valeurs de t et playerId, lues par les handlers sans réenregistrer
-  // les écouteurs (sinon les erreurs restent dans l'ancienne langue)
-  const latestRef = useRef({ t, playerId });
+  // Dernières valeurs des props, lues par les handlers sans réenregistrer les
+  // écouteurs (sinon les erreurs resteraient dans l'ancienne langue)
+  const latestRef = useRef({ t, playerId, view, playlistUrl });
   useEffect(() => {
-    latestRef.current = { t, playerId };
+    latestRef.current = { t, playerId, view, playlistUrl };
   });
 
   useEffect(() => {
@@ -104,7 +98,7 @@ export const useSocketListeners = (props: SocketListenersProps) => {
       setIsConnected(true);
     }
 
-    const handleConnectError = (err: Error) => {
+    const handleConnectError = () => {
       setError(latestRef.current.t("errors.connection_error"));
       setIsConnected(false);
       setView("home");
@@ -170,7 +164,10 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     };
 
     const handleRoomUpdated = (roomCode: string, players: Player[]) => {
-      if (viewRef.current !== "game" && viewRef.current !== "result") {
+      if (
+        latestRef.current.view !== "game" &&
+        latestRef.current.view !== "result"
+      ) {
         setView("lobby");
       }
       setPlayers((prev) => {
@@ -195,7 +192,7 @@ export const useSocketListeners = (props: SocketListenersProps) => {
 
     const handleGameStarted = (players: Player[]) => {
       setPlayers(players);
-      socket.emit("send_playlist_url", playlistUrlRef.current);
+      socket.emit("send_playlist_url", latestRef.current.playlistUrl);
     };
     socket.on("game_started", handleGameStarted);
 
@@ -356,7 +353,13 @@ export const useSocketListeners = (props: SocketListenersProps) => {
       setPhase(data.phase);
       setTimeLeft(data.timeLeft);
       setTime(data.time);
-      setView("game");
+      if (data.turn > data.toPlay.length) {
+        // Partie déjà terminée : directement les résultats
+        socket.emit("get_final_scores");
+        setView("result");
+      } else {
+        setView("game");
+      }
     };
 
     socket.on("game_reconnected", handleGameReconnected);

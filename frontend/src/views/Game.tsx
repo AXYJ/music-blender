@@ -30,7 +30,6 @@ export default function Game() {
     setPlayers,
     socket,
     players,
-    restart,
     turn,
     setTurn,
     phase,
@@ -41,9 +40,9 @@ export default function Game() {
     setError,
     message,
     setMessage,
-    quitGame,
     playerId,
     gameClock,
+    setView,
   } = useGame();
 
   const { t } = useTranslation();
@@ -217,6 +216,12 @@ export default function Game() {
       }
       setTimeLeft(next.timeLeft);
 
+      // Dernier morceau terminé : on demande les scores et on affiche les résultats
+      if (next.turn > toPlay.length && cur.turn <= toPlay.length) {
+        socket?.emit("get_final_scores");
+        setView("result");
+      }
+
       // Une seule réponse par tour, envoyée dès la fin de la phase de devinette
       let answeredTurn = cur.answeredTurn;
       if (
@@ -235,6 +240,8 @@ export default function Game() {
     gameClock,
     toPlay.length,
     sendAnswer,
+    socket,
+    setView,
     setPlayers,
     setTurn,
     setPhase,

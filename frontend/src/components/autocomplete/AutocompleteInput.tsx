@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { useTranslation } from "@/context/LanguageContext";
 
@@ -60,15 +60,17 @@ export default function AutocompleteInput<T>({
 
   const query = getQuery(value);
 
-  useEffect(() => {
+  // Remises à zéro dérivées des props, faites pendant le rendu plutôt que dans un effet
+  const [prevValue, setPrevValue] = useState<string>(value);
+  if (value !== prevValue) {
+    setPrevValue(value);
     setActiveIndex(-1);
-  }, [value]);
-
-  useEffect(() => {
-    if (!isActive) {
-      setShowSuggestions(false);
-    }
-  }, [isActive]);
+  }
+  const [prevActive, setPrevActive] = useState<boolean>(isActive);
+  if (isActive !== prevActive) {
+    setPrevActive(isActive);
+    if (!isActive) setShowSuggestions(false);
+  }
 
   const handleSelect = (item: T) => {
     const selectedText = getSuggestionValue(item);

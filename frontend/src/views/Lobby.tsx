@@ -1,7 +1,7 @@
 "use client";
 
 // Import de react
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 // Import du contexte
 import { useGame } from "@/context/GameContext";
@@ -16,8 +16,6 @@ import Logo from "@/components/Logo";
 import Info from "@/components/Info/Info";
 import ChangeLanguage from "@/components/button/ChangeLanguage";
 import InstallPrompt from "@/components/pwa/InstallPrompt";
-
-import { motion, AnimatePresence } from "framer-motion";
 
 export default function Lobby() {
   const {
@@ -90,12 +88,12 @@ export default function Lobby() {
     setMessage(t("lobby.code-copied"));
   };
 
-  // Reset de l'état isLoading en cas d'erreur
-  useEffect(() => {
-    if (error) {
-      setIsLoading(false);
-    }
-  }, [error]);
+  // Reset de l'état isLoading dès qu'une erreur arrive (remise à zéro pendant le rendu)
+  const [prevError, setPrevError] = useState<string | null>(error);
+  if (error !== prevError) {
+    setPrevError(error);
+    if (error) setIsLoading(false);
+  }
 
   return (
     <div className="my-16 flex w-full flex-col items-center gap-8">

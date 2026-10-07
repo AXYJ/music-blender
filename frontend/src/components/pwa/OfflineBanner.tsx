@@ -1,26 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { useTranslation } from "@/context/LanguageContext";
 
+function subscribeToConnectivity(callback: () => void) {
+  window.addEventListener("online", callback);
+  window.addEventListener("offline", callback);
+  return () => {
+    window.removeEventListener("online", callback);
+    window.removeEventListener("offline", callback);
+  };
+}
+
 export default function OfflineBanner() {
-  const [isOffline, setIsOffline] = useState<boolean>(false);
+  const isOffline = useSyncExternalStore(
+    subscribeToConnectivity,
+    () => !navigator.onLine,
+    () => false,
+  );
   const { t } = useTranslation();
-
-  useEffect(() => {
-    setIsOffline(!navigator.onLine);
-
-    const goOnline = () => setIsOffline(false);
-    const goOffline = () => setIsOffline(true);
-
-    window.addEventListener("online", goOnline);
-    window.addEventListener("offline", goOffline);
-
-    return () => {
-      window.removeEventListener("online", goOnline);
-      window.removeEventListener("offline", goOffline);
-    };
-  }, []);
 
   if (!isOffline) return null;
 

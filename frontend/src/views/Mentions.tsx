@@ -50,7 +50,7 @@ export default function Mentions() {
               <p className="text-center leading-relaxed">
                 {t("mentions.host-address-label")}
                 <br />
-                UAB "HOSTINGER LT",
+                UAB &quot;HOSTINGER LT&quot;,
                 <br />
                 Švitrigailos g. 34C, LT-03110 Vilnius,
                 <br />

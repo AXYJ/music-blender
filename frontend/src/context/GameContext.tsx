@@ -10,8 +10,9 @@ import {
   ReactNode,
   useCallback,
   useMemo,
+  useSyncExternalStore,
 } from "react";
-import { io, Socket } from "socket.io-client";
+import type { Socket } from "socket.io-client";
 
 // Clé pour le localStorage
 const PLAYER_NAME_KEY = "game_name";
@@ -32,8 +33,14 @@ import {
   DatabaseTrack,
 } from "../types/game";
 import { useSocketListeners } from "../utils/useSocketListeners";
-import { getSocketUrl } from "../utils/config";
+import { getSocket } from "../utils/socket";
 import { getSessionItem } from "../utils/storageUtils";
+import {
+  readLocal,
+  subscribeNever,
+  useLocalValue,
+  writeLocal,
+} from "../utils/useLocalStorage";
 import { useTranslation } from "./LanguageContext";
 
 // Création du contexte
@@ -42,7 +49,12 @@ const GameContext = createContext<GameContextType | undefined>(undefined);
 // Création du provider
 export const GameProvider = ({ children }: { children: ReactNode }) => {
   const { t } = useTranslation();
-  const [socket, setSocket] = useState<Socket | null>(null);
+  // null côté serveur et pendant l'hydratation, la socket partagée ensuite
+  const socket = useSyncExternalStore<Socket | null>(
+    subscribeNever,
+    getSocket,
+    () => null,
+  );
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<View>("home");
@@ -77,14 +89,12 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [gameClock, setGameClock] = useState<GameClock | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(30);
 
-  // Pseudo et identifiant du joueur
-  const [name, setName] = useState<string>("");
-  const [playerId, setPlayerId] = useState<string>(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("id") || "";
-    }
-    return "";
-  });
+  // Pseudo : celui saisi pendant la session, sinon celui sauvegardé dans localStorage
+  const savedName = useLocalValue(PLAYER_NAME_KEY);
+  const [typedName, setName] = useState<string | null>(null);
+  const name = typedName ?? savedName;
+  // Identifiant du joueur (créé à la première connexion, il sert à se reconnecter)
+  const playerId = useLocalValue("id");
 
   const isPopStateRef = useRef<boolean>(false);
   const currentViewRef = useRef<View>("home");
@@ -139,42 +149,21 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   }, [message]);
 
   // ----------------------------------------------------------------
-  // Gestion du pseudo dans le localStorage
-  // ----------------------------------------------------------------
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedName = localStorage.getItem(PLAYER_NAME_KEY);
-      if (savedName) {
-        setName(savedName);
-      }
-    }
-  }, []);
-
-  // ----------------------------------------------------------------
   // Connexion au serveur
   // ----------------------------------------------------------------
   useEffect(() => {
     // Création d'un ID de session pour pouvoir se reconnecter
-    let id = localStorage.getItem("id");
-    if (!id) {
-      id = crypto.randomUUID();
-      localStorage.setItem("id", id);
+    if (!readLocal("id")) {
+      writeLocal("id", crypto.randomUUID());
     }
-    setPlayerId(id);
 
-    // Initialisation de la connexion
-    const socketUrl = getSocketUrl();
-    const newSocket = io(socketUrl, {
-      transports: ["polling", "websocket"],
-    });
-
-    setSocket(newSocket);
-    setIsConnected(newSocket.connected);
-
+    // Connexion : les écouteurs de useSocketListeners sont déjà branchés
+    if (!socket) return;
+    socket.connect();
     return () => {
-      newSocket.disconnect();
+      socket.disconnect();
     };
-  }, []);
+  }, [socket]);
 
   // ----------------------------------------------------------------
   // Sauvegarde du code de partie dans le sessionStorage
@@ -219,7 +208,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       const id = localStorage.getItem("id");
       socket.emit("create_game", id, name);
       // Sauvegarde du pseudo uniquement au lancement de la partie
-      localStorage.setItem(PLAYER_NAME_KEY, name);
+      writeLocal(PLAYER_NAME_KEY, name);
     }
   }, [socket, name]);
 
@@ -230,7 +219,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         const id = localStorage.getItem("id");
         socket.emit("join_game", code, id, name);
         // Sauvegarde du pseudo uniquement au lancement de la partie
-        localStorage.setItem(PLAYER_NAME_KEY, name);
+        writeLocal(PLAYER_NAME_KEY, name);
       }
     },
     [socket, name],
@@ -277,14 +266,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   // ----------------------------------------------------------------
   // Post Game
   // ----------------------------------------------------------------
-
-  // Demande des résultats au serveur
-  useEffect(() => {
-    if (turn > toPlay.length && toPlay.length > 0 && socket) {
-      socket.emit("get_final_scores");
-      setView("result");
-    }
-  }, [turn, toPlay, socket]);
 
   // Relancer une partie
   const restart = useCallback(() => {
