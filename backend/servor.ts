@@ -41,23 +41,9 @@ const io = new Server<
   InterServerEvents,
   SocketData
 >(server, {
-  cors: {
-    origin: (origin, callback) => {
-      if (
-        !origin ||
-        /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+)(:\d+)?$/.test(
-          origin,
-        ) ||
-        origin === "https://music-blender.xiao-web.com" ||
-        origin === "https://museek.xiao-web.com"
-      ) {
-        return callback(null, true);
-      }
-      return callback(null, true);
-    },
-    methods: ["GET", "POST"],
-    credentials: true,
-  },
+  // Serveur volontairement ouvert : pas de cookie ni de compte, et CORS ne
+  // s'applique de toute façon pas au transport WebSocket.
+  cors: { origin: true, methods: ["GET", "POST"] },
   transports: ["polling", "websocket"],
   pingInterval: 25000,
   pingTimeout: 60000,
@@ -140,7 +126,10 @@ io.on(
     // Création d'une partie
     // --------------------------------------------------------
     socket.on("create_game", (id: string, name: string) => {
-      const roomCode = crypto.randomUUID().slice(0, 6).toUpperCase();
+      let roomCode: string;
+      do {
+        roomCode = crypto.randomUUID().slice(0, 6).toUpperCase();
+      } while (rooms[roomCode]);
       socket.data.roomCode = roomCode;
       socket.data.playerId = id;
       rooms[roomCode] = {
@@ -385,8 +374,8 @@ io.on(
 
   // Lancement de la partie
   socket.on("start_game", () => {
-    const { roomCode, room } = getSocketContext(socket);
-    if (!roomCode || !room) return;
+    const { roomCode, room, player } = getSocketContext(socket);
+    if (!roomCode || !room || !player?.isHost) return;
 
     // Réinitialiser la propriété playlistUrl de tous les joueurs à undefined pour pouvoir suivre les retours
     room.players.forEach((p) => {
@@ -606,16 +595,18 @@ io.on(
 
   // Musique par playlist
   socket.on("music_amount", (amount: number) => {
-    const { roomCode, room } = getSocketContext(socket);
-    if (!roomCode || !room) return;
+    const { roomCode, room, player } = getSocketContext(socket);
+    if (!roomCode || !room || !player?.isHost) return;
+    if (!Number.isInteger(amount) || amount < 1 || amount > 30) return;
     room.musicAmount = amount;
     io.to(roomCode).emit("game-setting", "music_amount", amount);
   });
 
   // Temps
   socket.on("time", (time: number) => {
-    const { roomCode, room } = getSocketContext(socket);
-    if (!roomCode || !room) return;
+    const { roomCode, room, player } = getSocketContext(socket);
+    if (!roomCode || !room || !player?.isHost) return;
+    if (!Number.isInteger(time) || time < 5 || time > 30 || time % 5 !== 0) return;
     room.time = time;
     io.to(roomCode).emit("game-setting", "time", time);
   });

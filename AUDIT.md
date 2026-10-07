@@ -19,9 +19,9 @@ Règle : une modification et un commit par thème, avec un test par thème (scri
 
 ### Thème A : Le serveur fait confiance au client (sécurité)
 - [x] A1. `submit_answer` : score répétable, `turn` fourni par le client. Le tour est recalculé côté serveur (`getCurrentTurn`), une seule réponse par joueur et par tour. La phase « devinette » n est volontairement pas imposée (latence du client). Testé.
-- [ ] A2. `start_game` / `music_amount` / `time` : pas de contrôle hôte, pas de validation des valeurs.
-- [ ] A3. Code de room : `randomUUID().slice(0, 6)` sans test de collision (écrasement possible d une room).
-- [ ] A4. CORS : le callback renvoie `true` dans tous les cas, la liste d origines est sans effet.
+- [x] A2. `start_game` / `music_amount` / `time` : garde hôte + bornes (1 à 30 morceaux, 5 à 30 s par pas de 5). Testé.
+- [x] A3. Code de room : tirage répété tant que le code existe. Testé : 150 rooms, 150 codes distincts (une vraie collision ne peut pas être forcée).
+- [x] A4. CORS : option 1 retenue, serveur assumé ouvert (`origin: true`), liste inutile et `credentials` supprimés. Testé : handshake depuis une origine quelconque accepté. Piste si abus : rate limit, pas un filtre d origine.
 
 ### Thème B : Robustesse de la reconnexion et de l état de partie
 - [x] B0. **Crash serveur à la déconnexion** (trouvé en test, bug existant) : le `Timeout` stocké dans `Player` était envoyé aux clients (circulaire, `RangeError` socket.io). Minuteurs déplacés dans une `Map` côté serveur (`disconnectTimeouts`). Testé : déconnexion hôte / non-hôte, reconnexion dans le délai de grâce, `leave_game`. Non testé : l expiration des 5 minutes.
