@@ -46,9 +46,6 @@ export interface Player {
   inLobby?: boolean;
   playlistUrl?: string;
   tracks?: Track[];
-  artist_answer?: boolean;
-  artist_score?: number;
-  track_answer?: boolean;
   artists_final_board?: Record<number, string>;
   tracks_final_board?: Record<number, string>;
   artists_scores_board?: Record<number, number>;
@@ -66,7 +63,6 @@ export interface Room {
   gameStartTime?: number | null;
   isLoadingTracks?: boolean;
   isGameOver?: boolean;
-  leavedPlayers?: Player[];
   answers?: Record<string, PlayerAnswer>;
   cleanupTimeout?: NodeJS.Timeout;
 }

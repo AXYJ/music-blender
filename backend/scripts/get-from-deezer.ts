@@ -9,10 +9,13 @@ export interface DeezerTrackResult {
 /**
  * Fonction générique pour récupérer les morceaux d'une entité Deezer (playlist ou album)
  */
-async function fetchDeezerEntityTracks(
-  type: string,
-  id: string,
-): Promise<DeezerTrackResult[] | null> {
+export async function fetchDeezerTracks({
+  type,
+  id,
+}: {
+  type: string;
+  id: string;
+}): Promise<DeezerTrackResult[] | null> {
   try {
     const response = await fetch(`https://api.deezer.com/${type}/${id}`);
     if (!response.ok) {
@@ -100,17 +103,4 @@ async function fetchDeezerEntityTracks(
     console.error(`Error fetching Deezer ${type} tracks:`, e);
     return null;
   }
-}
-
-// ----------------------------------------------------------------
-// Fonction unifiée d'accès aux morceaux
-// ----------------------------------------------------------------
-export async function fetchDeezerTracks({
-  type,
-  id,
-}: {
-  type: string;
-  id: string;
-}): Promise<DeezerTrackResult[] | null> {
-  return fetchDeezerEntityTracks(type, id);
 }

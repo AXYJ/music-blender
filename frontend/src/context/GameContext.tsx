@@ -15,7 +15,6 @@ import { io, Socket } from "socket.io-client";
 
 // Clé pour le localStorage
 const PLAYER_NAME_KEY = "game_name";
-const SFX_KEY = "game_sfx_volume";
 const VOLUME_KEY = "game_volume";
 
 // Import des types

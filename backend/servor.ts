@@ -152,7 +152,6 @@ io.on(
         toPlay: [],
         database_artists: [],
         database_tracks: [],
-        leavedPlayers: [],
       };
       socket.join(roomCode);
       socket.emit("room_created", roomCode, rooms[roomCode].players);
@@ -341,8 +340,6 @@ io.on(
       clearTimeout(player.disconnectTimeout);
     }
     player.leavedPlayer = true;
-    room.leavedPlayers = room.leavedPlayers || [];
-    room.leavedPlayers.push(player);
     room.players = room.players.filter((p) => p.id !== player.id);
     console.log(
       `[${new Date().toISOString()}] User ${player.name} left room ${roomCode}`,
@@ -871,7 +868,7 @@ function splitArtists(artistStr: string): string[] {
     );
 }
 
-export const checkAndResetGame = (
+const checkAndResetGame = (
   roomCode: string,
   allRooms: Record<string, Room>,
   socketIo: Server<

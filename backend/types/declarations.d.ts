@@ -21,5 +21,3 @@ declare module "kuroshiro-analyzer-kuromoji" {
     constructor(dictPath?: { dictPath?: string });
   }
 }
-
-declare module "spotify-url-info";

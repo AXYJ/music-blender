@@ -6,7 +6,6 @@ import { useState, useEffect, useRef } from "react";
 // Import des composants
 import Error from "@/components/alert/Error";
 import Message from "@/components/alert/Message";
-import Stepper from "@/components/stepper/Stepper";
 import TrackCover from "@/components/track/TrackCover";
 import AutocompleteInput from "@/components/autocomplete/AutocompleteInput";
 import QuitGame from "@/components/button/QuitGame";
@@ -308,22 +307,6 @@ export default function Game() {
     phase === "guessing" ? time : phase === "transition" ? 2 : 5;
   const showAnswer = phase === "answer" || phase === "transition";
 
-  const handleVolume = (operation: "up" | "down") => {
-    if (operation === "up") {
-      if (volume < 1) {
-        const newVolume = Math.min(1, Math.round((volume + 0.1) * 10) / 10);
-        setVolume(newVolume);
-        socket?.emit("volume", newVolume);
-      }
-    } else if (operation === "down") {
-      if (volume > 0) {
-        const newVolume = Math.max(0, Math.round((volume - 0.1) * 10) / 10);
-        setVolume(newVolume);
-        socket?.emit("volume", newVolume);
-      }
-    }
-  };
-
   return (
     <div className="relative mx-auto my-16 flex min-h-[calc(100vh-128px)] max-w-4xl flex-col items-center justify-center gap-4 px-4">
       <audio ref={audioRef} src={currentTrack.previewUrl}></audio>
@@ -354,13 +337,6 @@ export default function Game() {
               className="absolute right-2 bottom-2 z-10"
               ref={volumeControlRef}
             >
-              {/* <Stepper
-                value={Math.round(volume * 10) / 10}
-                onIncrement={() => handleVolume("up")}
-                onDecrement={() => handleVolume("down")}
-                minDisabled={volume <= 0}
-                maxDisabled={volume >= 1}
-              /> */}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"

@@ -28,7 +28,7 @@ Le projet est structuré en **monorepo** :
 - **Backend** :
   - [Node.js](https://nodejs.org/) avec [Express](https://expressjs.com/)
   - Serveur temps réel : [Socket.io](https://socket.io/)
-  - Intégration API & Scraping : `spotify-url-info`, `cheerio` (pour Apple/Deezer)
+  - Intégration API & Scraping : `fetch` natif (Spotify, Deezer, iTunes), `cheerio` (scraping Apple Music)
   - Normalisation & Translittération : `kuroshiro`, `kuroshiro-analyzer-kuromoji`, `transliteration`
 
 ---
