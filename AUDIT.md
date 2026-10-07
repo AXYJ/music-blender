@@ -15,6 +15,7 @@ Méthode : un point à la fois. On discute du problème, l'utilisateur décide, 
 
 ## À traiter (par ordre d'impact)
 
+0. [ ] **CRASH serveur (trouvé en test, bug existant)** : quand un joueur se déconnecte, `disconnect` pose `player.disconnectTimeout` (objet `Timeout`) puis émet `room_updated` avec `room.players`. Le `Timeout` est circulaire : socket.io plante en `RangeError: Maximum call stack size exceeded` (`hasBinary`) et tout le serveur s'arrête. Se produit si l'hôte se déconnecte avec d'autres joueurs, ou un non-hôte dans le lobby / en fin de partie.
 1. [x] `submit_answer` : score répétable, `turn` fourni par le client. Corrigé : le tour est recalculé côté serveur (`getCurrentTurn`) et une seule réponse par joueur et par tour est acceptée. La phase « devinette » n'est volontairement pas imposée : le client envoie sa réponse pile à la fin du chrono, une vérification stricte rejetterait des réponses légitimes à cause de la latence.
 2. [ ] `start_game` / `music_amount` / `time` : pas de contrôle hôte, pas de validation
 3. [ ] Code de room : collision possible
