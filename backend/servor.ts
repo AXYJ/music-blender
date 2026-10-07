@@ -19,6 +19,7 @@ import selectTracks, {
 } from "./scripts/get-artists-tracks.js";
 import { transliterateArtists } from "./scripts/transliterate.js";
 import { SlidingWindowLimiter, getClientIp } from "./scripts/rate-limit.js";
+import { prepareTrack, scoreAnswer, splitArtists } from "./scripts/answers.js";
 import {
   Track,
   Room,
@@ -473,54 +474,8 @@ io.on(
 
     const currentTrack = room.toPlay[turn - 1];
     if (currentTrack) {
-      const trackGuess = normalizeString(track);
-      const correctTrack =
-        currentTrack._normalizedName ?? normalizeString(currentTrack.name);
-      const correctIntTrack =
-        currentTrack._normalizedIntName ??
-        normalizeString(currentTrack.internationalName || "");
-
-      // Découper et normaliser les réponses de l'artiste saisies par le joueur
-      const playerGuesses = (artist || "")
-        .split(",")
-        .map((a) => normalizeString(a))
-        .filter(Boolean);
-
-      const requiredArtists = currentTrack._requiredArtists ?? [];
-
-      let artist_score = 0;
-      if (requiredArtists.length > 0) {
-        let matchedCount = 0;
-        for (const acceptableNames of requiredArtists) {
-          const isGuessed = playerGuesses.some((guess) =>
-            acceptableNames.includes(guess),
-          );
-          if (isGuessed) {
-            matchedCount++;
-          }
-        }
-        if (matchedCount === requiredArtists.length) {
-          artist_score = 1;
-        } else if (matchedCount > 0) {
-          artist_score = 0.5;
-        }
-      } else {
-        const rawArtist =
-          currentTrack._rawArtist ?? normalizeString(currentTrack.artist);
-        const rawIntArtist =
-          currentTrack._rawIntArtist ??
-          normalizeString(currentTrack.internationalArtist || "");
-        if (
-          playerGuesses.some(
-            (guess) => guess === rawArtist || guess === rawIntArtist,
-          )
-        ) {
-          artist_score = 1;
-        }
-      }
-
-      const track_answer =
-        trackGuess === correctTrack || trackGuess === correctIntTrack;
+      const { artistScore: artist_score, trackCorrect: track_answer } =
+        scoreAnswer(currentTrack, artist, track);
 
       player.artists_final_board = player.artists_final_board || {};
       player.tracks_final_board = player.tracks_final_board || {};
@@ -769,41 +724,6 @@ async function buildArtistDatabase(
   return database;
 }
 
-// Morceau prêt à jouer : champs par défaut et normalisations précalculées pour
-// la correction des réponses (voir submit_answer)
-function prepareTrack(track: Track, index: number): Track {
-  const originalArtists = splitArtists(track.artist)
-    .map((a) => normalizeString(a))
-    .filter(Boolean);
-  const internationalArtists = splitArtists(track.internationalArtist || "")
-    .map((a) => normalizeString(a))
-    .filter(Boolean);
-
-  // Pour chaque artiste, les noms acceptés (original et international)
-  const requiredArtists = originalArtists.map((orig, idx) => {
-    const names = [orig];
-    if (internationalArtists[idx]) names.push(internationalArtists[idx]);
-    return names;
-  });
-
-  return {
-    order: index + 1,
-    name: track.name || "",
-    artist: track.artist || "",
-    internationalName: track.internationalName || track.name || "",
-    internationalArtist: track.internationalArtist || track.artist || "",
-    previewUrl: track.previewUrl || "",
-    imageUrl: track.imageUrl || "",
-    submittedBy: track.submittedBy || "",
-    url: track.url || "",
-    _normalizedName: normalizeString(track.name || ""),
-    _normalizedIntName: normalizeString(track.internationalName || ""),
-    _requiredArtists: requiredArtists,
-    _rawArtist: normalizeString(track.artist || ""),
-    _rawIntArtist: normalizeString(track.internationalArtist || ""),
-  };
-}
-
 function shuffle<T>(array: T[]): T[] {
   const newArray = [...array];
   for (let i = newArray.length - 1; i > 0; i--) {
@@ -854,29 +774,6 @@ function isGameRunning(room: Room): boolean {
   const lastAnswerEnd =
     (room.toPlay.length - 1) * (room.time + 7) + room.time + 5;
   return Date.now() < room.gameStartTime + lastAnswerEnd * 1000;
-}
-
-function normalizeString(str: string): string {
-  if (!str) return "";
-  return str
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim();
-}
-
-function splitArtists(artistStr: string): string[] {
-  if (!artistStr || typeof artistStr !== "string") return [];
-
-  const separators =
-    /,\s*|&\s*|\s+\/\s+|\s+(?:and|feat\.?|featuring|with)\s+/gi;
-
-  return artistStr
-    .split(separators)
-    .map((a) => a.trim())
-    .filter(
-      (a) => a.length > 0 && !/^(feat\.?|featuring|with|&|and)$/i.test(a),
-    );
 }
 
 const checkAndResetGame = (roomCode: string): void => {

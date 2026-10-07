@@ -43,8 +43,9 @@ export async function transliterateText(text: string): Promise<string> {
         romajiSystem: "hepburn",
       });
 
-      const hasRemainingKana = /[\u3040-\u309F\u30A0-\u30FF]/.test(converted);
-      if (hasRemainingKana) {
+      // Reste non ASCII (voyelles longues ō ā ū, kanji absents du dictionnaire, kana
+      // oubliés) : la bibliothèque le ramène en lettres latines simples
+      if (/[^\x00-\x7F]/.test(converted)) {
         return transliterate(converted);
       }
       return converted;
@@ -65,8 +66,18 @@ export async function transliterateText(text: string): Promise<string> {
 // Convertir les noms en version internationale
 //----------------------------------
 
+// Espaces insécables ou pleine largeur (fréquents dans les titres japonais et les artistes
+// renvoyés par Spotify) remplacés par une espace simple : sinon un nom 100 % latin est pris
+// pour du non-ASCII et part inutilement en romanisation
+export const cleanSpaces = (text: string): string =>
+  (text || "").replace(/\s+/g, " ").trim();
+
 export async function getInternationalName(text: string): Promise<string> {
   if (!text || typeof text !== "string") return "";
+
+  // NFKC : "（FLAME）" devient "(FLAME)", "ＡＢＣ" devient "ABC", les kana demi-chasse
+  // deviennent des kana normaux
+  text = text.normalize("NFKC");
 
   let result = text;
   // Use [^()]+ to ensure we match the LAST individual parenthesized block
@@ -81,7 +92,7 @@ export async function getInternationalName(text: string): Promise<string> {
     if (isFeaturing) {
       // Recursively process the title part, then append the featuring part back
       const p1 = await getInternationalName(part1);
-      result = `${p1} (${part2})`;
+      result = `${p1} (${await transliterateText(part2)})`;
     } else {
       const isPart1Ascii = !/[^\x00-\x7F]/.test(part1);
       const isPart2Ascii = !/[^\x00-\x7F]/.test(part2);
@@ -159,6 +170,12 @@ export default async function selectTracks(
       }
 
       if (playlistTracks && playlistTracks.length > 0) {
+        playlistTracks = playlistTracks.map((t) => ({
+          ...t,
+          name: cleanSpaces(t.name),
+          artist: cleanSpaces(t.artist),
+        }));
+
         // 1. Détecter les morceaux ayant des caractères non-ASCII à translitérer avec Groq
         const itemsToTranslate: TransliterateItem[] = [];
         playlistTracks.forEach((t, index) => {

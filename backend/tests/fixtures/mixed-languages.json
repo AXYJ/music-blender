@@ -1,0 +1,112 @@
+[
+  {
+    "note": "japonais : titre kana + kanji, artiste latin",
+    "artist": "Fujii Kaze",
+    "name": "特にない"
+  },
+  {
+    "note": "japonais : titre en hiragana seul",
+    "artist": "MIREI",
+    "name": "またねがあれば"
+  },
+  {
+    "note": "japonais : titre kanji + hiragana (voyelle longue en romaji)",
+    "artist": "Tatsuya Kitani",
+    "name": "聖者の行進"
+  },
+  {
+    "note": "japonais : titre avec un w latin accolé",
+    "artist": "Fujii Kaze",
+    "name": "何なんw"
+  },
+  {
+    "note": "japonais : plusieurs artistes",
+    "artist": "Lanndo, Eve, suis from Yorushika",
+    "name": "宇宙の季節"
+  },
+  {
+    "note": "japonais : katakana seul",
+    "artist": "Uru",
+    "name": "ドライフラワー"
+  },
+  {
+    "note": "japonais : katakana avec voyelle longue",
+    "artist": "Sukima Switch",
+    "name": "ゴールデンタイムラバー"
+  },
+  {
+    "note": "japonais : très long titre",
+    "artist": "Maigo Hanyuu",
+    "name": "世界で一番じゃない貴方を愛したら"
+  },
+  {
+    "note": "japonais : artiste en hiragana",
+    "artist": "*Luna, ねんね",
+    "name": "イノセント"
+  },
+  {
+    "note": "japonais : titre bilingue avec tiret",
+    "artist": "Kenshi Yonezu",
+    "name": "ゆめうつつ - Daydream"
+  },
+  {
+    "note": "japonais : kanji seul (lecture japonaise attendue)",
+    "artist": "Ado",
+    "name": "踊"
+  },
+  {
+    "note": "japonais : kanji seuls, deux caractères",
+    "artist": "the peggies",
+    "name": "足跡"
+  },
+  {
+    "note": "japonais : kanji seuls, artiste latin",
+    "artist": "BUMP OF CHICKEN",
+    "name": "記念撮影"
+  },
+  {
+    "note": "japonais : parenthèses pleine largeur",
+    "artist": "QUEEN BEE",
+    "name": "火炎（FLAME）"
+  },
+  {
+    "note": "japonais : chiffres, kanji et kana mélangés",
+    "artist": "suisoh, 人間合格",
+    "name": "23時の断捨離"
+  },
+  {
+    "note": "chinois : artiste et titre en han avec latin collé",
+    "artist": "江皓南",
+    "name": "不如RnB"
+  },
+  {
+    "note": "chinois : latin collé à du han (artiste et titre)",
+    "artist": "吴子健REmi",
+    "name": "Drowing沉陷"
+  },
+  {
+    "note": "chinois : feat. en han dans le titre",
+    "artist": "JORDANN, 邹沛沛",
+    "name": "Meridian (feat. 邹沛沛Peipei)"
+  },
+  {
+    "note": "chinois : artiste en han, titre latin",
+    "artist": "美波",
+    "name": "Prologue"
+  },
+  {
+    "note": "latin : espace insécable entre artistes + feat.",
+    "artist": "Orangestar, kase.",
+    "name": "Sunflower (feat. kase.)"
+  },
+  {
+    "note": "latin : feat. et remix entre parenthèses",
+    "artist": "Nulbarich, Vaundy",
+    "name": "ASH feat. Vaundy (n-buna from YORUSHIKA Remix)"
+  },
+  {
+    "note": "latin : deux artistes",
+    "artist": "eill, GANMI, PARKGOLF",
+    "name": "with U"
+  }
+]

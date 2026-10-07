@@ -14,8 +14,18 @@ Sujets repérés pendant l'audit qui demandaient une décision, pas une simple c
 6. ~~Types dupliqués front/back.~~ **Assumé.** La duplication est en partie justifiée : le `Player` du front correspond au `PublicPlayer` du serveur et le `Track` du front au `PublicTrack`. Les partager demanderait de relier deux projets configurés différemment (extensions `.js` côté serveur).
 
 ## Qualité et outillage
-7. ~~Aucun test dans le repo.~~ **Fait** : `npm test --prefix backend` (13 fichiers dans `backend/tests/`, serveur de test lancé automatiquement, `SKIP_NETWORK=1` pour éviter Deezer). Reste à décider si on veut les brancher sur une CI.
+7. ~~Aucun test dans le repo.~~ **Fait** : `npm test --prefix backend` (14 fichiers dans `backend/tests/`, serveur de test lancé automatiquement, `SKIP_NETWORK=1` pour éviter Deezer). Reste à décider si on veut les brancher sur une CI.
 8. ~~Erreurs de lint déjà présentes.~~ **Fait** : `npm run lint` à 0 erreur et 0 warning (15 erreurs et 14 warnings au départ, dans 12 fichiers). Les lectures de `localStorage` passent par `useSyncExternalStore` (`utils/useLocalStorage.ts`) et la socket par `utils/socket.ts`.
 9. ~~Variables inutilisées dans `Game.tsx`.~~ **Fait** (avec les autres warnings : imports inutiles, datalist de code de room jamais alimentée).
 10. ~~README en retard.~~ **Fait** : `servor.ts`, structure complète, variables Groq et Spotify (optionnelles), section « Lancer les tests », Node 20.12+.
 11. ~~Service worker.~~ **Confirmé** : il fonctionne en local dans Chrome (le navigateur intégré à l'app Claude ne sait pas enregistrer de service worker, même d'une ligne). Enregistrement laissé tel quel : le site n'a qu'une seule page, `InstallPrompt` est monté à chaque chargement.
+
+## Playlists en plusieurs langues (trouvé en testant une vraie playlist japonais, chinois et latin)
+
+Corrigé : espaces insécables dans les noms d'artistes (17 sur 100 morceaux, qui faisaient prendre un nom 100 % latin pour du non-ASCII), parenthèses pleine largeur (`火炎（FLAME）` donne `FLAME`), `feat.` en han non romanisé, voyelles longues et kanji restant dans les versions internationales (15 noms sur 98 avant, 0 après). Tests : `mixed-languages.test.mts` (22 morceaux réels et 9 écritures fabriquées, hors ligne) et `live-mixed-playlist.test.mjs` (bout en bout, internet requis).
+
+Restent à décider (non faits) :
+13. **Un groupe dont le nom contient « and », « & » ou « with » est noté 0 quand on le saisit tel quel.** Vérifié : `Simon & Garfunkel`, `Hall & Oates`, `Florence and the Machine`, `Mumford and Sons` donnent 0, `Earth, Wind & Fire` donne 0,5. Cause : `splitArtists` coupe ces noms en deux artistes, et la saisie, découpée seulement aux virgules, ne correspond plus à rien. Valable pour toutes les langues. Piste : accepter aussi une saisie égale au nom complet de l'artiste (original ou international), un petit changement dans `scoreAnswer`.
+14. **Sans Groq (repli local), le japonais romanisé est collé sans espaces** (`seijanokoshin`) : une saisie « seija no koshin » est refusée. Avec Groq, les romanisations ont des espaces (« Toku Ni Nai ») et la correction ignore la casse. Pistes : mode « spaced » de Kuroshiro, et/ou comparaison qui ignore espaces et ponctuation.
+15. **Sans Groq, un titre en kanji seuls est lu en chinois** (`白夜` donne `Bai Ye` au lieu de `Byakuya`, `踊` donne `Yong`, `足跡` donne `Zu Ji`), car sans kana on ne peut pas savoir que c'est du japonais. Groq s'en sort mieux grâce au contexte. Piste : si la playlist contient du kana, lire les kanji seuls en japonais.
+16. **Groq n'est pas toujours exact** (`聖者の行進` romanisé `Seisha No Koushin` au lieu de `Seija no Kōshin`) et reformule parfois (`Drowing` devient `Drowning`) : la saisie dans l'écriture d'origine reste toujours acceptée, donc sans conséquence grave.
