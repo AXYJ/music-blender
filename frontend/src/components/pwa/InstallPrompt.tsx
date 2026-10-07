@@ -62,7 +62,6 @@ export default function InstallPrompt() {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
         .register("/sw.js")
-        .then((reg) => console.log("Service Worker registered!", reg))
         .catch((err) => console.error("SW registration failed:", err));
     }
   }, []);
@@ -74,8 +73,7 @@ export default function InstallPrompt() {
     }
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log(`User response to install prompt: ${outcome}`);
+    await deferredPrompt.userChoice;
     // L'invite ne sert qu'une fois : on l'oublie et on prévient les abonnés
     window.deferredPrompt = undefined;
     window.dispatchEvent(new Event("pwa-prompt-available"));

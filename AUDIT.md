@@ -1,5 +1,29 @@
 # Audit music-blender : suivi
 
+## Audit n°2 (7 octobre 2026)
+
+Relecture du code et des dépendances. État de départ : `tsc --noEmit` OK des deux côtés, 14 fichiers de tests backend OK.
+
+### Corrigé
+- [x] **Limite par IP contournable derrière un proxy** (`getClientIp`, `backend/scripts/rate-limit.ts`). Avec `TRUST_PROXY=1`, la fonction lisait la première adresse de `X-Forwarded-For`, celle que le client écrit lui-même : une valeur différente par connexion échappait à la limite. Elle lit maintenant la dernière (ajoutée par le proxy). Limite connue : un seul proxy de confiance (`ponytail:` dans le code). Test mis à jour (`limiter.test.mts` : `6.6.6.6, 9.9.9.9` donne `9.9.9.9`).
+- [x] **Dépendances backend** : `npm audit fix` ; `npm audit --omit=dev` passe de 4 alertes (`proxy-addr` critique, `engine.io`, `undici` hautes, `qs` modérée) à 0.
+- [x] **Dépendances frontend** : `next` 16.1.6 → 16.4.0 (saut mineur, aucun changement incompatible pour l'App Router + React 19), puis `npm audit fix` (`sharp`, `postcss`, `nanoid`, `source-map-js`). `npm audit --omit=dev` passe de 5 paquets (dont `next` critique) à 0. Build et lint OK, images (`next/image`) vérifiées à la main.
+- [x] **`console.log` retirés du frontend** (`useSocketListeners.ts` ×2, `InstallPrompt.tsx` ×2). Les `console.error` et les journaux du serveur sont conservés.
+
+### Reste à faire
+- [ ] **Racine** : `shell-quote` via `concurrently` (critique, outil de développement seulement) : `npm audit fix` à la racine.
+- [ ] **Mises à jour mineures backend** : `kuroshiro` 1.2.1, `@types/node`, `tsx`. `groq-sdk` 0.30 vers 1.6 est une version majeure : à tester avant.
+- [ ] **`dangerouslySetInnerHTML`** (`Toggle.tsx`, `Mentions.tsx`) : sans risque tant que le contenu vient des fichiers de traduction ; ne jamais y faire passer une saisie de joueur.
+- [ ] **`backend/servor.ts`** : 809 lignes, non relu en entier lors de cet audit.
+- [ ] Les trois défauts de `PISTES.md` (groupes dont le nom contient « & » / « and », japonais romanisé sans espaces, kanji seuls lus en chinois).
+
+### Vérification après corrections
+`tsc --noEmit` OK (backend et frontend), 14 fichiers de tests backend OK. Non testé : un vrai reverse proxy devant le serveur (testé uniquement sur la fonction).
+
+---
+
+## Audit n°1
+
 Méthode : un point à la fois. On discute du problème, l'utilisateur décide, on corrige, on passe au suivant.
 
 ## Fait

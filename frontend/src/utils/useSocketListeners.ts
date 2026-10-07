@@ -105,7 +105,6 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     };
 
     const handleDisconnect = (reason: string) => {
-      console.log("Socket déconnecté:", reason);
       setIsConnected(false);
       if (
         reason === "io server disconnect" ||
@@ -270,7 +269,6 @@ export const useSocketListeners = (props: SocketListenersProps) => {
     // Gestion des paramètres de partie
     // ----------------
     const handleGameSetting = (key: string, value: number) => {
-      console.log("Game setting:", key, value);
       if (key === "music_amount") {
         setMusicAmount(value);
       } else if (key === "time") {

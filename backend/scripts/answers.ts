@@ -10,7 +10,7 @@ export function normalizeString(str: string): string {
     .toLowerCase()
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
-    .trim();
+    .replace(/[^\p{L}\p{M}\p{N}]/gu, "");
 }
 
 export function splitArtists(artistStr: string): string[] {
@@ -82,20 +82,19 @@ export function scoreAnswer(
     .filter(Boolean);
 
   const requiredArtists = track._requiredArtists ?? [];
+  const rawArtist = track._rawArtist ?? normalizeString(track.artist);
+  const rawIntArtist =
+    track._rawIntArtist ?? normalizeString(track.internationalArtist || "");
   let artistScore = 0;
-  if (requiredArtists.length > 0) {
+  // Nom de groupe saisi en entier (« Simon & Garfunkel »)
+  if (playerGuesses.some((g) => g === rawArtist || g === rawIntArtist)) {
+    artistScore = 1;
+  } else if (requiredArtists.length > 0) {
     const matchedCount = requiredArtists.filter((acceptableNames) =>
       playerGuesses.some((guess) => acceptableNames.includes(guess)),
     ).length;
     if (matchedCount === requiredArtists.length) artistScore = 1;
     else if (matchedCount > 0) artistScore = 0.5;
-  } else {
-    const rawArtist = track._rawArtist ?? normalizeString(track.artist);
-    const rawIntArtist =
-      track._rawIntArtist ?? normalizeString(track.internationalArtist || "");
-    if (playerGuesses.some((g) => g === rawArtist || g === rawIntArtist)) {
-      artistScore = 1;
-    }
   }
 
   return { artistScore, trackCorrect };

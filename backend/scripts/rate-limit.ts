@@ -46,7 +46,10 @@ export class SlidingWindowLimiter {
 
 // Adresse du client. Derrière un reverse proxy, socket.handshake.address est celle du
 // proxy : il faut alors lire X-Forwarded-For (TRUST_PROXY=1). Sans proxy, cet en-tête
-// est librement falsifiable par le client, donc on ne le lit pas par défaut.
+// est librement falsifiable par le client, donc on ne le lit pas par défaut. Avec un proxy,
+// seule la DERNIÈRE adresse est fiable (ajoutée par le proxy) : les précédentes sont celles
+// que le client a écrites lui-même.
+// ponytail: un seul proxy de confiance ; avec plusieurs, prendre la n-ième en partant de la fin.
 export function getClientIp(
   handshake: { address: string; headers: Record<string, string | string[] | undefined> },
   trustProxy: boolean,
@@ -54,7 +57,8 @@ export function getClientIp(
   if (trustProxy) {
     const forwarded = handshake.headers["x-forwarded-for"];
     const first = (Array.isArray(forwarded) ? forwarded[0] : forwarded)
-      ?.split(",")[0]
+      ?.split(",")
+      .at(-1)
       ?.trim();
     if (first) return first;
   }

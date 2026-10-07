@@ -32,7 +32,7 @@ const handshake = (address: string, forwarded?: string) => ({
   headers: forwarded === undefined ? {} : { "x-forwarded-for": forwarded },
 });
 check("sans proxy de confiance, X-Forwarded-For est ignoré (falsifiable)", getClientIp(handshake("1.1.1.1", "9.9.9.9"), false) === "1.1.1.1");
-check("avec proxy de confiance, on lit le premier de X-Forwarded-For", getClientIp(handshake("10.0.0.1", "9.9.9.9, 10.0.0.1"), true) === "9.9.9.9");
+check("avec proxy de confiance, on lit le dernier de X-Forwarded-For (le client ne peut pas s'en inventer un)", getClientIp(handshake("10.0.0.1", "6.6.6.6, 9.9.9.9"), true) === "9.9.9.9");
 check("avec proxy de confiance mais sans en-tête : adresse de la connexion", getClientIp(handshake("1.1.1.1"), true) === "1.1.1.1");
 check("en-tête vide : adresse de la connexion", getClientIp(handshake("1.1.1.1", ""), true) === "1.1.1.1");
 
