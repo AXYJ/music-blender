@@ -27,14 +27,6 @@ export interface DatabaseTrack {
   internationalName?: string;
 }
 
-export interface PlayerAnswer {
-  artist: string;
-  track: string;
-  artist_correct: boolean;
-  artist_score: number;
-  track_correct: boolean;
-}
-
 export interface Player {
   id: string;
   socketId?: string;
@@ -69,7 +61,6 @@ export interface Room {
   gameStartTime?: number | null;
   isLoadingTracks?: boolean;
   isGameOver?: boolean;
-  answers?: Record<string, PlayerAnswer>;
   cleanupTimeout?: NodeJS.Timeout;
 }
 

@@ -289,7 +289,6 @@ io.on(
       p.leavedPlayer = false;
     });
     room.isGameOver = false;
-    room.answers = {};
     room.gameStartTime = null;
     room.isLoadingTracks = false;
     io.to(roomCode).emit("game_started", room.players);
@@ -588,15 +587,6 @@ io.on(
       player.artists_scores_board[turn - 1] = artist_score;
       player.tracks_scores_board[turn - 1] = track_answer;
 
-      room.answers = room.answers || {};
-      room.answers[player.id] = {
-        artist: artist,
-        track: track,
-        artist_correct: artist_score > 0,
-        artist_score: artist_score,
-        track_correct: track_answer,
-      };
-
       // Calcul et mise à jour du score sur le serveur
       let additionalScore = artist_score;
       if (track_answer) {
@@ -843,7 +833,6 @@ const checkAndResetGame = (
 
     room.players = activePlayers;
     room.isGameOver = false;
-    room.answers = {};
     room.gameStartTime = null;
     room.isLoadingTracks = false;
 

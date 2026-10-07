@@ -32,8 +32,9 @@ Règle : une modification et un commit par thème, avec un test par thème (scri
 - [x] B5. `useSocketListeners` : `t` et `playerId` lus via un ref, les erreurs suivent la langue.
 - Testé : serveur (scénario mobile avec socket périmée, hôte qui quitte en pleine partie, état de reconnexion, room pleine, horloge) ; fonction d'horloge client (décalage d'horloge, retour de veille) ; vraie partie dans le navigateur intégré (lobby, 3 tours au rythme exact du serveur, réponse saisie notée 2 points, coupure de connexion en plein tour 2 : reconnexion automatique, même tour, toujours hôte, résultats). Non testé : l'expiration réelle de 5 minutes et la vraie mise en arrière-plan d'un téléphone (simulées).
 ### Thème C : Protocole socket incohérent
-- [ ] C1. `socket.emit("volume")` dans `Game.tsx` : événement que le serveur n écoute pas et qui n est pas dans `ClientToServerEvents`.
-- [ ] C2. `room.answers` écrit mais jamais lu (code mort probable, avec le type `PlayerAnswer`).
+- [x] C1. `socket.emit("volume")` supprimé de `Game.tsx` (événement sans écouteur, le volume est local).
+- [x] C2. `room.answers` (3 écritures) et type `PlayerAnswer` supprimés : jamais lus, déjà couverts par les tableaux `*_board` du joueur.
+- Testé : tous les scénarios serveur précédents (réponses et scores, paramètres, reconnexion, déconnexions, scénario mobile) passent toujours ; `tsc` OK des deux côtés.
 
 ### Thème D : Duplications et gros blocs
 - [ ] D1. `send_playlist_url` : handler de ~190 lignes à découper.

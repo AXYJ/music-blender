@@ -369,10 +369,7 @@ export default function Game() {
                     step="0.1"
                     value={volume}
                     onMouseDown={() => setIsChangingVolume(true)}
-                    onChange={(e) => {
-                      setVolume(Number(e.target.value));
-                      socket?.emit("volume", Number(e.target.value));
-                    }}
+                    onChange={(e) => setVolume(Number(e.target.value))}
                     className="h-2 w-24 cursor-pointer appearance-none rounded-lg bg-gray-200 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-(--accent) [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-(--accent)"
                   />
                 </div>
