@@ -273,7 +273,7 @@ export default async function selectTracks(
     tracksCopy.splice(index, 1);
   }
 
-  // Récupérer les vraies images de couverture pour les pistes sélectionnées via Deezer Lookup (avec OEmbed Spotify en Fallback)
+  // Récupérer les vraies images de couverture pour les pistes sélectionnées (Spotify uniquement : Deezer et Apple fournissent déjà la bonne image)
   let selectedTracksWithImages = [...selectedTracks];
   if (platform === "spotify") {
     selectedTracksWithImages = await Promise.all(
@@ -290,36 +290,10 @@ export default async function selectTracks(
           };
         }
 
-        let realImg: string | null = null;
-
-        // 1. Essayer de récupérer l'image sur Deezer (qualité supérieure)
-        try {
-          const query = `${track.internationalArtist || track.artist} ${track.internationalName || track.name}`;
-          const response = await fetch(
-            `https://api.deezer.com/search?q=${encodeURIComponent(query)}&limit=1`,
-          );
-          if (response.ok) {
-            const data = (await response.json()) as {
-              data?: { album?: { cover_big?: string } }[];
-            };
-            if (data.data && data.data.length > 0) {
-              realImg = data.data[0].album?.cover_big || null;
-            }
-          }
-        } catch (e) {
-          console.warn(
-            `[Deezer Cover Lookup] Failed to fetch cover for ${track.name} on Deezer:`,
-            e,
-          );
-        }
-
-        // 2. Fallback sur l'OEmbed officiel de Spotify si Deezer n'a rien trouvé
-        if (!realImg && track.url) {
-          realImg = await fetchTrackImageViaOEmbed(
-            track.url,
-            track.imageUrl || "",
-          );
-        }
+        // Pochette exacte du morceau via l'OEmbed officiel de Spotify (pas de recherche approximative)
+        const realImg = track.url
+          ? await fetchTrackImageViaOEmbed(track.url, track.imageUrl || "")
+          : null;
 
         if (realImg) {
           setBounded(coverCache, coverKey, realImg, MAX_CACHED_COVERS);
