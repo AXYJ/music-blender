@@ -30,6 +30,7 @@ export default function Toggle({
       >
         <div className="overflow-hidden">
           <div className="mb-2 pt-4 text-sm">
+            {/* HTML issu des traductions uniquement, jamais d'une saisie utilisateur. */}
             <div dangerouslySetInnerHTML={{ __html: answer }} />
           </div>
         </div>
