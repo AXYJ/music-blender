@@ -10,6 +10,12 @@ try {
   // pas de fichier .env
 }
 
+for (const name of ["SPOTIFY_CLIENT_ID", "SPOTIFY_CLIENT_SECRET", "GROQ_API_KEY"]) {
+  if (!process.env[name]?.trim()) {
+    console.warn(`[servor] Variable d'environnement manquante : ${name}`);
+  }
+}
+
 import express, { Request, Response } from "express";
 import http from "http";
 import { Server, Socket } from "socket.io";
