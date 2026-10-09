@@ -68,8 +68,8 @@ export default function TrackCover({
           <Image
             src={imageUrl}
             alt={"Cover " + turn}
-            width={250}
-            height={250}
+            width={640}
+            height={640}
             className="h-full w-full object-cover"
             priority
           />
@@ -77,8 +77,8 @@ export default function TrackCover({
           <Image
             src={imageUrl}
             alt={"Cover blurred " + turn}
-            width={250}
-            height={250}
+            width={640}
+            height={640}
             className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${
               blurImage ? "opacity-100 transition-none" : "opacity-0"
             }`}

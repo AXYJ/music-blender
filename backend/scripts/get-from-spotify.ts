@@ -199,7 +199,11 @@ export async function fetchTrackImageViaOEmbed(
     );
     if (response.ok) {
       const data = (await response.json()) as { thumbnail_url?: string };
-      return data.thumbnail_url || fallbackUrl;
+      // L'OEmbed renvoie du 300 px (…1e02) ; le même hash en …b273 donne du 640 px
+      return (
+        data.thumbnail_url?.replace("ab67616d00001e02", "ab67616d0000b273") ||
+        fallbackUrl
+      );
     }
   } catch (e) {
     console.error(`[Spotify OEmbed] Error fetching cover for ${trackUrl}:`, e);
