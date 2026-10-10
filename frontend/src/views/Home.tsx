@@ -128,11 +128,12 @@ export default function Home() {
       </Section>
       <Section>
         <h3 className="text-2xl text-(--white)">{t("home.about")}</h3>
-        <p>
-          {t("home.about-text-1")}
-          <br />
-          {t("home.about-text-2")}
-        </p>
+        <p>{t("home.about-text")}</p>
+        <ul className="mt-4 flex list-outside list-disc flex-col gap-1 pl-4">
+          {[1, 2, 3].map((n) => (
+            <li key={n}>{t(`home.about-point-${n}`)}</li>
+          ))}
+        </ul>
       </Section>
       <div className="grid w-full grid-cols-1 flex-col gap-4 md:flex-row md:gap-8 lg:grid-cols-2">
         <Section>

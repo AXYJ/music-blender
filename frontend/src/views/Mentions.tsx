@@ -67,6 +67,9 @@ export default function Mentions() {
               </a>
             </div>
           </div>
+          <p className="mt-4 text-center text-xs leading-relaxed text-(--white)/60">
+            {t("mentions.trademarks")}
+          </p>
         </div>
 
         {/* SECTION 2: POLITIQUE DE CONFIDENTIALITE */}
@@ -179,6 +182,24 @@ export default function Mentions() {
                     <td className="p-3">{t("mentions.purpose-player-id")}</td>
                     <td className="p-3 text-(--white)/60">
                       {t("mentions.duration-player-id")}
+                    </td>
+                  </tr>
+                  <tr className="border-b border-(--white)/5 hover:bg-(--white)/2">
+                    <td className="p-3 font-medium text-(--white)">
+                      {t("mentions.data-ip")}
+                    </td>
+                    <td className="p-3">{t("mentions.purpose-ip")}</td>
+                    <td className="p-3 text-(--white)/60">
+                      {t("mentions.duration-ip")}
+                    </td>
+                  </tr>
+                  <tr className="border-b border-(--white)/5 hover:bg-(--white)/2">
+                    <td className="p-3 font-medium text-(--white)">
+                      {t("mentions.data-third-party")}
+                    </td>
+                    <td className="p-3">{t("mentions.purpose-third-party")}</td>
+                    <td className="p-3 text-(--white)/60">
+                      {t("mentions.duration-third-party")}
                     </td>
                   </tr>
                   <tr className="hover:bg-(--white)/2">
