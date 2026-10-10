@@ -155,4 +155,4 @@ Ce jeu est un projet indépendant et n'est ni affilié, ni sponsorisé, ni appro
 
 ## 📄 Licence
 
-Code distribué sous licence [ISC](LICENSE). Les marques et visuels de Spotify, Deezer et Apple Music, ainsi que les extraits audio, restent la propriété de leurs ayants droit et ne sont pas couverts par cette licence. Polices : Public Sans (SIL OFL 1.1), Clash Display (Fontshare / Indian Type Foundry, licence gratuite).
+Code distribué sous licence [ISC](LICENSE). Les marques et visuels de Spotify, Deezer et Apple Music, ainsi que les extraits audio, restent la propriété de leurs ayants droit et ne sont pas couverts par cette licence. Polices et composants tiers : voir [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
