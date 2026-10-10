@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "license": "ISC",
-  "author": "",
+  "author": "Museek",
   "type": "module",
   "scripts": {
     "dev": "next dev",

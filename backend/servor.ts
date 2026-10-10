@@ -285,7 +285,7 @@ io.on(
           delete room.cleanupTimeout;
         }
         console.log(
-          `[${new Date().toISOString()}] User ${socket.id} (${player.name}) reconnected to room ${roomCode}`,
+          `[${new Date().toISOString()}] User ${socket.id} reconnected to room ${roomCode}`,
         );
       } else {
         room.players.push({
@@ -333,7 +333,7 @@ io.on(
     player.leavedPlayer = true;
     room.players = room.players.filter((p) => p.id !== player.id);
     console.log(
-      `[${new Date().toISOString()}] User ${player.name} left room ${roomCode}`,
+      `[${new Date().toISOString()}] User ${socket.id} left room ${roomCode}`,
     );
     socket.leave(roomCode);
 
@@ -612,7 +612,7 @@ io.on(
                 nextHost.isHost = true;
                 nextHost.isReady = true;
                 console.log(
-                  `[${new Date().toISOString()}] Host transferred to ${nextHost.name} in room ${roomCode} after 5min timeout`,
+                  `[${new Date().toISOString()}] Host transferred in room ${roomCode} after 5min timeout`,
                 );
                 emitRoomUpdated(roomCode, currentRoom);
               }
@@ -632,7 +632,7 @@ io.on(
                 (x) => x.id !== player.id,
               );
               console.log(
-                `[${new Date().toISOString()}] Disconnected player ${p.name} removed from room ${roomCode} after 5min timeout`,
+                `[${new Date().toISOString()}] Disconnected player removed from room ${roomCode} after 5min timeout`,
               );
               emitRoomUpdated(roomCode, currentRoom);
               checkAndResetGame(roomCode);
@@ -655,7 +655,7 @@ async function loadPlayersTracks(
 ): Promise<{ allTracks: Track[]; selected: Track[]; hasError: boolean }> {
   let hasError = false;
   const fail = (p: Player, err?: unknown) => {
-    if (err) console.error(`Error processing tracks for player ${p.name}:`, err);
+    if (err) console.error(`Error processing tracks for a player:`, err);
     p.tracks = [];
     io.to(roomCode).emit("error", `playlist_load_error:${p.name}`);
     hasError = true;

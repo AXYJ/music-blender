@@ -142,9 +142,17 @@ Le projet fonctionne selon le principe du respect de la vie privée par défaut 
 - Pas de base de données persistante.
 - Les données de jeu, pseudonymes, et liens de playlists sont conservés uniquement en mémoire volatile sur le serveur backend.
 - Dès que tous les joueurs quittent un salon, la mémoire associée est entièrement purgée.
+- Les journaux du serveur ne contiennent ni pseudonyme ni adresse IP (uniquement l'identifiant de socket et le code de salon).
+- Seuls tiers destinataires : Groq (titres et artistes, romanisation) et, pour la lecture des extraits, Spotify / Deezer / Apple, que le navigateur du joueur contacte directement. Le détail est dans la page « Mentions légales & Politique de confidentialité » de l'application.
 - Les autres joueurs ne reçoivent jamais votre identifiant de reconnexion ni votre lien de playlist : ils ne voient qu'un identifiant public tiré au hasard à votre arrivée dans le salon, ce qui empêche de prendre la place d'un autre joueur.
 
 ---
 
 ## ⚖️ Avertissement Légal
 Ce jeu est un projet indépendant et n'est ni affilié, ni sponsorisé, ni approuvé par Spotify, Deezer ou Apple Music. Les titres, artistes et visuels associés restent la propriété exclusive de leurs ayants droit respectifs.
+
+---
+
+## 📄 Licence
+
+Code distribué sous licence [ISC](LICENSE). Les marques et visuels de Spotify, Deezer et Apple Music, ainsi que les extraits audio, restent la propriété de leurs ayants droit et ne sont pas couverts par cette licence. Polices : Public Sans (SIL OFL 1.1), Clash Display (Fontshare / Indian Type Foundry, licence gratuite).

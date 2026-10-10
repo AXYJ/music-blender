@@ -37,7 +37,7 @@ export default function Mentions() {
                 <span className="font-semibold">
                   {t("mentions.publisher-label")}
                 </span>{" "}
-                Alex Xiao
+                {t("mentions.publisher-value")}
               </p>
               <EmailLink className="text-(--white) underline transition-all duration-300 hover:text-(--accent) active:text-(--accent)" />
             </div>
@@ -51,9 +51,9 @@ export default function Mentions() {
               <p className="text-center leading-relaxed">
                 {t("mentions.host-address-label")}
                 <br />
-                UAB &quot;HOSTINGER LT&quot;,
+                HOSTINGER, UAB,
                 <br />
-                Švitrigailos g. 34C, LT-03110 Vilnius,
+                Švitrigailos str. 34, LT-03230 Vilnius,
                 <br />
                 {t("mentions.host-country")}
               </p>
