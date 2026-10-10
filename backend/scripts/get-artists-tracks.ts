@@ -149,7 +149,7 @@ export default async function selectTracks(
     Date.now() - cachedPlaylist.timestamp < PLAYLIST_CACHE_TTL
   ) {
     console.log(
-      `[Playlist Cache] Hit pour ${resolvedUrl} (${cachedPlaylist.tracks.length} pistes en mémoire)`,
+      `[Playlist Cache] Hit (${cachedPlaylist.tracks.length} pistes en mémoire)`,
     );
     tracks = cachedPlaylist.tracks.map((t) => ({
       ...t,

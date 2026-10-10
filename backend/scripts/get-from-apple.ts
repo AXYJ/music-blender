@@ -115,7 +115,7 @@ export async function fetchAppleTracks({
     (id.startsWith("http") ? id : `https://music.apple.com/fr/playlist/${id}`);
 
   console.log(
-    `[Apple Music] Scraping tracks from playlist URL: ${playlistUrl}`,
+    `[Apple Music] Scraping tracks from playlist`,
   );
   const scrapedTracks = await getAppleMusicTracks(playlistUrl);
   console.log(

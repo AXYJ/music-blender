@@ -72,7 +72,20 @@ export default function Mentions() {
           </p>
         </div>
 
-        {/* SECTION 2: POLITIQUE DE CONFIDENTIALITE */}
+        {/* SECTION 2: CONDITIONS D'UTILISATION */}
+        <div className="mt-8 flex w-full flex-col gap-4">
+          <h2 className="text-center text-2xl font-bold text-(--accent)">
+            {t("mentions.terms-title")}
+          </h2>
+          <p className="leading-relaxed">{t("mentions.terms-text1")}</p>
+          <p className="leading-relaxed">{t("mentions.terms-text2")}</p>
+          <p className="leading-relaxed">{t("mentions.terms-text3")}</p>
+          <div className="text-center">
+            <EmailLink className="font-semibold text-(--white) underline transition-all duration-300 hover:text-(--accent) active:text-(--accent)" />
+          </div>
+        </div>
+
+        {/* SECTION 3: POLITIQUE DE CONFIDENTIALITE */}
         <div className="mt-8 flex w-full flex-col gap-6">
           <h2 className="text-center text-2xl font-bold text-(--accent)">
             {t("mentions.privacy-title")}

@@ -72,7 +72,7 @@
         "duration-game-data": "Automatically deleted as soon as all players leave the lobby.",
         "data-music-list": "track List",
         "purpose-music-list": "Optimize loading and avoid repetitive requests during the session (Technical Cache).",
-        "duration-music-list": "Temporarily stored in cache memory and purged regularly.",
+        "duration-music-list": "Kept in cache memory for 1 hour at most, with no link to a player, then purged.",
         "data-lang-preference": "Language preference",
         "purpose-lang-preference": "Remember your preferred language for future visits.",
         "duration-lang-preference": "Persistent in your browser's local storage until you clear your browsing data.",
@@ -81,7 +81,7 @@
         "duration-player-id": "Persistent in your browser's local storage until you clear your browsing data.",
         "data-ip": "IP address",
         "purpose-ip": "Limit the number of requests per address to protect the service from abuse (rate limiting).",
-        "duration-ip": "Kept in memory only, for about one minute. The hosting provider may keep technical logs under its own terms.",
+        "duration-ip": "Kept in memory only, for about one minute. The hosting provider also keeps connection data for the statutory period of one year, under its own terms.",
         "data-third-party": "Track titles and artists (third-party service Groq); audio previews (Spotify, Deezer, Apple)",
         "purpose-third-party": "Romanize non-Latin names (Chinese, Korean, etc.) through the API of Groq, a company based in the United States, i.e. outside the European Union, with the transfer covered by the European Commission's standard contractual clauses (Groq's data processing addendum): only titles and artist names are sent, never usernames or IP addresses. In addition, to play previews, your browser connects directly to the servers of Spotify, Deezer or Apple, which then receive your IP address under their own privacy policies.",
         "duration-third-party": "Not kept by the server beyond the game. Groq is configured with Zero Data Retention: requests are not stored on its side.",
@@ -104,6 +104,10 @@
         "section5-text1": "In accordance with the General Data Protection Regulation (GDPR), you have the right to access, correct, delete, object to and restrict the processing of your personal data. You may also lodge a complaint with the French data protection authority, the CNIL (www.cnil.fr).",
         "section5-text2": "Given the absence of persistent storage and user accounts, <strong>leaving the game and closing your browser de facto deletes all your session data</strong>.",
         "section5-text3": "For any questions or requests relating to your data (answered within one month), you can contact the website publisher at the following address:",
+        "terms-title": "Terms of use",
+        "terms-text1": "Museek is a free game, provided with no guarantee of availability or results. It is intended for personal, non-commercial use.",
+        "terms-text2": "Choose a username that does not infringe the rights of others: no unlawful, abusive or discriminatory language, and no impersonation. The publisher may remove you from a lobby or restrict access to the service in case of abuse.",
+        "terms-text3": "Playlists, titles, covers and previews are provided by Spotify, Deezer and Apple Music and remain subject to their terms. For any question, you can write to the following address:",
         "back": "Back"
     },
     "lobby": {

@@ -72,7 +72,7 @@
         "duration-game-data": "Supprimées automatiquement dès que tous les joueurs quittent le salon.",
         "data-music-list": "Liste des morceaux",
         "purpose-music-list": "Optimiser le chargement et éviter les requêtes répétitives pendant la session (Cache technique).",
-        "duration-music-list": "Conservée temporairement en mémoire cache et purgée régulièrement.",
+        "duration-music-list": "Conservée en mémoire cache pendant 1 heure au plus, sans lien avec un joueur, puis purgée.",
         "data-lang-preference": "Choix de langue",
         "purpose-lang-preference": "Mémoriser votre langue préférée pour les prochaines visites.",
         "duration-lang-preference": "Persistant dans le stockage local de votre navigateur jusqu'à ce que vous effaciez vos données de navigation.",
@@ -81,7 +81,7 @@
         "duration-player-id": "Persistant dans le stockage local de votre navigateur jusqu'à ce que vous effaciez vos données de navigation.",
         "data-ip": "Adresse IP",
         "purpose-ip": "Limiter le nombre de requêtes par adresse pour protéger le service des abus (limitation de débit).",
-        "duration-ip": "Conservée uniquement en mémoire vive, environ une minute. L'hébergeur peut tenir des journaux techniques selon ses propres conditions.",
+        "duration-ip": "Conservée uniquement en mémoire vive, environ une minute. L'hébergeur conserve en outre les données de connexion pendant la durée légale d'un an, selon ses propres conditions.",
         "data-third-party": "Titres et artistes des morceaux (service tiers Groq) ; extraits audio (Spotify, Deezer, Apple)",
         "purpose-third-party": "Romaniser les noms non latins (chinois, coréen, etc.) via l'API de Groq, société établie aux États-Unis, donc hors Union européenne, avec transfert encadré par les clauses contractuelles types de la Commission européenne (addendum de traitement des données de Groq) : seuls les titres et noms d'artistes sont transmis, jamais les pseudonymes ni les adresses IP. Par ailleurs, pour jouer les extraits, votre navigateur se connecte directement aux serveurs de Spotify, Deezer ou Apple, qui reçoivent alors votre adresse IP selon leurs propres politiques de confidentialité.",
         "duration-third-party": "Non conservés par le serveur au-delà de la partie. Groq est configuré en « Zero Data Retention » : les requêtes ne sont pas enregistrées chez lui.",
@@ -104,6 +104,10 @@
         "section5-text1": "Conformément au Règlement Général sur la Protection des Données (RGPD), vous disposez d'un droit d'accès, de rectification, de suppression, d'opposition et de limitation du traitement de vos données personnelles. Vous pouvez aussi introduire une réclamation auprès de la CNIL (www.cnil.fr).",
         "section5-text2": "Compte tenu de l'absence de stockage persistant et de comptes utilisateurs, <strong>quitter la partie et fermer votre navigateur supprime de facto l'ensemble de vos données de session</strong>.",
         "section5-text3": "Pour toute question ou demande relative à vos données (réponse sous un mois), vous pouvez contacter l'éditeur du site à l'adresse suivante :",
+        "terms-title": "Conditions d'utilisation",
+        "terms-text1": "Museek est un jeu gratuit, proposé sans garantie de disponibilité ni de résultat. Il est destiné à un usage personnel et non commercial.",
+        "terms-text2": "Choisissez un pseudonyme qui ne porte pas atteinte aux droits d'autrui : pas de propos illicites, injurieux ou discriminatoires, ni d'usurpation d'identité. L'éditeur peut vous exclure d'un salon ou restreindre l'accès au service en cas d'abus.",
+        "terms-text3": "Les playlists, titres, pochettes et extraits sont fournis par Spotify, Deezer et Apple Music et restent soumis à leurs conditions. Pour toute question, vous pouvez écrire à l'adresse suivante :",
         "back": "Retour"
     },
     "lobby": {

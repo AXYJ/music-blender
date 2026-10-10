@@ -167,9 +167,9 @@ export default function Home() {
                     aria-hidden="true"
                   >
                     <div className="flex flex-wrap items-center justify-center gap-8">
-                      <Image src="/spotify.svg" alt="" width={50} height={50} />
-                      <Image src="/deezer.svg" alt="" width={50} height={50} />
-                      <Image src="/apple.webp" alt="" width={50} height={50} />
+                      <Image src="/spotify.png" alt="" width={50} height={50} />
+                      <Image src="/deezer.png" alt="" width={50} height={50} />
+                      <Image src="/apple-music.svg" alt="" width={50} height={50} />
                     </div>
                   </div>
                   <p className="px-2 text-center">{t("home.step2")}</p>
